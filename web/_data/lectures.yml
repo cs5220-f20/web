@@ -1,0 +1,138 @@
+# ==================
+# Week 1
+#
+-
+  date: 2020-09-03
+  info: Introduction
+# =================
+# Week 2
+#
+-
+  date: 2020-09-08
+  info: Performance basics
+-
+  date: 2020-09-10
+  info: Single processor architecture
+# =================
+# Week 3
+#
+-
+  date: 2020-09-15
+  info: Basic optimizations
+-
+  date: 2020-09-17
+  info: Basic optimizations
+# =================
+# Week 4
+#
+-
+  date: 2020-09-22
+  info: Roofline modeling
+-
+  date: 2020-09-24
+  info: Parallel machines and models
+# =================
+# Week 4
+#
+-
+  date: 2020-09-29
+  info: Parallelism and locality in simulations
+-
+  date: 2020-10-01
+  info: Parallelism and locality in simulations
+# =================
+# Week 4
+#
+-
+  date: 2020-10-06
+  info: Distributed memory programming
+-
+  date: 2020-10-08
+  info: Distributed memory programming
+# =================
+# Week 5
+#
+-
+  date: 2020-10-13
+  info: Shared memory programming
+-
+  date: 2020-10-15
+  info: Shared memory programming
+# =================
+# Week 6
+#
+-
+  date: 2020-10-20
+  info: Dense linear algebra
+-
+  date: 2020-10-22
+  info: Dense linear algebra
+# =================
+# Week 7
+#
+-
+  date: 2020-10-27
+  info: Sparse linear algebra
+-
+  date: 2020-10-29
+  info: Sparse linear algebra
+# =================
+# Week 8
+#
+-
+  date: 2020-11-03
+  break: Election day
+-
+  date: 2020-11-05
+  info: Transforms and data sparsity
+# =================
+# Week 9
+#
+-
+  date: 2020-11-10
+  info: Graph partitioning
+-
+  date: 2020-11-12
+  info: Load balancing
+# =================
+# Week 10
+#
+-
+  date: 2020-11-17
+  break: Semi-final exams
+-
+  date: 2020-11-19
+  break: Semi-final exams
+# =================
+# Week 11
+#
+-
+  date: 2020-11-24
+  break: Semi-final exams
+-
+  date: 2020-11-26
+  break: Thanksgiving
+# =================
+# Week 12
+#
+-
+  date: 2020-12-01
+  info: Parallel graph algorithms  
+-
+  date: 2020-12-03
+  info: Mixing languages, libraries, and frameworks
+# =================
+# Week 13
+#
+-
+  date: 2020-12-08
+  info: Heterogeneity and accelerators
+-
+  date: 2020-12-10
+  info: Impact of floating point
+# =================
+# Week 13
+#
+-
+  date: 2020-12-15
+  info: Project poster blitz
