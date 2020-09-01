@@ -11,3 +11,7 @@ fi
 cd /home/bindel/work/class/cs5220-f20/web
 git pull origin
 rake deploy
+
+cd ../web-netid
+git pull origin
+rake deploy
