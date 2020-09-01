@@ -1,0 +1,69 @@
+---
+title: CS 5220
+audio: audio/
+---
+
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>{{ title }}</title>
+
+    <link rel="stylesheet" href="{{ "reveal.js/dist/reset.css" | relative_url }}">
+    <link rel="stylesheet" href="{{ "reveal.js/dist/reveal.css | relative_url}}">
+    <link rel="stylesheet" href="{{ "dist/theme/black.css" | relative_url }}" id="theme">
+
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="{{ "plugin/highlight/monokai.css" | relative_url }}" id="highlight-theme">
+
+  </head>
+  <body>
+
+    <div class="reveal">
+      <div class="slides">
+        {{ content }}
+      </div>
+    </div>
+
+    <script src="{{ "reveal.js/dist/reveal.js" | relative_url }}"></script>
+    <script src="{{ "reveal.js/plugin/notes/notes.js" | relative_url }}"></script>
+    <script src="{{ "reveal.js/plugin/markdown/markdown.js" | relative_url }}"></script>
+    <script src="{{ "reveal.js/plugin/math/math.js" | relative_url }}"></script>
+    <script src="{{ "reveal.js/plugin/highlight/highlight.js | relative_url }}"></script>
+    <script src="{{ "reveal.js-plugins/audio-slideshow/plugin.js" | relative_url }}"></script>
+    <script src="{{ "reveal.js-plugins/audio-slideshow/recorder.js" | relative_url }}"></script>
+    <script src="{{ "reveal.js-plugins/audio-slideshow/RecordRTC.js" | relative_url }}"></script>
+
+    <script>
+      // More info about initialization & config:
+      // - https://revealjs.com/initialization/
+      // - https://revealjs.com/config/
+      Reveal.initialize({
+        hash: true,
+
+        audio: {
+          prefix: '{{ audio }}',
+          suffix: '.ogg',
+          advance: 500,
+          autoplay: true,
+          defaultDuration: 5,
+          defaultAudios: true
+          playerOpacity: 0.05,
+          playerStyle: 'position: fixed; bottom: 4px; left: 25%; width: 50%; height:75px; z-index: 33;',
+          startAtFragment: true
+        },
+
+        math: {
+          mathjax: 'https://cdn.jsdelivr.net/gh/mathjax/mathjax@2.7.8/MathJax.js',
+          config: 'TeX-AMS_HTML-full'
+        },
+
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [ RevealMarkdown, RevealMath, RevealHighlight, RevealNotes, RevealAudioSlideshow, RevealAudioRecorder ],
+
+      });
+    </script>
+  </body>
+</html>
