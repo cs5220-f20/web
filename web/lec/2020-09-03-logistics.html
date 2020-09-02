@@ -1,0 +1,365 @@
+---
+title: Logistics
+layout: slides
+audio: 2020-09-03-logistics
+---
+
+
+<section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a>
+  </p>
+  <p>Please click the play button below.</p>
+  
+  <aside class="notes">
+    Welcome to CS 5220, Applications of Parallel Computers, the Fall
+    2020 deluxe edition.  I am your host, David Bindel.
+
+    This slide deck covers some of the logistical aspects of the
+    course.  It is a strange semester, so the logistics are complex.
+    I have taught at Cornell for the past decade, but I have not had a
+    semester like this before, either.  Also, this is a one-man band;
+    I have no course staff this semester.  So, please: bear with me!
+
+    If you want to start with an overview and introduction to the
+    technical part of the course, feel free to back out and look at
+    that slide deck instead.  It should be hyperlinked from the same
+    course schedule page that brought you here.  But the logistics are
+    important, too, so I urge you to go through this deck carefully
+    and ask questions, either on Piazza or in the course meeting.
+  </aside>
+</section>
+
+
+<section>
+  <h2>Slide logistics</h2>
+  
+  <ul>
+    <li>
+      Slides produced
+      with <a href="https://revealjs.com/">reveal.js</a>
+    </li>
+    <li>
+      Narration via the
+      <a href="https://github.com/rajgoel/reveal.js-plugins/tree/master/audio-slideshow">audio-slideshow</a>
+      plugin
+    </li>
+    <li>
+      Press the S key to open speaker notes for a text version of the
+      narration.
+    </li>
+  </ul>
+  
+  <aside class="notes">
+    These slides are produced with the reveal.js framework, and
+    narrated with the audio slideshow plugin.  If you want to listen
+    to the narration, I recommend doing so at a normal computer rather
+    than a mobile device.  I also recommend Chrome, Firefox, or
+    Microsoft Edge rather than Safari, as I've had trouble with the
+    audio feature on Safari.
+
+    Some of you may have trouble hearing the narration, either because
+    of poor hearing, or because of background noise, or because you
+    are dead-set on using Safari.  Or, perhaps, you
+    read faster than you listen.  In any of these cases, I have added
+    speaker notes to the slides, and I intend to follow them closely
+    in my narration.
+  </aside>
+</section>
+
+
+<section>
+  <h2>Enrollment</h2>
+  
+  <ul>
+    <li>Initial enrollment was restricted to non-CIS majors</li>
+    <li>Plenty of room for non-CIS majors on the initial waitlist</li>
+    <li>I expect plenty of room generally, and open add/drop</li>
+    <li>Please do not register for a formal audit</li>
+  </ul>
+  
+  <aside class="notes">
+    For several years, we have restricted enrollment in upper-division
+    CS classes.  This is to make sure that our students, particularly
+    the MEng students (who register late and who are only hear for one
+    year), can take the classes they need.  But parallel scientific
+    computing is not ML, and we are not in danger of running out of
+    room.  If you were on the waitlist, you should be automatically
+    enrolled in the next couple days.  And if you want to add the
+    class now, the add/drop period is not restricted.  You can enroll
+    through September 16, though sooner is better.
+    
+    In some semesters, I allow students to formally audit 5220.  This
+    semester, if you want to just follow along, I recommend keeping up
+    with the material on the web page.  Otherwise, I expect you to
+    participate in the homework, the group projects, and other course
+    activities.
+  </aside>
+</section>
+
+
+<section>
+  <h2>Course community</h2>
+  
+  <ul>
+    <li>A class is not just the lectures and HW!</li>
+    <li>We want group <b>interaction</b></li>
+    <li>This can be synchronous or asynchronous</li>
+    <li>Several things planned, will adapt as we go</li>
+  </ul>
+
+  <aside class="notes">
+    A class is never just about lectures and homework.  Particularly
+    in a class like 5220, you should learn as much from your peers as
+    you learn from me.  Managing that peer-to-peer learning is going
+    to be a special challenge this semester, but I have some plans for
+    how we can foster it, whether through synchronous meetings or
+    asynchronous online platforms.  I have a lot of ideas about this,
+    and will spend a few moments now telling you about them.  I am as
+    new at this as you are, so I will take any good ideas you might
+    have, and we can also always throw out things that are not
+    working!
+  </aside>
+</section>
+
+
+<section>
+  <h2>Course community</h2>
+
+  <p>
+    The typical mix of 5220 students includes:
+  </p>
+  <ul>
+    <li>CS undergrad and MEng students (and a few PhD)</li>
+    <li>PhD students from other disciplines</li>
+  </ul>
+  <p>
+    This means:
+  </p>
+  <ul>
+    <li>We assume all know how to program in C-family languages.</li>
+    <li>We assume most will be missing some other background.</li>
+    <li>Expect to be a teacher and a learner.</li>
+  </ul>
+
+  <aside class="notes">
+    Let's start with who you are.  Usually, the two main audiences for
+    the class are CS undergraduates and MEng students, and PhD
+    students from other disciplines who need to do parallel computing
+    for their research.  There are also always a few CS PhD students,
+    non-traditional students, or undergraduates from other
+    disciplines.
+
+    I assume you know how to program in some C family language, and I
+    assume you know enough to learn how to navigate in a Unix
+    environment without too much lecturing from me -- though I will
+    provide some references for those of you who haven't done this
+    much.  But otherwise I try not to assume much about what you
+    already know.
+
+    What this means is that I expect some of you to be
+    confused when I talk about computer architecture, and some of you
+    to be confused when I talk about fluid dynamics, and some of you
+    to be confused when I talk about numerical methods.  And I may say
+    some things that confuse everyone!
+
+    Fortunately, you also have a lot of collective knowledge, and
+    students in this class have worked together to do some pretty
+    remarkable things.  There are at least two PhD theses in the past
+    few years that I know arose largely from projects in this class!
+    So plan to learn from each other and teach each other as much as
+    you learn from me (and teach me).  And be prepared to ask lots of
+    questions.
+  </aside>
+</section>
+
+
+<section>
+  <h2>Course meeting</h2>
+
+  <ul>
+    <li>Main meeting: TR 8:00-9:30</li>
+    <li>I will help coordinate alternate meetings, too</li>
+    <li>This is not about lecture (class is <q>flipped</q>)</li>
+    <li>Goal is discussion and small group activities</li>
+    <li>We may also do some programming together!</li>
+    <li>Zoom recordings will be (selectively) posted to Canvas</li>
+  </ul>
+
+  <aside class="notes">
+    The main meeting for the class is Tuesdays and Thursdays at 8:00
+    AM, Eastern.  This is a very awkward time for students who are
+    coming in from California, or even for Ithaca students who happen
+    to be night owls.  So we will coordinate alternate meeting times,
+    too, though these may involve only students and not me.
+
+    I call this a meeting rather than a lecture because I will not be
+    going through the narrated lecture slides with you, for the most
+    part.  Instead, we will use the time for question-and-answer,
+    discussion, and small group activities.  We may also walk through
+    code or tool demos together, partly so that you can ask questions
+    as we go.  The Zoom recordings of these meetings will be posted to
+    Canvas, though any activity that happens in breakout rooms will
+    not be recorded.
+  </aside>
+</section>
+
+
+<section>
+  <h2>Course buddies</h2>
+
+  <ul>
+    <li>Role: Make sure nobody falls through cracks</li>
+    <li>One or two buddies per student</li>
+    <li>You can nominate, if you know people</li>
+    <li>I may also do some buddy assignments</li>
+  </ul>
+
+  <aside class="notes">
+    Once we have a reasonable idea of who is taking the course, I will
+    be making a list of "course buddies."  A buddy is just there to
+    check in and make sure that things are going OK.  There will be
+    reminders to check in with your buddies periodically through the
+    semester.
+
+    If you already know a couple people in the semester who you want
+    to buddy with, I can take that into account.  But it is also fine
+    if you don't know anybody!  I can help with buddy assignments.
+  </aside>
+</section>
+
+
+<section>
+  <h2>Project groups</h2>
+
+  <ul>
+    <li>Most course work is done in small groups</li>
+    <li>We will assign groups for initial projects</li>
+    <li>Final project is at your discretion</li>
+    <li>Active collaboration and <a href="https://en.wikipedia.org/wiki/Pair_programming">pair programming</a> are encouraged!</li>
+  </ul>
+
+  <aside class="notes">
+    Most of the work in this class is done in small groups, usually
+    mixing people from different backgrounds.  These are not the same
+    as your class buddies.  I will assign groups for the projects that
+    are done in common, but you will have some choice about the final
+    project group, just as you have a choice about the final project
+    topic.
+
+    I'd prefer that groups don't try to just split projects into a
+    bunch of small pieces that can be put together at the end.  The
+    goal is to get you to work together.  Online can actually be a
+    good environment to practice collaboration techniques like pair
+    programming, for example.
+  </aside>
+</section>
+
+
+<section>
+  <h2>Collaboration and AI</h2>
+
+  <ul>
+    <li>5220 is <b>supposed</b> to be collaborative!</li>
+    <li>I also want you to learn to use online resources effectively</li>
+    <li>But for academic integrity: <b>cite</b>!</li>
+  </ul>
+
+  <a class="notes">
+    This is supposed to be a collaborative class.  There are no exams,
+    and the only homeworks are there to make sure that you know the
+    basics.  There are also lots of resources online, and I want you
+    to understand how things work well enough to be able to look
+    things up, judge the answers you find online, and incorporate any
+    good ideas into your own work.  There is not a lot of room for
+    cheating in all of this, but you definitely should cite any
+    resources that you use -- whether in the form of help from a
+    friend or from StackOverflow.
+  </a>
+</section>
+
+
+<section>
+  <h2>Information systems</h2>
+
+  <ul>
+    <li><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">Course home page</a></li>
+    <li><a href="https://www.github.com/dbindel/cs5220-f20/">GitHub</a></li>
+    <li><a href="https://canvas.cornell.edu/courses/18630">Canvas</a></li>
+    <li><a href="http://cms.csuglab.cornell.edu/">CMS</a></li>
+    <li><a href="https://piazza.com/">Piazza</a></li>
+    <li>Other
+      (<a href="https://discord.com/">Discord</a>,
+       <a href="https://slack.com/">Slack</a>,
+       <a href="https://gather.town/">Gather</a>, ...)?</li>
+    <li>Computing systems</li>
+  </ul>
+
+  <aside class="notes">
+    Finally, let's talk about the class information systems.  All of
+    the systems we use will be linked from the course home page,
+    though those that are restricted may be listed in the Cornell-only
+    section.  The non-restricted part of the home page is all built
+    from a public Github repository, and you should feel free to file
+    issues or pull requests (or just send email) if I make mistakes!
+
+    There is a Canvas page for the class, but I mostly plan
+    to use it for sharing Zoom recordings -- we have to restrict
+    access to these because of FERPA.  I will use our home-grown
+    course management system (CMS) for homework submission and keeping
+    track of grades.  We will use Piazza for asynchronous course
+    question-and-answer things, but I am also looking at a few options
+    to support ad hoc synchronous interactions, including Discord, Slack, and
+    Gather.town.  I also encourage you to explore for yourself; for
+    example, I know that VisualStudio has support for pair
+    programming, though I haven't tried it out myself.  If you come
+    across tools that you find useful, let us all know!
+
+    Finally, we will be using various external computing resources
+    over the course of the class, and I'll distribute information on
+    those when possible.
+  </aside>
+</section>
+
+
+<section>
+  <h2>Homework Zero</h2>
+
+  <p>You will be asked to submit a text file with</p>
+  <ol>
+    <li>Your netid</li>
+    <li>How you like to be called</li>
+    <li>Your background (degree program, major, etc)</li>
+    <li>Whether you expect to attend the main meeting time</li>
+    <li>What times might work for you for synchronous meetings (with
+      the class or project groups)</li>
+    <li>Fellow students who might be good "course buddies"</li>
+    <li>What you hope to get out of the course</li>
+    <li>Any concerns you have at this point</li>
+  </ol>
+  <p>A slot on CMS will be open for this shortly.</p>
+
+  <aside class="notes">
+    In order to manage group interactions, I need to know who you all
+    are and where you are coming from, both in terms of your
+    background and your time zone.  For this, I will put up a Homework
+    0, which you should try to submit via CMS by next Thursday, September 10.
+    Let me know who you are, where you're coming from, who you might
+    like to buddy with (if you know), and what your hopes and fears
+    for the course are.
+  </aside>
+</section>
+
+
+<section>
+  <h2>Good luck!</h2>
+
+  <aside class="notes">
+    Thanks for making it through this first slide deck!  I know that
+    it's an odd semester, but I hope we can use it to do something
+    interesting.  Get in touch if you have any questions or concerns,
+    and remember to submit homework 0!
+  </aside>
+</section>
