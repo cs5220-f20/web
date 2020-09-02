@@ -4,6 +4,13 @@
 -
   date: 2020-09-03
   info: Introduction
+  files:
+    - info: Logistics
+      file: lec/2020-09-03-logistics.html
+    - info: Overview
+      file: lec/2020-09-03-overview.html
+    - info: HW 0
+      file: hw/hw0.txt
 # =================
 # Week 2
 #
