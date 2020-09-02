@@ -262,14 +262,14 @@ audio: 2020-09-03-overview
 
 <section>
   <h2>Amdahl’s Law</h2>
-  <p>Parallel scaling study where some serial code remains: <span class="math display">\[\begin{aligned}
+  <p><span class="math display">\[\begin{aligned}
       p = &amp; \mbox{ number of processors} \\
       s = &amp; \mbox{ fraction of work that is serial} \\
       t_s = &amp; \mbox{ serial time} \\
       t_p = &amp; \mbox{ parallel time} \geq s t_s + (1-s) t_s / p
       \end{aligned}\]</span></p>
   
-  <p>Amdahl’s law: <span class="math display">\[\mbox{Speedup} = 
+  <p><span class="math display">\[\mbox{Speedup} = 
       \frac{t_s}{t_p} = \frac{1}{s + (1-s) / p} &gt; \frac{1}{s}\]</span></p>
 
   <p>So <span class="math inline">\(1\%\)</span> serial work <span class="math inline">\(\implies\)</span> max speedup &lt; <span class="math inline">\(100 \times\)</span>, regardless of <span class="math inline">\(p\)</span>.</p>
@@ -277,7 +277,7 @@ audio: 2020-09-03-overview
 
 
 <section>
-  <h2>A Little Experiment</h2>
+  <h2>A Thought Experiment</h2>
 
   <p>Let’s try a simple parallel attendance count:</p>
   <ul>
@@ -285,8 +285,6 @@ audio: 2020-09-03-overview
 <li><p><span><strong>Synchronization:</strong></span> Raise your hand when you have a count</p></li>
 <li><p><span><strong>Communication:</strong></span> When all hands are raised, each row representative adds their count to a tally and says the sum (going front to back).</p></li>
 </ul>
-
-  <p>(Somebody please time this.)</p>
 </section>
 
 
@@ -294,10 +292,10 @@ audio: 2020-09-03-overview
   <h2>A Toy Analysis</h2>
   
   <p>Parameters: <span class="math display">\[\begin{aligned}
-    n = &amp; \mbox{ number of students} \\
+    n = &amp; \mbox{ number of students (80)} \\
     r = &amp; \mbox{ number of rows} \\
-    t_c = &amp; \mbox{ time to count one student} \\
-    t_t = &amp; \mbox{ time to say tally} \\
+    t_c = &amp; \mbox{ time to count one student (0.3)} \\
+    t_t = &amp; \mbox{ time to say tally (1)} \\
     t_s \approx &amp; ~n t_c \\
     t_p \approx &amp; ~n t_c / r + r t_t
   \end{aligned}\]</span></p>
@@ -306,9 +304,6 @@ audio: 2020-09-03-overview
 
 <section>
   <h2>Modeling Speedup</h2>
-  <p><br />
-    (Parameters: <span class="math inline">\(n = 80\)</span>, <span class="math inline">\(t_c = 0.3\)</span>, <span class="math inline">\(t_t = 1\)</span>.)</p>
-  <h3 id="modeling-speedup-1">Modeling Speedup</h3>
   <p>The bound <span class="math display">\[\mathrm{speedup} &lt; 
       \frac{1}{2} \sqrt{\frac{n t_c}{t_t}}\]</span> is usually tight.</p>
   <p>Poor speed-up occurs because:</p>
@@ -318,21 +313,16 @@ audio: 2020-09-03-overview
     <li><p>The serial computation cost is relatively large</p></li>
   </ul>
   <p>Some of the usual suspects for parallel performance problems!<br />
-Things would look better if I allowed both <span class="math
-                                                        inline">\(n\)</span>
-    and <span class="math inline">\(r\)</span> to grow — that would be
-    a <span><em>weak</em></span> scaling study.</p>
 </section>
 
 
 <section>
   <h2>Summary: Thinking about Parallel Performance</h2>
-  <p>Today:</p>
   <ul>
-    <li><p>We’re approaching machines with peak <span><em>exaflop</em></span> rates</p></li>
+    <li><p>We have (arguably) <em>exaflop</em> machines</p></li>
     <li><p>But codes rarely get peak performance</p></li>
     <li><p>Better comparison: tuned serial performance</p></li>
-    <li><p>Common measures: <span><em>speedup</em></span> and <span><em>efficiency</em></span></p></li>
+    <li><p>Common measures: <span><em>speedup</em></span> and <em>efficiency</em></p></li>
     <li><p>Strong scaling: study speedup with increasing <span class="math inline">\(p\)</span></p></li>
     <li><p>Weak scaling: increase both <span class="math inline">\(p\)</span> and <span class="math inline">\(n\)</span></p></li>
     <li><p>Serial overheads and communication costs kill speedup</p></li>
