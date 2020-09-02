@@ -1,0 +1,338 @@
+---
+title: Overview
+layout: slides
+audio: 2020-09-03-overview
+---
+
+
+<section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
+  </p>
+  <p>Please click the play button below.</p>
+  
+  <aside class="notes">
+  </aside>
+</section>
+
+
+<section>
+  <h2>The Computational Science &amp; Engineering Picture</h2>
+</section>
+
+
+<section>
+  <h2>Applications Everywhere!</h2>
+  <p>These tools are used in more places than you might think:</p>
+  <ul>
+    <li><p>Climate modeling</p></li>
+    <li><p>CAD tools (computers, buildings, airplanes, ...)</p></li>
+    <li><p>Control systems</p></li>
+    <li><p>Computational biology</p></li>
+    <li><p>Computational finance</p></li>
+    <li><p>Machine learning and statistical models</p></li>
+    <li><p>Game physics and movie special effects</p></li>
+    <li><p>Medical imaging</p></li>
+    <li><p>Information retrieval</p></li>
+    <li><p>...</p></li>
+  </ul>
+  <p>Parallel computing shows up in all of these.</p>
+</section>
+
+
+<section>
+  <h2>Why Parallel Computing?</h2>
+  <ul>
+    <li><p>Scientific computing went parallel long ago</p>
+      <ul>
+        <li><p>Want an answer that is right enough, fast enough</p></li>
+        <li><p>Either of those might imply a lot of work!</p></li>
+        <li><p>... and we like to ask for more as machines get bigger</p></li>
+        <li><p>... and we have a lot of data, too</p></li>
+    </ul></li>
+    <li><p>Today: Hard to get a non-parallel computer!</p>
+      <ul>
+        <li><p>Totient nodes (2015): 12-core compute nodes</p></li>
+        <li><p>Totient accelerators (2015): 60-core Xeon Phi 5110P</p></li>
+        <li><p>My laptop (late 2013): Dual core i5 + built in graphics</p></li>
+    </ul></li>
+    <li><p>Cluster access <span class="math inline">\(\approx\)</span> internet connection + credit card</p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Lecture Plan</h2>
+  <p>Roughly three parts:</p>
+  <ol>
+    <li><p><span><strong>Basics:</strong></span> architecture, parallel concepts, locality and parallelism in scientific codes</p></li>
+    <li><p><span><strong>Technology:</strong></span> OpenMP, MPI, CUDA/OpenCL, cloud systems, compilers and tools</p></li>
+    <li><p><span><strong>Patterns:</strong></span> Monte Carlo, dense and sparse linear algebra and PDEs, graph partitioning and load balancing, fast multipole, fast transforms</p></li>
+  </ol>
+</section>
+
+
+<section>
+  <h2>Objectives</h2>
+  <ul>
+    <li><p>Reason about code performance</p>
+      <ul>
+        <li><p>Many factors: HW, SW, algorithms</p></li>
+        <li><p>Want simple “good enough” models</p></li>
+    </ul></li>
+    <li><p>Learn about high-performance computing (HPC)</p>
+      <ul>
+        <li><p>Learn parallel concepts and vocabulary</p></li>
+        <li><p>Experience parallel platforms (HW and SW)</p></li>
+        <li><p>Read/judge HPC literature</p></li>
+        <li><p>Apply model numerical HPC patterns</p></li>
+        <li><p>Tune existing codes for modern HW</p></li>
+    </ul></li>
+    <li><p>Apply good software practices</p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Prerequisites</h2>
+  <p>Basic logistical constraints:</p>
+  <ul>
+    <li><p>Default class codes will be in C</p></li>
+    <li><p>Our focus is numerical codes</p></li>
+  </ul>
+  <p>Fine if you’re not a numerical C hacker!</p>
+  <ul>
+    <li><p>I want a diverse class</p></li>
+    <li><p>Most students have <span><em>some</em></span> holes</p></li>
+    <li><p>Come see us if you have concerns</p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Coursework</h2>
+
+  <ul>
+    <li><p>Participation (broadly construed): 10%</p></li>
+    <li><p>Individual homework: 15%</p></li>
+    <li><p>Small group projects: 45%</p></li>
+    <li><p>Final project: 30%</p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>How Fast Can We Go?</h2>
+  <p>Speed records for the Linpack benchmark:</p>
+  <p><span><a href="http://www.top500.org" class="uri">http://www.top500.org</a></span></p>
+
+  <p>Speed measured in flop/s (floating point ops / second):</p>
+  <ul>
+    <li><p>Giga (<span class="math inline">\(10^9\)</span>) – a single core</p></li>
+    <li><p>Tera (<span class="math inline">\(10^{12}\)</span>) – a big machine</p></li>
+    <li><p>Peta (<span class="math inline">\(10^{15}\)</span>) – current top 10 machines (5 in US)</p></li>
+    <li><p>Exa (<span class="math inline">\(10^{18}\)</span>) – favorite of funding agencies</p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Current Record: China’s Sunway TaihuLight</h2>
+  <ul>
+    <li><p>93 petaflop/s (125 petaflop/s peak)</p></li>
+    <li><p>15 MW (LAPACK) – relatively energy efficient</p>
+      <ul>
+        <li><p>Does not include custom chilled-water cooling unit</p></li>
+    </ul></li>
+    <li><p>Based on SW26010 manycore RISC processors</p>
+      <ul>
+        <li><p>Management processing element (CPE) = 64-bit RISC core</p></li>
+        <li><p>Computer processing element (CPE) = <span class="math inline">\(8 \times 8\)</span> core mesh</p></li>
+        <li><p>Custom interconnect</p></li>
+        <li><p>Sunway Raise OS (Linux)</p></li>
+        <li><p>Custom compilers (Sunway OpenACC)</p></li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Performance on TaihuLight (Dongarra, June 2016)</h2>
+  <ul>
+    <li><p>Theoretical peak: 125.4 petaflop/s</p></li>
+    <li><p>Linpack: 93 petaflop/s (74% peak)</p></li>
+    <li><p>Three SC16 Gordon Bell finalists</p>
+      <ul>
+        <li><p>Explicit PDE solves: 30–40 petaflop/s (25–30%)</p></li>
+        <li><p>Implicit solver: 1.5 petaflop/s (1%)</p></li>
+        <li><p>Numbers taken from June 2016, may have improved</p></li>
+        <li><p>Even with improvements: peak is not indicative!</p></li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Second: Tianhe-2 (33.9 pflop/s Linpack)</h2>
+  <p>Commodity nodes, custom interconnect:</p>
+  <ul>
+    <li><p>Nodes consist of Xeon E5-2692 + Xeon Phi accelerators</p></li>
+    <li><p>Intel compilers + Intel math kernel libraries</p></li>
+    <li><p>MPICH2 MPI with customized channel</p></li>
+    <li><p>Kylin Linux</p></li>
+    <li><p><span style="color: red"><strong>TH Express-2</strong></span></p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Alternate Benchmark: Graph 500</h2>
+  
+  <p>Graph processing benchmark (data-intensive)</p>
+  <ul>
+    <li><p>Metric: traversed edges per second (TEPS)</p></li>
+    <li><p>K computer (Japan) tops the list (38.6 teraTEPS)</p></li>
+    <li><p>Sunway TaihuLight is second (23.8 teraTEPS)</p></li>
+    <li><p>Tianhe-2 is at 8 (2.1 teraTEPS)</p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Punchline</h2>
+  <ul>
+    <li><p>Some high-end machines look like high-end clusters</p>
+      <ul>
+        <li><p>Except custom networks.</p></li>
+    </ul></li>
+    <li><p>Achievable performance is</p>
+      <ul>
+        <li><p><span class="math inline">\(\ll\)</span> peak performance</p></li>
+        <li><p>Application-dependent</p></li>
+    </ul></li>
+    <li><p>Hard to achieve peak on more modest platforms, too!</p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Parallel Performance in Practice</h2>
+  <p>So how fast can I make my computation?</p>
+  <ul>
+    <li><p>Peak <span class="math inline">\(&gt;\)</span> Linpack <span class="math inline">\(&gt;\)</span> Gordon Bell <span class="math inline">\(&gt;\)</span> Typical</p></li>
+    <li><p>Measuring performance of real applications is hard</p>
+      <ul>
+        <li><p>Even figure of merit may be unclear (flops, TEPS, ...?)</p></li>
+        <li><p>Typically a few bottlenecks slow things down</p></li>
+        <li><p>And figuring out why they slow down can be tricky!</p></li>
+    </ul></li>
+    <li><p>And we <span><em>really</em></span> care about time-to-solution</p>
+      <ul>
+        <li><p>Sophisticated methods get answer in fewer flops</p></li>
+        <li><p>... but may look bad in benchmarks (lower flop rates!)</p></li>
+    </ul></li>
+  </ul>
+
+  <p>See also David Bailey’s comments:</p>
+  <ul>
+    <li><p><a href="http://crd.lbl.gov/~dhbailey/dhbpapers/twelve-ways.pdf">Twelve Ways to Fool the Masses When Giving Performance Results on Parallel Computers</a> (1991)</p></li>
+    <li><p><a href="http://crd.lbl.gov/~dhbailey/dhbtalks/dhb-12ways.pdf">Twelve Ways to Fool the Masses: Fast Forward to 2011</a> (2011)</p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Quantifying Parallel Performance</h2>
+  <ul>
+    <li><p>Starting point: good <span><em>serial</em></span> performance</p></li>
+    <li><p>Strong scaling: compare parallel to serial time on the same problem instance as a function of number of processors (<span class="math inline">\(p\)</span>) <span class="math display">\[\begin{aligned}
+          \mbox{Speedup} &amp;= \frac{\mbox{Serial time}}{\mbox{Parallel time}} \\[2mm]
+          \mbox{Efficiency} &amp;= \frac{\mbox{Speedup}}{p}
+          \end{aligned}\]</span></p></li>
+    <li><p>Ideally, speedup = <span class="math inline">\(p\)</span>. Usually, speedup <span class="math inline">\(&lt; p\)</span>.</p></li>
+    <li><p>Barriers to perfect speedup</p>
+      <ul>
+        <li><p>Serial work (Amdahl’s law)</p></li>
+        <li><p>Parallel overheads (communication, synchronization)</p></li>
+    </ul></li>
+  </ul>
+  <h3 id="amdahls-law">Amdahl’s Law</h3>
+  <p>Parallel scaling study where some serial code remains: <span class="math display">\[\begin{aligned}
+      p = &amp; \mbox{ number of processors} \\
+      s = &amp; \mbox{ fraction of work that is serial} \\
+      t_s = &amp; \mbox{ serial time} \\
+      t_p = &amp; \mbox{ parallel time} \geq s t_s + (1-s) t_s / p
+      \end{aligned}\]</span></p>
+  
+  <p>Amdahl’s law: <span class="math display">\[\mbox{Speedup} = 
+      \frac{t_s}{t_p} = \frac{1}{s + (1-s) / p} &gt; \frac{1}{s}\]</span></p>
+
+  <p>So <span class="math inline">\(1\%\)</span> serial work <span class="math inline">\(\implies\)</span> max speedup &lt; <span class="math inline">\(100 \times\)</span>, regardless of <span class="math inline">\(p\)</span>.</p>
+</section>
+
+
+<section>
+  <h2>A Little Experiment</h2>
+
+  <p>Let’s try a simple parallel attendance count:</p>
+  <ul>
+    <li><p><span><strong>Parallel computation:</strong></span> Rightmost person in each row counts number in row.</p></li>
+<li><p><span><strong>Synchronization:</strong></span> Raise your hand when you have a count</p></li>
+<li><p><span><strong>Communication:</strong></span> When all hands are raised, each row representative adds their count to a tally and says the sum (going front to back).</p></li>
+</ul>
+
+  <p>(Somebody please time this.)</p>
+</section>
+
+
+<section>
+  <h2>A Toy Analysis</h2>
+  
+  <p>Parameters: <span class="math display">\[\begin{aligned}
+    n = &amp; \mbox{ number of students} \\
+    r = &amp; \mbox{ number of rows} \\
+    t_c = &amp; \mbox{ time to count one student} \\
+    t_t = &amp; \mbox{ time to say tally} \\
+    t_s \approx &amp; ~n t_c \\
+    t_p \approx &amp; ~n t_c / r + r t_t
+  \end{aligned}\]</span></p>
+  <p>How much could I possibly speed up?</p>
+</section>
+
+<section>
+  <h2>Modeling Speedup</h2>
+  <p><br />
+    (Parameters: <span class="math inline">\(n = 80\)</span>, <span class="math inline">\(t_c = 0.3\)</span>, <span class="math inline">\(t_t = 1\)</span>.)</p>
+  <h3 id="modeling-speedup-1">Modeling Speedup</h3>
+  <p>The bound <span class="math display">\[\mathrm{speedup} &lt; 
+      \frac{1}{2} \sqrt{\frac{n t_c}{t_t}}\]</span> is usually tight.</p>
+  <p>Poor speed-up occurs because:</p>
+  <ul>
+    <li><p>The problem size <span class="math inline">\(n\)</span> is small</p></li>
+    <li><p>The communication cost is relatively large</p></li>
+    <li><p>The serial computation cost is relatively large</p></li>
+  </ul>
+  <p>Some of the usual suspects for parallel performance problems!<br />
+Things would look better if I allowed both <span class="math
+                                                        inline">\(n\)</span>
+    and <span class="math inline">\(r\)</span> to grow — that would be
+    a <span><em>weak</em></span> scaling study.</p>
+</section>
+
+
+<section>
+  <h2>Summary: Thinking about Parallel Performance</h2>
+  <p>Today:</p>
+  <ul>
+    <li><p>We’re approaching machines with peak <span><em>exaflop</em></span> rates</p></li>
+    <li><p>But codes rarely get peak performance</p></li>
+    <li><p>Better comparison: tuned serial performance</p></li>
+    <li><p>Common measures: <span><em>speedup</em></span> and <span><em>efficiency</em></span></p></li>
+    <li><p>Strong scaling: study speedup with increasing <span class="math inline">\(p\)</span></p></li>
+    <li><p>Weak scaling: increase both <span class="math inline">\(p\)</span> and <span class="math inline">\(n\)</span></p></li>
+    <li><p>Serial overheads and communication costs kill speedup</p></li>
+    <li><p>Simple analytical models help us understand scaling</p></li>
+  </ul>
+</section>
