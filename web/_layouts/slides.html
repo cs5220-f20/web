@@ -62,6 +62,30 @@ audio: audio
           config: 'TeX-AMS_HTML-full'
         },
 
+        chart: {
+          defaults: {
+            global: {
+              title: { fontColor: "#FFF" },
+              legend: {
+                position: "bottom",
+                labels: { fontColor: "#FFF" },
+              },
+              tooltips: {
+                labels: { fontColor: "#FFF" },
+              },
+            },
+            scale: {
+              scaleLabel: { fontColor: "#FFF" },
+              gridLines: { color: "#FFF", zeroLineColor: "#FFF" },
+            ticks: { fontColor: "#FFF" },
+            }
+          },
+          line: { borderColor: [ "rgba(20,220,220,.8)" , "rgba(220,120,120,.8)", "rgba(20,120,220,.8)" ], "borderDash": [ [5,10], [0,0] ] },
+          bar: { backgroundColor: [ "rgba(20,220,220,.8)" , "rgba(220,120,120,.8)", "rgba(20,120,220,.8)" ]},
+          pie: { backgroundColor: [ ["rgba(0,0,0,.8)" , "rgba(220,20,20,.8)", "rgba(20,220,20,.8)", "rgba(220,220,20,.8)", "rgba(20,20,220,.8)"] ]},
+          radar: { borderColor: [ "rgba(20,220,220,.8)" , "rgba(220,120,120,.8)", "rgba(20,120,220,.8)" ]},
+        },
+
         // Learn about plugins: https://revealjs.com/plugins/
         plugins: [ RevealMarkdown, RevealMath, RevealHighlight, RevealNotes, RevealAudioSlideshow, RevealAudioRecorder, RevealChart ],
 
