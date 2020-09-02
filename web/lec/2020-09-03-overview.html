@@ -346,7 +346,15 @@ audio: 2020-09-03-overview
        "label": "Model speedup"}
     ]
   },
-  "options": { "responsive": "true" }
+  "options": { 
+    "responsive": "true",
+    "scales" : {
+      "xAxes": [{ "display": true, 
+                  "scaleLabel": {"display" : true, "labelString": "Rows"} }],
+      "yAxes": [{ "display": true, 
+                  "scaleLabel": {"display" : true, "labelString": "Speedup"} }],
+    }
+  }
 }
 -->
   </canvas>
