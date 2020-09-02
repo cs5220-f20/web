@@ -14,6 +14,13 @@ audio: 2020-09-03-overview
   <p>Please click the play button below.</p>
   
   <aside class="notes">
+    Welcome to CS 5220, Applications of Parallel Computers, the Fall
+    2020 edition.  I am your host, David Bindel.
+
+    This is the first technical slide deck of the semester.  There is
+    a previous slide deck on logistics, and I recommend it to you if
+    you have not yet watched it.  The logistics deck, like this deck,
+    is linked from the schedule on the course home page.
   </aside>
 </section>
 
@@ -40,13 +47,26 @@ audio: 2020-09-03-overview
   <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="24" id="svg_6" y="199" x="138" stroke-opacity="null" stroke-width="0" stroke="#000" fill="#000000">Computation</text>
  </g>
 </svg>
+
+  <aside class="notes">
+    The computer science department assigns the first two digits of
+    course numbers based on the level and the area.  So 5220 is a
+    masters-level scientific computing course.  Unlike the other
+    scientific computing courses that we offer, though, 5220 is not
+    focused on numerical methods or analysis, but on high-performance
+    implementation.  This course also differs from some of our other
+    courses in the way in which we interact with applications.  But I
+    always figured that it is the combination of computation and
+    applications with analysis that makes for really interesting
+    computational science work.
+  </aside>
 </section>
 
 
 <section>
   <h2>Applications Everywhere!</h2>
   <ul>
-    <li><p>Climate modeling</a></p></li>
+    <li><p>Climate modeling</p></li>
     <li><p>CAD tools (computers, buildings, airplanes, ...)</p></li>
     <li><p>Computational biology</p></li>
     <li><p>Computational finance</p></li>
@@ -54,6 +74,14 @@ audio: 2020-09-03-overview
     <li><p>Game physics and movie special effects</p></li>
     <li><p>Medical imaging</p></li>
   </ul>
+
+  <aside class="notes">
+    Indeed, there are applications of high-performance scientific
+    computing ideas everywhere across sciences, engineering, medicine,
+    finance, and many other areas. When I say we are interested in
+    scientific computing applications in this class, I mean "science"
+    in a very big sense.
+  </aside>
 </section>
 
 
@@ -70,6 +98,17 @@ audio: 2020-09-03-overview
     <a href="https://www.hpcwire.com/">the front page of HPCWire</a>
     to see some things that others care about!
   </p>
+
+  <aside class="notes">
+    Many of you came to this class because you were interested in
+    applying high-performance computing to some other area of
+    interest.  Others of you came because the title sounded
+    interesting.  Whatever the case, I suggest pausing in the slides
+    here and looking around for some articles or web pages that talk
+    about applications of HPC to something you might find interesting.
+    Don't worry, I'll wait for you to come back!  I suggest making
+    some notes and sharing them with your group when we next meet.
+  </aside>
 </section>
 
 
@@ -83,6 +122,24 @@ audio: 2020-09-03-overview
     <li><p>We like to ask for more as machines get bigger</p></li>
     <li><p>We have a lot of data, too</p></li>
   </ul>
+
+  <aside class="notes">
+    All right, you're back.  I hope you found an application that
+    tickled your interest.
+
+    When we talk about high-performance computing, we often (though
+    not always!) mean trying to scale computations up to big parallel
+    computers with lots of processors.  This has been a revered path
+    forward in scientific computing for a long time.  When we simulate
+    physical systems, we often need a lot of resolution, and that's
+    expensive.  For 3D time-stepping problems, we often have to scale
+    the work with every dimension, so simulating on a 1-meter grid
+    might be ten thousand times more expensive than simulating on a
+    10-meter grid.  Those expensive simulations also generate a lot of
+    data, and parallelism may be necessary both for the computation
+    and for storing that data and
+    crunching it down to a reasonable size.
+  </aside>
 </section>
 
 
@@ -95,16 +152,56 @@ audio: 2020-09-03-overview
     <li><p>How many in NVidia's latest accelerator?</p></li>
     <li><p>What's the biggest single node EC2 instance?</p></li>
   </ul>
+
+  <aside class="notes">
+    Even if you think you aren't interested in big physics
+    simulations, though, it isn't like you can get away from parallel
+    computing.  The speed of individual processors stalled many years
+    ago now; we only get faster because of parallelism.  I'm going to
+    encourage you to pause here again to get a sense for how parallel
+    the modern world is.  Do some Googling.  How many cores are in
+    your laptop?  What about NVidia's latest GPU?  Or what about the
+    biggest single node you can rent on Amazon's EC2?  Not even your
+    phone is serial these days!
+
+    I'm serious, go Google!  I will wait.
+  </aside>
 </section>
 
 
 <section>
   <h2>Lecture Plan</h2>
+
   <ol>
     <li><p><span><strong>Basics:</strong></span> architecture, parallel concepts, locality and parallelism in scientific codes</p></li>
     <li><p><span><strong>Technology:</strong></span> OpenMP, MPI, CUDA/OpenCL, cloud systems, compilers and tools</p></li>
     <li><p><span><strong>Patterns:</strong></span> Monte Carlo, dense and sparse linear algebra and PDEs, graph partitioning and load balancing, fast multipole, fast transforms</p></li>
   </ol>
+
+  <aside class="notes">
+    All right, welcome back from your Googling.
+
+    We've talked a bit about the why of the class.  Now, let's talk
+    about the topics that we will cover and the overarching themes
+    that I hope will come across.
+
+    The semester involves three parts, though they interlace with each
+    other.  In the first part of the semester, we will cover basic
+    ideas of high-performance computing, including some elements of
+    computer architecture, basic parallel concepts, and ideas of how
+    to think about parallelism and locality in scientific codes.
+
+    In the second part of the semester, we will talk about programming
+    technologies for high-performance computing.  That means MPI and
+    OpenMP, but also how to effectively use tools like compilers and
+    profilers.
+
+    Finally, we will talk about common algorithmic pattern in
+    high-performance scientific computing, including pleasingly
+    parallel workloads, dense and sparse linear algebra, numerical
+    PDE methods, graph partitioning and load balancing, fast multipole
+    methods, and fast transforms.
+  </aside>
 </section>
 
 
@@ -115,6 +212,17 @@ audio: 2020-09-03-overview
     <li><p>Many factors: HW, SW, algorithms</p></li>
     <li><p>Want simple “good enough” models</p></li>
   </ul>
+
+  <aside class="notes">
+    So that's the plan in terms of topics.  What do I hope you really
+    understand at the end of the semester?  One thing is how to reason
+    about the performance of codes.  It is much more complicated than
+    just making things faster by adding more processors; indeed,
+    sometimes more processors cause our codes to slow down!  But
+    fairly simple models can often give us an idea how fast we should
+    expect our codes to be on different machines, and they can help
+    guide our algorithmic choices and implementation decisions.
+  </aside>
 </section>
 
 
@@ -128,17 +236,33 @@ audio: 2020-09-03-overview
     <li><p>Apply model numerical HPC patterns</p></li>
     <li><p>Tune existing codes for modern HW</p></li>
   </ul>
+
+  <aside class="notes">
+    Beyond learning how to think about performance, I want you to
+    learn how to really do HPC.  That means learning the language and
+    reading the literature, but it also means getting your hands dirty
+    and tuning real codes.
+  </aside>
 </section>
 
 
 <section>
   <h2>Objectives</h2>
   <p>Apply good software practices</p>
+
+  <aside class="notes">
+    Finally, I want you to learn some good modern practices for working with
+    scientific software.  Knowing what actually causes code to go fast
+    or slow will help you avoid the trap of flailing around at a code
+    in an attempt to accelerate it and only making it harder to debug
+    and maintain.
+  </aside>
 </section>
 
 
 <section>
   <h2>How Fast Can We Go?</h2>
+
   <p>Speed records for the Linpack benchmark:</p>
   <p><span><a href="http://www.top500.org" class="uri">http://www.top500.org</a></span></p>
 
@@ -149,6 +273,25 @@ audio: 2020-09-03-overview
     <li><p>Peta (<span class="math inline">\(10^{15}\)</span>) – current top 10 machines</p></li>
     <li><p>Exa (<span class="math inline">\(10^{18}\)</span>) – favorite of funding agencies</p></li>
   </ul>
+
+  <aside class="notes">
+    All right.  Before we start trying to make things go fast, it's
+    always worth understanding the fundamental limits we might run
+    into.  A good way to learn about the speed of light for different
+    classes of machines is to look at the top 500 machines according
+    to the Linpack benchmark, which tests how fast different machines
+    can solve giant linear systems of equations.  To solve a system of
+    n equations in n unknowns takes us about n^3 / 3 floating point adds and a
+    similar number of multiplies.  We call these operations flops,
+    short for "floating point operations."  Your laptop is a gigaflop
+    machine, and you can easily get access to teraflop machines.
+    Petaflop machines still count as pretty big, and the funding
+    agencies are all spending time these days talking about how we
+    should get to exaflops.  There are some people who think that we
+    are at exaflops already, but they usually use a definition that
+    some of us consider cheating -- this is only with lower-precision
+    arithmetic than standard IEEE single or double precision.
+  </aside>
 </section>
 
 
@@ -167,6 +310,23 @@ audio: 2020-09-03-overview
     <li><p>Network organization?</p></li>
     <li><p>Software stack?</p></li>
   </ul>
+
+  <aside class="notes">
+    According to the Linpack benchmark, the fastest computer these
+    days is the Fujitsu Fugaku machine in Japan.  It seems like
+    Jack Dongarra writes a report every time there is a new top
+    machine, and this machine is no exception.  I've hyperlinked the
+    report from this slide.  I suggest going to look through it to see
+    what it says about the hardware and software stack.  Look not only
+    at the Linpack performance; what does the report say about the
+    high-performance conjugate gradient (aka HPCG) benchmark?  Also,
+    how much energy does the machine use?
+
+    If you have some time left over after looking at the Fujitsu
+    Fugaku, I recommend looking at this information for a couple of
+    the other top machines.  We can talk about it the next time we
+    meet.
+  </aside>
 </section>
 
 
@@ -176,11 +336,25 @@ audio: 2020-09-03-overview
   <p>Graph processing benchmark (data-intensive)</p>
   <ul>
     <li><p>Metric: traversed edges per second (TEPS)</p></li>
-    <li><p>What is Fujutsu Fugaku in GTEPS?</p></li>
+    <li><p>What is Fujitsu Fugaku in GTEPS?</p></li>
     <li><p>How do the top machines compare between
         <a href="https://top500.org/">Top 500</a> and
         <a href="https://graph500.org/">Graph 500?</a></p></li>
   </ul>
+
+  <aside class="notes">
+    Some types of algorithms are much more challenging than others
+    when it comes to raw performance.  The Graph 500 benchmark was
+    designed as a more realistically challenging alternative to the
+    Linpack benchmark, as very few things run as fast as dense linear
+    algebra on modern machines.  This is a benchmark consisting of
+    various common graph operations, and the measure of performance is
+    the number of edges traversed per second, or TEPS.  It turns out
+    that the Fujitsu Fugaku is at the top of the Graph 500 list, too.
+    Poke around a bit in the links above.  Are the other machines at
+    the top of the Graph 500 list the same as those at the top of the
+    Linpack Top 500 list?
+  </aside>
 </section>
 
 
@@ -199,6 +373,25 @@ audio: 2020-09-03-overview
     </ul></li>
     <li><p>Peak is hard on more modest platforms, too!</p></li>
   </ul>
+
+  <aside class="notes">
+    If you poke through the descriptions of the Top 500 machines, you
+    will see that many of them look similar to clusters that you might
+    have encountered, with commodity processors and memory at each
+    node.  The thing that makes them really different is the custom
+    networks.  At least, that was the case for a long time.  We seem
+    to be entering another period where people are trying out
+    different creative hardware solutions, and Intel does not dominate
+    the entire world quite as much as it once did.
+
+    The other thing that you will see as you look through this data is
+    that it is not so easy to get anywhere close to the theoretical
+    peak performance of a modern supercomputer.  For that matter, it
+    is not so easy to get close to the peak performance of much more
+    modest machines, either!  The best we can do depends a lot on the
+    application, and dense linear algebra -- as in Linpack -- is
+    easier to make fast than many other computational patterns are.
+  </aside>
 </section>
 
 
@@ -208,6 +401,17 @@ audio: 2020-09-03-overview
   <p>Peak <span class="math inline">\(&gt;\)</span>
     Linpack <span class="math inline">\(&gt;\)</span> Gordon
     Bell <span class="math inline">\(&gt;\)</span> Typical</p>
+
+  <aside class="notes">
+    All right.  So we probably are not going to be able to reach
+    Linpack levels of performance when we tune our own codes.  We
+    might make heroic efforts and get up to ten percent of the
+    capacity of a big modern machine, but even that is hard, and might
+    get us something like the Gordon Bell prize -- a prize given at
+    Supercomputing to the most impressively fast science codes.  More
+    likely is that we will get to a few percent of the theoretical
+    peak performance.
+  </aside>
 </section>
 
 
@@ -219,6 +423,19 @@ audio: 2020-09-03-overview
     <li><p>Typically a few bottlenecks slow things down</p></li>
     <li><p>Why they slow down can be tricky!</p></li>
   </ul>
+
+  <aside class="notes">
+    Of course, figuring out how close we are to the theoretical peak
+    performance is itself hard.  We have to figure out the right
+    measure for speed, for one thing.  Also, our intuitive understanding
+    of performance is pretty bad.  We might think we know what is
+    keeping us from going fast, but often we only really understand
+    the problem after we do some careful measurement and modeling.
+    Often there are bottlenecks in the code that slow things down, and
+    it is hard to get around those bottlenecks without fundamentally
+    changing the way the code works.  It isn't just a matter of
+    fiddling with low-level instructions, as we will see in the coming weeks.
+  </aside>
 </section>
 
 
@@ -230,6 +447,17 @@ audio: 2020-09-03-overview
     <li><p>Sophisticated methods get answer in fewer flops</p></li>
     <li><p>... but may look bad in benchmarks (lower flop rates!)</p></li>
   </ul>
+
+  <aside class="notes">
+    Moreover, measures like flops and TEPS are only proxies for what
+    we really want.  Unfortunately, I don't know how to measure
+    scientific insight per unit time.  But it is worth watching out
+    for people who talk about how fast they can run simple
+    algorithms.  Often, more complex and sophisticated algorithms get
+    the same answer in fewer flops or TEPS or whatever -- but they
+    may be harder to parallelize, and so look worse in benchmarks that
+    concentrate on those numbers.
+  </aside>
 </section>
 
 
@@ -241,6 +469,12 @@ audio: 2020-09-03-overview
     <li><p><a href="http://crd.lbl.gov/~dhbailey/dhbpapers/twelve-ways.pdf">Twelve Ways to Fool the Masses When Giving Performance Results on Parallel Computers</a> (1991)</p></li>
     <li><p><a href="http://crd.lbl.gov/~dhbailey/dhbtalks/dhb-12ways.pdf">Twelve Ways to Fool the Masses: Fast Forward to 2011</a> (2011)</p></li>
   </ul>
+
+  <aside class="notes">
+    A great read on this front is David Bailey's papers on ways to
+    fool the masses in reporting performance.  I've linked them from
+    the slide.  Go read -- I won't spoil it for you.
+  </aside>
 </section>
 
 
@@ -250,6 +484,15 @@ audio: 2020-09-03-overview
   <p>
     Starting point: good <em>serial</em> performance.
   </p>
+
+  <aside class="notes">
+    OK, so if the right measure of performance is application
+    dependent, how can we systematically understand the benefits of
+    parallelism?  The answer is that we start with the best serial
+    code we can find, and use that as a reference.  Using a well-tuned
+    serial code is key; speeding up good serial code is a bigger challenge
+    than speeding up bad serial code!
+  </aside>
 </section>
 
 
@@ -264,6 +507,17 @@ audio: 2020-09-03-overview
       \mbox{Efficiency} &amp;= \frac{\mbox{Speedup}}{p}
       \end{aligned}\]</span>
   </p>
+
+  <aside class="notes">
+    Once we have a serial code that we like, we look at the benefits
+    of parallelism -- or other changes to the code -- in terms of how
+    much it speeds the code up.  The speedup in a parallel code is the ratio of
+    the serial reference time to the parallel code time.  In an ideal
+    setting, we would get speedup equal to the number of processors we
+    used.  But life is rarely ideal.  We measure how close to ideal we
+    are in terms of parallel efficiency, which is the ratio of the
+    speedup to the ideal number p.
+  </aside>
 </section>
 
 
@@ -277,7 +531,19 @@ audio: 2020-09-03-overview
     <li><p>Serial work (Amdahl’s law)</p></li>
     <li><p>Parallel overheads (communication, synchronization)</p></li>
   </ul>
+
+  <aside class="notes">
+    Why don't we get perfect efficiency in most parallel codes?  There
+    are two big pieces to the puzzle.  First, some code is hard to
+    parallelize, and any serial work that we do limits how fast the
+    code can go overall.  That's Amdahl's law.  Second, parallel code
+    comes with its own overheads.  We spend time communicating and
+    synchronizing, and sometimes we need extra data structures to keep
+    track of who is doing what.  That extra work can also hurt our
+    efficiency.
+  </aside>
 </section>
+
 
 <section>
   <h2>Amdahl’s Law</h2>
@@ -292,6 +558,14 @@ audio: 2020-09-03-overview
       \frac{t_s}{t_p} = \frac{1}{s + (1-s) / p} &gt; \frac{1}{s}\]</span></p>
 
   <p>So <span class="math inline">\(1\%\)</span> serial work <span class="math inline">\(\implies\)</span> max speedup &lt; <span class="math inline">\(100 \times\)</span>, regardless of <span class="math inline">\(p\)</span>.</p>
+
+  <aside class="notes">
+    Amdahl's law is a simple observation about the effect of serial
+    work on performance.  Suppose some fraction s of the work in a
+    given computation is intrinsically serial.  Then no matter how
+    many processors we use, a little algebra shows us that we cannot
+    get a speedup greater than 1/s.
+  </aside>
 </section>
 
 
@@ -301,9 +575,20 @@ audio: 2020-09-03-overview
   <p>Let’s try a simple parallel attendance count:</p>
   <ul>
     <li><p><span><strong>Parallel computation:</strong></span> Rightmost person in each row counts number in row.</p></li>
-<li><p><span><strong>Synchronization:</strong></span> Raise your hand when you have a count</p></li>
-<li><p><span><strong>Communication:</strong></span> When all hands are raised, each row representative adds their count to a tally and says the sum (going front to back).</p></li>
-</ul>
+    <li><p><span><strong>Synchronization:</strong></span> Raise your hand when you have a count</p></li>
+    <li><p><span><strong>Communication:</strong></span> When all hands are raised, each row representative adds their count to a tally and says the sum (going front to back).</p></li>
+  </ul>
+
+  <aside class="notes">
+    To see the effect of parallel overheads on speedup, let's play
+    with a little toy algorithm.  Suppose we were all sitting in a
+    classroom together -- wouldn't that be something! -- and I decided
+    to count the number of students in the room.  I could do this by
+    counting for myself, or I could ask the students at the end of
+    each row to give me a count, and then add those counts together.
+    The latter algorithm is parallel, and sounds like it ought to be
+    faster.  But is it?
+  </aside>
 </section>
 
 
@@ -319,6 +604,18 @@ audio: 2020-09-03-overview
     t_p \approx &amp; ~n t_c / r + r t_t
   \end{aligned}\]</span></p>
   <p>How much could I possibly speed up?</p>
+
+  <aside class="notes">
+    To answer this question, we'll build a simple performance model.
+    It takes me a fixed amount of time to count each student, and I
+    assume that time is about the same for any of you.  Let's say it's
+    about a third of a second.  If a representative from each row does
+    the count, then I can divide the total work by the number of rows
+    (assuming that there are about the same number of students in each
+    row -- a load balancing problem).  But then it takes some time for
+    each of the row representatives to report their count and for me
+    to add it up.  That's communication overhead.
+  </aside>
 </section>
 
 
@@ -360,6 +657,20 @@ audio: 2020-09-03-overview
 }
 -->
   </canvas>
+
+  <aside class="notes">
+    Based on this model, we can do a plot of the speedup as a function
+    of the number of rows.  I did this for a class of 80; as you can
+    see, we only ever manage about a two-fold speedup, and at some
+    point adding more rows only hurts the performance of our parallel
+    counting algorithm.  I suppose one could try to show off the benefits
+    of our method by scaling up the number of students at the same
+    time we scaled up the number of rows; that would be a so-called
+    weak-scaling study, unlike the strong-scaling case where we keep
+    the problem size fixed.  Of course, I'm not going to get an
+    arbitrary number of students to sign up for this class.  Sometimes
+    strong scaling is really the right measure.
+  </aside>
 </section>
 
 
@@ -372,7 +683,16 @@ audio: 2020-09-03-overview
     <li><p>The communication cost is relatively large</p></li>
     <li><p>The serial computation cost is relatively large</p></li>
   </ul>
-  <p>Common suspects for parallel performance problems!<br />
+  <p>Common suspects for parallel performance problems!</p>
+
+  <aside class="notes">
+    We can actually do a little algebra and find a simple bound on the
+    maximum speedup possible in this problem.  The bound increases as
+    we increase the number of students and the counting time per
+    student relative to the time to report a count.  That is, we can
+    only get good speedup if the computation is expensive relative to
+    the communication.  This is pretty typical in a lot of parallel methods.
+  </aside>
 </section>
 
 
@@ -385,6 +705,16 @@ audio: 2020-09-03-overview
     <li><p>Common measures: <span><em>speedup</em></span>
         and <em>efficiency</em></p></li>
   </ul>
+
+  <aside class="notes">
+    OK, let's wrap up our discussion.  We are getting close to having
+    exaflop machines in the world, but the speed of our codes doesn't
+    keep up with the peak performance of these machines.  In fact,
+    peak performance may be the wrong measure; the best we can do is
+    often to improve the performance relative to a fast
+    single-processor code.  We use measures like speedup and parallel
+    efficiency to describe this type of relative performance.
+  </aside>
 </section>
 
 
@@ -396,4 +726,14 @@ audio: 2020-09-03-overview
     <li><p>Serial overheads, communication kill speedup</p></li>
     <li><p>Simple models help us understand scaling</p></li>
   </ul>
+
+  <aside class="notes">
+    Unfortunately, we cannot usually get perfect efficiency in our
+    codes.  Serial overheads and communication costs get in our way.
+    Experiments like strong scaling studies (where the problem size is
+    fixed) and weak scaling studies (where we scale the problem size
+    with the number of processors) are necessary to understand the
+    real performance of our codes, but simple models can often help us
+    tell what we should expect from these studies.
+  </aside>
 </section>
