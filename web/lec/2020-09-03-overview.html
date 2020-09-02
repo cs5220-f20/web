@@ -133,7 +133,7 @@ audio: 2020-09-03-overview
 
 
 <section>
-  <h2>Current Record: Fujutsu Fugaku</h2>
+  <h2>Fujitsu Fugaku</h2>
 
   <p>
     Look at
@@ -151,7 +151,7 @@ audio: 2020-09-03-overview
 
 
 <section>
-  <h2>Alternate Benchmark: <a href="https://graph500.org/">Graph 500</a></h2>
+  <h2>Alternate: <a href="https://graph500.org/">Graph 500</a></h2>
   
   <p>Graph processing benchmark (data-intensive)</p>
   <ul>
@@ -185,21 +185,37 @@ audio: 2020-09-03-overview
 <section>
   <h2>Practical Performance</h2>
   <p>So how fast can I make my computation?</p>
-  <ul>
-    <li><p>Peak <span class="math inline">\(&gt;\)</span> Linpack <span class="math inline">\(&gt;\)</span> Gordon Bell <span class="math inline">\(&gt;\)</span> Typical</p></li>
-    <li><p>Measuring performance of real applications is hard</p>
-      <ul>
-        <li><p>What figure of merit (flops, TEPS, ...?)</p></li>
-        <li><p>Typically a few bottlenecks slow things down</p></li>
-        <li><p>Why they slow down can be tricky!</p></li>
-    </ul></li>
-    <li><p>And we <span><em>really</em></span> care about time-to-solution</p>
-      <ul>
-        <li><p>Sophisticated methods get answer in fewer flops</p></li>
-        <li><p>... but may look bad in benchmarks (lower flop rates!)</p></li>
-    </ul></li>
-  </ul>
+  <p>Peak <span class="math inline">\(&gt;\)</span>
+    Linpack <span class="math inline">\(&gt;\)</span> Gordon
+    Bell <span class="math inline">\(&gt;\)</span> Typical</p>
+</section>
 
+
+<section>
+  <h2>Practical Performance</h2>
+  <p>Measuring performance of real applications is hard</p>
+  <ul>
+    <li><p>What figure of merit (flops, TEPS, ...?)</p></li>
+    <li><p>Typically a few bottlenecks slow things down</p></li>
+    <li><p>Why they slow down can be tricky!</p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Practical Performance</h2>
+  
+  <p><em>Really</em> care about time-to-solution</p>
+  <ul>
+    <li><p>Sophisticated methods get answer in fewer flops</p></li>
+    <li><p>... but may look bad in benchmarks (lower flop rates!)</p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Practical Performance</h2>
+  
   <p>See also David Bailey’s comments:</p>
   <ul>
     <li><p><a href="http://crd.lbl.gov/~dhbailey/dhbpapers/twelve-ways.pdf">Twelve Ways to Fool the Masses When Giving Performance Results on Parallel Computers</a> (1991)</p></li>
@@ -210,22 +226,42 @@ audio: 2020-09-03-overview
 
 <section>
   <h2>Quantifying Performance</h2>
+
+  <p>
+    Starting point: good <em>serial</em> performance.
+  </p>
+</section>
+
+
+<section>
+  <h2>Quantifying Performance</h2>
+
+  <p>
+    Strong scaling: compare parallel to serial time on the same
+    problem instance as a function of number of processors
+    (<span class="math inline">\(p\)</span>) <span class="math display">\[\begin{aligned}
+      \mbox{Speedup} &amp;= \frac{\mbox{Serial time}}{\mbox{Parallel time}} \\[2mm]
+      \mbox{Efficiency} &amp;= \frac{\mbox{Speedup}}{p}
+      \end{aligned}\]</span>
+  </p>
+</section>
+
+
+<section>
+  <h2>Quantifying Performance</h2>
+  <p>
+    Ideally, speedup = <span class="math inline">\(p\)</span>.
+    Usually, speedup <span class="math inline">\(&lt; p\)</span>.
+  </p>
+  <p>Barriers to perfect speedup</p>
   <ul>
-    <li><p>Starting point: good <span><em>serial</em></span> performance</p></li>
-    <li><p>Strong scaling: compare parallel to serial time on the same
-        problem instance as a function of number of processors
-        (<span class="math inline">\(p\)</span>) <span class="math display">\[\begin{aligned}
-          \mbox{Speedup} &amp;= \frac{\mbox{Serial time}}{\mbox{Parallel time}} \\[2mm]
-          \mbox{Efficiency} &amp;= \frac{\mbox{Speedup}}{p}
-          \end{aligned}\]</span></p></li>
-    <li><p>Ideally, speedup = <span class="math inline">\(p\)</span>. Usually, speedup <span class="math inline">\(&lt; p\)</span>.</p></li>
-    <li><p>Barriers to perfect speedup</p>
-      <ul>
-        <li><p>Serial work (Amdahl’s law)</p></li>
-        <li><p>Parallel overheads (communication, synchronization)</p></li>
-    </ul></li>
+    <li><p>Serial work (Amdahl’s law)</p></li>
+    <li><p>Parallel overheads (communication, synchronization)</p></li>
   </ul>
-  <h3 id="amdahls-law">Amdahl’s Law</h3>
+</section>
+
+<section>
+  <h2>Amdahl’s Law</h2>
   <p>Parallel scaling study where some serial code remains: <span class="math display">\[\begin{aligned}
       p = &amp; \mbox{ number of processors} \\
       s = &amp; \mbox{ fraction of work that is serial} \\
