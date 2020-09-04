@@ -4,6 +4,7 @@ layout: slides
 audio: 2020-09-03-perf-basics
 ---
 
+
 <section>
   <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
   <h2>Applications of Parallel Computers</h2>
@@ -82,11 +83,17 @@ for (i = 0; i &lt; n; ++i)
   <h2>The Cost of Computing</h2>
   <p>Simplest model:</p>
   <ol>
-    <li>Dominant cost is <span class="math inline">\(2n^3\)</span> flops (adds and multiplies)</li>
+    <li>Dominant cost is <span class="math inline">\(2n^3\)</span>
+      flops (adds and multiplies)</li>
     <li>One flop per clock cycle</li>
-    <li>Expected time is <span class="math display">\[\mbox{Time (s)} \approx
+    <li>Expected time is
+      <span class="math display">\[
+        \mbox{Time (s)} \approx
         \frac{2n^3 \mbox{ flops}}
-        {2.4 \cdot 10^9 \mbox{ cycle/s} \times 1 \mbox{ flop/cycle}}\]</span></li>
+        {2.4 \cdot 10^9 \mbox{ cycle/s} \times 1 \mbox{ flop/cycle}}
+        \]
+      </span>
+    </li>
   </ol>
   <p>Problem: Model assumptions are wrong!</p>
 </section>
@@ -94,7 +101,9 @@ for (i = 0; i &lt; n; ++i)
 
 <section>
   <h2>The Cost of Computing</h2>
-  <p>Dominant cost is <span class="math inline">\(2n^3\)</span> flops (adds and multiplies)?</p>
+  <p>
+    Dominant cost is <span class="math inline">\(2n^3\)</span> flops
+    (adds and multiplies)?</p>
   <ul>
     <li><p>Dominant cost is often memory traffic!</p></li>
     <li><p>Special case of a <em>communication cost</em></p></li>
@@ -119,31 +128,61 @@ for (i = 0; i &lt; n; ++i)
 <section>
   <h2>The Cost of Computing</h2>
   <ul>
-    <li><p>Usually latency <span class="math inline">\(\gg\)</span> bandwidth<span class="math inline">\(^{-1}\)</span> <span class="math inline">\(\gg\)</span> time per flop</p></li>
-    <li><p>Latency to L3 cache is 10s of ns, DRAM is <span class="math inline">\(3\)</span>–<span class="math inline">\(4 \times\)</span> slower</p></li>
-<li><p>Partial solution: caches (to discuss next time)</p></li>
+    <li>
+      <p>
+        Usually latency
+        <span class="math inline">\(\gg\)</span>
+        bandwidth<span class="math inline">\(^{-1}\)</span>
+        <span class="math inline">\(\gg\)</span>
+        time per flop
+      </p>
+    </li>
+    <li>
+      <p>Latency to L3 cache is 10s of ns,
+        DRAM is <span class="math
+        inline">\(3\)</span>–<span class="math inline">\(4
+          \times\)</span> slower
+      </p>
+    </li>
+    <li><p>Partial solution: caches (to discuss next time)</p></li>
   </ul>
-  <p>See: <a href="https://gist.github.com/jboner/2841832">Latency numbers every programmer should know</a></p>
+  <p>
+    See: <a href="https://gist.github.com/jboner/2841832">Latency
+      numbers every programmer should know</a>
+  </p>
 </section>
 
 
 <section>
   <h2>The Cost of Computing</h2>
-  <p>One flop per clock cycle? For cluster CPU cores: <span class="math display">\[2 \frac{\mbox{flops}}{\mbox{FMA}} \times
+  <p>
+    One flop per clock cycle? For cluster CPU cores:
+    <span class="math display">\[
+      2 \frac{\mbox{flops}}{\mbox{FMA}} \times
       4 \frac{\mbox{FMA}}{\mbox{vector FMA}} \times
       2 \frac{\mbox{vector FMA}}{\mbox{cycle}} =
-      16 \frac{\mbox{flops}}{\mbox{cycle}}\]</span> Theoretical peak (one core) is <span class="math display">\[\mbox{Time (s)} \approx
-  \frac{2n^3 \mbox{ flops}}
-      {2.4 \cdot 10^9 \mbox{ cycle/s} \times 16 \mbox{ flop/cycle}}\]</span></p>
+      16 \frac{\mbox{flops}}{\mbox{cycle}}\]
+    </span>
+    Theoretical peak (one core) is
+    <span class="math display">\[
+      \mbox{Time (s)} \approx
+      \frac{2n^3 \mbox{ flops}}
+      {2.4 \cdot 10^9 \mbox{ cycle/s} \times 16 \mbox{ flop/cycle}}\]
+    </span>
+  </p>
 </section>
 
 
 <section>
   <h2>The Cost of Computing</h2>
-  <p>Makes DRAM latency look even worse! DRAM latency <span class="math inline">\(\sim 100\)</span> ns: <span class="math display">\[100 \mbox{ ns} \times
+  <p>Makes DRAM (<span class="math inline">\(\sim 100\)</span> ns)
+    look even worse:
+    <span class="math display">\[
+      100 \mbox{ ns} \times
       2.4 \frac{\mbox{cycle}}{\mbox{ns}} \times
       16 \frac{\mbox{flops}}{\mbox{cycle}} =
-      3840 \mbox{ flops}\]</span>
+      3840 \mbox{ flops}\]
+    </span>
   </p>
 </section>
 
@@ -157,6 +196,10 @@ for (i = 0; i &lt; n; ++i)
       flop/cycle}}\]</span> For 12 core node, theoretical peak
     is <span class="math inline">\(12 \times\)</span> faster.
   </p>
+</section>
+
+<section>
+  <h2>The Cost of Computing</h2>
   <ul>
     <li><p>Lose orders of magnitude if too many memory refs</p></li>
     <li><p>And getting full vectorization is also not easy!</p></li>
