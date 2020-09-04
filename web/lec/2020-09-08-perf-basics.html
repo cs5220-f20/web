@@ -81,6 +81,168 @@ audio: 2020-09-03-perf-basics
 </section>
 
 
+<section> <!-- Peak performance -->
+
+  <section>
+    <h2>Peak performance</h2>
+  </section>
+
+
+  <section>
+    <h3>Whence Rmax?</h3>
+
+    <p>
+      Top 500 benchmark reports:
+    </p>
+    <ul>
+      <li>Rmax: Linpack flop/s</li>
+      <li>Rpeak: Theoretical peak flop/s</li>
+    </ul>
+    <p>Measure the first; how do we know the second?</p>
+  </section>
+
+
+  <section>
+    <h3>What is a float?</h3>
+
+    <p>Start with what is floating point:</p>
+    <ul>
+      <li><p>(Binary) scientific notation</p></li>
+      <li><p>Extras: inf, NaN, de-normalized numbers</p></li>
+      <li><p>IEEE 754 standard: encodings, arithmetic rules</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>What is a float?</h3>
+
+    <p>Common floating point formats</p>
+    <ul>
+      <li>64-bit double precision (DP)</li>
+      <li>32-bit single precision (SP)</li>
+    </ul>
+    <p>Linpack results are double precision</p>
+  </section>
+
+
+  <section>
+    <h3>What is a float?</h3>
+
+    <p>Less common</p>
+    <ul>
+      <li><p>Extended precisions (often 80 bits)</p></li>
+      <li><p>128-bit quad precision</p></li>
+      <li><p>16-bit half precision (multiple)</p></li>
+      <li><p>Decimal formats</p></li>
+    </ul>
+    <p>Lots of interest in 16-bit formats for ML</p>
+  </section>
+
+
+  <section>
+    <h3>What is a flop?</h3>
+
+    <ul>
+      <li>
+        <p>Basic floating point operations:
+          \[
+          +, -, \times, /, \sqrt{\cdot}
+          \]
+          all computed with correct rounding.
+        </p>
+      </li>
+      <li>
+        <p>FMA (fused multiply-add):
+          \[
+            d = ab + c
+          \]
+          Does this count as one op or two?
+        </p>
+      </li>
+      <li><p>Costs depend on precision and op</p></li>
+      <li><p>Often focus on add, multiply, FMA (<q>flams</q>)</p></li>
+    </ul>
+
+  </section>
+
+
+  <section>
+    <h3>Flops / cycle / core</h3>
+
+    <p>
+      Processor does more than one thing at a time.  On my laptop:
+    </p>
+    <ul>
+      <li><p>Two vector FMAs can start in one cycle<p></li>
+      <li><p>Vector FMA does four DP FMAs at once<p></li>
+      <li><p>Often count an FMA as two flops</p></li>
+    </ul>
+    <p>NB: I have a 2018 Macbook Air</p>
+  </section>
+
+
+  <section>
+    <h3>Flops / cycle (one core)</h3>
+
+    <span class="math display">\[
+      2 \frac{\mbox{flops}}{\mbox{FMA}} \times
+      4 \frac{\mbox{FMA}}{\mbox{vector FMA}} \times
+      2 \frac{\mbox{vector FMA}}{\mbox{cycle}} =
+      16 \frac{\mbox{flops}}{\mbox{cycle}}\]
+    </span>
+  </section>
+
+
+  <section>
+    <h3>Flops / sec (one core)</h3>
+    <p><span class="math display">\[
+        16 \frac{\mbox{flops}}{\mbox{cycle}} \times
+        (1.6 \times 10^9) \frac{\mbox{cycle}}{\mbox{sec}} =
+        25.6 \times 10^9 \frac{\mbox{flops}}{\mbox{sec}} =
+        25.6 \mbox{Gflop/s}
+    \]</span></p>
+  </section>
+
+
+  <section>
+    <h3>Flops / sec</h3>
+
+    <p><span class="math display">\[
+        25.6 \frac{\mbox{Gflop/s}}{\mbox{core}} \times
+        2 \mbox{cores} =
+        51.2 \mbox{Gflop/s}
+    \]</span></p>
+    <p>
+      Things get more complicated if there are different core types
+      (e.g. CPU cores and GPU cores)
+    </p>
+  </section>
+
+
+  <section>
+    <h3>Some historical context</h3>
+
+
+    <p>Note: <a href="https://www.top500.org/system/166997/">CM-5/1024</a>
+      (top machine in 7/1993) peak was 131 Gflop/s</p>
+  </section>
+
+
+  <section>
+    <h3>Sanity check</h3>
+
+    <p>
+      What is the peak flop (CPU) flop rate on your machine?
+      <a href="https://stackoverflow.com/questions/15655835/flops-per-cycle-for-sandy-bridge-and-haswell-sse2-avx-avx2#:~:text=Intel%20Haswell%2FBroadwell%2FSkylake%2F,(fused%20multiply%2Dadd)%20instructions">This
+      StackOverflow thread</a> might help you figure out your flops/cycle.
+    </p>
+  </section>
+
+
+</section>
+
+
 <section> <!-- The cost of computing -->
 
 
