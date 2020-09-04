@@ -61,7 +61,7 @@ audio: 2020-09-03-perf-basics
   <ul>
     <li><span class="math inline">\(p\)</span> processors <span class="math inline">\(\neq\)</span> speedup of <span class="math inline">\(p\)</span></li>
     <li>Different algorithms parallelize differently.</li>
-    <li>Speed vs a naive, untuned serial algorithm is cheating!</li>
+    <li>Speed vs untuned serial code is cheating!</li>
   </ul>
 </section>
 
@@ -138,7 +138,10 @@ for (i = 0; i &lt; n; ++i)
       </p>
     </li>
     <li>
-      <p>Latency to L3 cache is 10s of ns,
+      <p>Latency to L3 cache is 10s of ns</p>
+    </li>
+    <li>
+      <p>
         DRAM is <span class="math
         inline">\(3\)</span>–<span class="math inline">\(4
           \times\)</span> slower
@@ -306,7 +309,7 @@ for (i = 0; i &lt; n; ++i)
       t_s = &amp; \mbox{ serial time} \\
       t_p = &amp; \mbox{ parallel time} \geq s t_s + (1-s) t_s / p
       \end{aligned}\]</span></p>
-  <p>Amdahl’s law: <span class="math display">\[\mbox{Speedup} = 
+  <p><span class="math display">\[\mbox{Speedup} = 
       \frac{t_s}{t_p} = \frac{1}{s + (1-s) / p} &lt; \frac{1}{s}\]</span></p>
   <p>So <span class="math inline">\(1\%\)</span> serial work <span class="math inline">\(\implies\)</span> max speedup &lt; <span class="math inline">\(100 \times\)</span>, regardless of <span class="math inline">\(p\)</span>.</p>
 </section>
@@ -340,12 +343,13 @@ for (i = 0; i &lt; n; ++i)
   </p>
   <ul>
     <li>Monte Carlo computations with independent trials</li>
-    <li>Computations mapping many data items independently</li>
+    <li>Mapping many data items independently</li>
   </ul>
   <p>
     Result is “high-throughput” computing – easy to get impressive
-    speedups! Says nothing about hard-to-parallelize tasks.
+    speedups!
   </p>
+  <p>Says nothing about hard-to-parallelize tasks.</p>
 </section>
 
 
