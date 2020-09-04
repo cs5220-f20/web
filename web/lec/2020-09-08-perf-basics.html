@@ -33,7 +33,7 @@ audio: 2020-09-03-perf-basics
 
 
 <section>
-  <h1>Starting on the Soap Box</h1>
+  <h2>Starting on the Soap Box</h2>
 
   <p>Performance is not all that matters.</p>
   <ul>
@@ -239,7 +239,7 @@ for (i = 0; i &lt; n; ++i)
 
 
 <section>
-  <h1>Quantifying Parallel Performance</h1>
+  <h2>Quantifying Parallel Performance</h2>
   <ul>
     <li><p>Starting point: good <em>serial</em> performance</p></li>
     <li><p>Scaling study: compare parallel to serial time as a function of number of processors (<span class="math inline">\(p\)</span>) <span class="math display">\[\begin{aligned}
@@ -271,7 +271,7 @@ for (i = 0; i &lt; n; ++i)
 
 
 <section>
-  <h1>Strong and weak scaling</h1>
+  <h2>Strong and weak scaling</h2>
   <p>Ahmdahl looks bad! But two types of scaling studies:</p>
   <dl>
     <dt>Strong scaling</dt>
@@ -288,7 +288,7 @@ for (i = 0; i &lt; n; ++i)
 
 
 <section>
-  <h1>Pleasing Parallelism</h1>
+  <h2>Pleasing Parallelism</h2>
   <p>
     A task is “pleasingly parallel” (aka “embarrassingly parallel”)
     if it requires very little coordination, for example:
@@ -305,7 +305,7 @@ for (i = 0; i &lt; n; ++i)
 
 
 <section>
-  <h1>Dependencies</h1>
+  <h2>Dependencies</h2>
   <p>Main pain point: <em>dependency</em> between computations</p>
   <pre><code>    a = f(x)
       b = g(x)
@@ -318,7 +318,7 @@ for (i = 0; i &lt; n; ++i)
 
 
 <section>
-  <h1>Granularity</h1>
+  <h2>Granularity</h2>
   
   <ul>
     <li>Coordination is expensive — including parallel start/stop!</li>
@@ -330,7 +330,7 @@ for (i = 0; i &lt; n; ++i)
 
 
 <section>
-  <h1>Patterns and Benchmarks</h1>
+  <h2>Patterns and Benchmarks</h2>
   
   <p>If your task is not pleasingly parallel, you ask:</p>
   <ul>
@@ -341,7 +341,7 @@ for (i = 0; i &lt; n; ++i)
 
 
 <section>
-  <h1>Patterns and Benchmarks</h1>
+  <h2>Patterns and Benchmarks</h2>
 
   <p>
     Look at examples somewhat like yours – a
