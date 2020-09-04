@@ -169,14 +169,14 @@ audio: 2020-09-03-perf-basics
     <h3>Flops / cycle / core</h3>
 
     <p>
-      Processor does more than one thing at a time.  On my laptop:
+      Processor does more than one thing at a time.  On my laptop
+      (2018 MacBook Air):
     </p>
     <ul>
       <li><p>Two vector FMAs can start in one cycle<p></li>
       <li><p>Vector FMA does four DP FMAs at once<p></li>
       <li><p>Often count an FMA as two flops</p></li>
     </ul>
-    <p>NB: I have a 2018 Macbook Air</p>
   </section>
 
 
@@ -198,7 +198,7 @@ audio: 2020-09-03-perf-basics
         16 \frac{\mbox{flops}}{\mbox{cycle}} \times
         (1.6 \times 10^9) \frac{\mbox{cycle}}{\mbox{sec}} =
         25.6 \times 10^9 \frac{\mbox{flops}}{\mbox{sec}} =
-        25.6 \mbox{Gflop/s}
+        25.6 \mbox{ Gflop/s}
     \]</span></p>
   </section>
 
@@ -209,7 +209,7 @@ audio: 2020-09-03-perf-basics
     <p><span class="math display">\[
         25.6 \frac{\mbox{Gflop/s}}{\mbox{core}} \times
         2 \mbox{cores} =
-        51.2 \mbox{Gflop/s}
+        51.2 \mbox{ Gflop/s}
     \]</span></p>
     <p>
       Things get more complicated if there are different core types
@@ -223,7 +223,10 @@ audio: 2020-09-03-perf-basics
 
 
     <p>Note: <a href="https://www.top500.org/system/166997/">CM-5/1024</a>
-      (top machine in 7/1993) peak was 131 Gflop/s</p>
+      peak was 131 Gflop/s.</p>
+    <p>This was the top machine on the first Linpack benchmark list
+      (July 1993).
+    </p>
   </section>
 
 
