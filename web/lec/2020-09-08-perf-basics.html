@@ -1,0 +1,354 @@
+---
+title: Performance basics
+layout: slides
+audio: 2020-09-03-perf-basics
+---
+
+<section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
+  </p>
+  <p>Please click the play button below.</p>
+  
+  <aside class="notes">
+    Welcome to CS 5220, Applications of Parallel Computers, the Fall
+    2020 edition.  I am your host, David Bindel.
+
+    In this second technical slide deck of the semester, we will
+    discuss some fundamental performance concepts.  There are a lot of
+    misconceptions about computational performance, so part of the
+    goal here is to convince you there is more than meets the eye when
+    it comes to understanding code speed.
+  </aside>
+</section>
+
+
+<section>
+  <h2>Starting on the Soap Box</h2>
+  
+  <p>The goal is right enough, fast enough — not flop/s.</p>
+</section>
+
+
+<section>
+  <h1>Starting on the Soap Box</h1>
+
+  <p>Performance is not all that matters.</p>
+  <ul>
+    <li>Portability, readability, debuggability matter too!</li>
+    <li>Want to make intelligent trade-offs.</li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Starting on the Soap Box</h2>
+
+  <p>The road to good performance starts with a single core.</p>
+  <ul>
+    <li>Even single-core performance is hard.</li>
+    <li>Helps to build on well-engineered libraries.</li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Starting on the Soap Box</h2>
+  <p>Parallel efficiency is hard!</p>
+  <ul>
+    <li><span class="math inline">\(p\)</span> processors <span class="math inline">\(\neq\)</span> speedup of <span class="math inline">\(p\)</span></li>
+    <li>Different algorithms parallelize differently.</li>
+    <li>Speed vs a naive, untuned serial algorithm is cheating!</li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>The Cost of Computing</h2>
+  <p>Consider a simple serial code:</p>
+  <pre><code>
+// Accumulate C += A*B for n-by-n matrices
+for (i = 0; i &lt; n; ++i)
+  for (j = 0; j &lt; n; ++j)
+    for (k = 0; k &lt; n; ++k)
+      C[i+j*n] += A[i+k*n] * B[k+j*n];
+  </code></pre>
+</section>
+
+
+<section>
+  <h2>The Cost of Computing</h2>
+  <p>Simplest model:</p>
+  <ol>
+    <li>Dominant cost is <span class="math inline">\(2n^3\)</span> flops (adds and multiplies)</li>
+    <li>One flop per clock cycle</li>
+    <li>Expected time is <span class="math display">\[\mbox{Time (s)} \approx
+        \frac{2n^3 \mbox{ flops}}
+        {2.4 \cdot 10^9 \mbox{ cycle/s} \times 1 \mbox{ flop/cycle}}\]</span></li>
+  </ol>
+  <p>Problem: Model assumptions are wrong!</p>
+</section>
+
+
+<section>
+  <h2>The Cost of Computing</h2>
+  <p>Dominant cost is <span class="math inline">\(2n^3\)</span> flops (adds and multiplies)?</p>
+  <ul>
+    <li><p>Dominant cost is often memory traffic!</p></li>
+    <li><p>Special case of a <em>communication cost</em></p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>The Cost of Computing</h2>
+  <p>Two pieces to cost of fetching data</p>
+  <dl>
+    <dt>Latency</dt>
+    <dd><p>Time from operation start to first result (s)</p>
+    </dd>
+    <dt>Bandwidth</dt>
+    <dd><p>Rate at which data arrives (bytes/s)</p>
+    </dd>
+  </dl>
+</section>
+
+
+<section>
+  <h2>The Cost of Computing</h2>
+  <ul>
+    <li><p>Usually latency <span class="math inline">\(\gg\)</span> bandwidth<span class="math inline">\(^{-1}\)</span> <span class="math inline">\(\gg\)</span> time per flop</p></li>
+    <li><p>Latency to L3 cache is 10s of ns, DRAM is <span class="math inline">\(3\)</span>–<span class="math inline">\(4 \times\)</span> slower</p></li>
+<li><p>Partial solution: caches (to discuss next time)</p></li>
+  </ul>
+  <p>See: <a href="https://gist.github.com/jboner/2841832">Latency numbers every programmer should know</a></p>
+</section>
+
+
+<section>
+  <h2>The Cost of Computing</h2>
+  <p>One flop per clock cycle? For cluster CPU cores: <span class="math display">\[2 \frac{\mbox{flops}}{\mbox{FMA}} \times
+      4 \frac{\mbox{FMA}}{\mbox{vector FMA}} \times
+      2 \frac{\mbox{vector FMA}}{\mbox{cycle}} =
+      16 \frac{\mbox{flops}}{\mbox{cycle}}\]</span> Theoretical peak (one core) is <span class="math display">\[\mbox{Time (s)} \approx
+  \frac{2n^3 \mbox{ flops}}
+      {2.4 \cdot 10^9 \mbox{ cycle/s} \times 16 \mbox{ flop/cycle}}\]</span></p>
+</section>
+
+
+<section>
+  <h2>The Cost of Computing</h2>
+  <p>Makes DRAM latency look even worse! DRAM latency <span class="math inline">\(\sim 100\)</span> ns: <span class="math display">\[100 \mbox{ ns} \times
+      2.4 \frac{\mbox{cycle}}{\mbox{ns}} \times
+      16 \frac{\mbox{flops}}{\mbox{cycle}} =
+      3840 \mbox{ flops}\]</span>
+  </p>
+</section>
+
+
+<section>
+  <h2>The Cost of Computing</h2>
+  <p>
+    Theoretical peak for matrix-matrix product (one core) is <span class="math display">\[\mbox{Time (s)} \approx
+      \frac{2n^3 \mbox{ flops}}
+      {2.4 \cdot 10^9 \mbox{ cycle/s} \times 16 \mbox{
+      flop/cycle}}\]</span> For 12 core node, theoretical peak
+    is <span class="math inline">\(12 \times\)</span> faster.
+  </p>
+  <ul>
+    <li><p>But lose orders of magnitude if too many memory refs</p></li>
+    <li><p>And getting full vectorization is also not easy!</p></li>
+    <li><p>We’ll talk more about (single-core) arch next week</p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>The Cost of Computing</h2>
+  <p>
+    Sanity check: What is the theoretical peak of a Xeon Phi 5110P accelerator?<br />
+    <a href="https://en.wikipedia.org/wiki/Xeon_Phi">Wikipedia to the
+      rescue!</a>
+  </p>
+</section>
+
+
+<section>
+  <h2>The Cost of Computing</h2>
+  <p>
+    What to take away from this performance modeling example?
+  </p>
+</section>
+
+
+<section>
+  <h2>The Cost of Computing</h2>
+  <p>Start with a simple model</p>
+  <ul>
+    <li><p>Simplest model is asymptotic complexity (e.g. <span class="math inline">\(O(n^3)\)</span> flops)</p></li>
+    <li><p>Counting <em>every</em> detail just complicates life</p></li>
+    <li><p>But we want enough detail to predict something</p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>The Cost of Computing</h2>
+
+  <p>Watch out for hidden costs</p>
+  <ul>
+    <li><p>Flops are not the only cost!</p></li>
+    <li><p>Memory/communication costs are often killers</p></li>
+    <li><p>Integer computation may play a role as well</p></li>
+  </ul>
+  <p>Account for instruction-level parallelism, too!</p></li>
+</section>
+
+
+<section>
+  <h2>The Cost of Computing</h2>
+  <p>And we haven’t even talked about more than one core yet!</p>
+</section>
+
+
+<section>
+  <h2>The Cost of (Parallel) Computing</h2>
+  <p>Simple model:</p>
+  <ul>
+    <li><p>Serial task takes time <span class="math inline">\(T\)</span> (or <span class="math inline">\(T(n)\)</span>)</p></li>
+    <li><p>Deploy <span class="math inline">\(p\)</span> processors</p></li>
+    <li><p>Parallel time is <span class="math inline">\(T(n)/p\)</span></p></li>
+  </ul>
+  <p>... and you should be suspicious by now!</p>
+</section>
+
+
+<section>
+  <h2>The Cost of (Parallel) Computing</h2>
+  <p>Why is parallel time not <span class="math inline">\(T/p\)</span>?</p>
+  <ul>
+    <li><p><strong>Overheads:</strong> Communication, synchronization, extra computation and memory overheads</p></li>
+    <li><p><strong>Intrinsically serial</strong> work</p></li>
+    <li><p><strong>Idle time</strong> due to synchronization</p></li>
+    <li><p><strong>Contention</strong> for resources</p></li>
+  </ul>
+  <p>We will talk about all of these in more detail.</p>
+</section>
+
+
+<section>
+  <h1>Quantifying Parallel Performance</h1>
+  <ul>
+    <li><p>Starting point: good <em>serial</em> performance</p></li>
+    <li><p>Scaling study: compare parallel to serial time as a function of number of processors (<span class="math inline">\(p\)</span>) <span class="math display">\[\begin{aligned}
+          \mbox{Speedup} &amp;= \frac{\mbox{Serial time}}{\mbox{Parallel time}} \\[2mm]
+          \mbox{Efficiency} &amp;= \frac{\mbox{Speedup}}{p}
+          \end{aligned}\]</span></p></li>
+    <li><p>Ideally, speedup = <span class="math inline">\(p\)</span>. Usually, speedup <span class="math inline">\(&lt; p\)</span>.</p></li>
+    <li><p>Barriers to perfect speedup</p>
+      <ul>
+        <li><p>Serial work (Amdahl’s law)</p></li>
+        <li><p>Parallel overheads (communication, synchronization)</p></li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h2>Amdahl’s Law</h2>
+  <p>Parallel scaling study where some serial code remains: <span class="math display">\[\begin{aligned}
+      p = &amp; \mbox{ number of processors} \\
+      s = &amp; \mbox{ fraction of work that is serial} \\
+      t_s = &amp; \mbox{ serial time} \\
+      t_p = &amp; \mbox{ parallel time} \geq s t_s + (1-s) t_s / p
+      \end{aligned}\]</span></p>
+  <p>Amdahl’s law: <span class="math display">\[\mbox{Speedup} = 
+      \frac{t_s}{t_p} = \frac{1}{s + (1-s) / p} &lt; \frac{1}{s}\]</span></p>
+  <p>So <span class="math inline">\(1\%\)</span> serial work <span class="math inline">\(\implies\)</span> max speedup &lt; <span class="math inline">\(100 \times\)</span>, regardless of <span class="math inline">\(p\)</span>.</p>
+</section>
+
+
+<section>
+  <h1>Strong and weak scaling</h1>
+  <p>Ahmdahl looks bad! But two types of scaling studies:</p>
+  <dl>
+    <dt>Strong scaling</dt>
+    <dd><p>Fix problem size, vary <span class="math inline">\(p\)</span></p>
+    </dd>
+    <dt>Weak scaling</dt>
+    <dd><p>Fix work per processor, vary <span class="math inline">\(p\)</span></p>
+    </dd>
+  </dl>
+  
+  <p>For weak scaling, study <em>scaled speedup</em> <span class="math display">\[S(p) =
+      \frac{T_{\mbox{serial}}(n(p))}{T_{\mbox{parallel}}(n(p), p)}\]</span> Gustafson’s Law: <span class="math display">\[S(p) \leq p - \alpha(p-1)\]</span> where <span class="math inline">\(\alpha\)</span> is the fraction of work that is serial.</p>
+</section>
+
+
+<section>
+  <h1>Pleasing Parallelism</h1>
+  <p>
+    A task is “pleasingly parallel” (aka “embarrassingly parallel”)
+    if it requires very little coordination, for example:
+  </p>
+  <ul>
+    <li>Monte Carlo computations with many independent trials</li>
+    <li>Big data computations mapping many data items independently</li>
+  </ul>
+  <p>
+    Result is “high-throughput” computing – easy to get impressive
+    speedups! Says nothing about hard-to-parallelize tasks.
+  </p>
+</section>
+
+
+<section>
+  <h1>Dependencies</h1>
+  <p>Main pain point: <em>dependency</em> between computations</p>
+  <pre><code>    a = f(x)
+      b = g(x)
+      c = h(a,b)
+  </code></pre>
+  <p>Compute a and b in parallel, but finish both before c!<br />
+    Limits amount of parallel work available.</p>
+  <p>This is a true dependency (read-after-write). Also have false dependencies (write-after-read and write-after-write) that can be dealt with more easily.</p>
+</section>
+
+
+<section>
+  <h1>Granularity</h1>
+  
+  <ul>
+    <li>Coordination is expensive — including parallel start/stop!</li>
+    <li>Need to do enough work to amortize parallel costs</li>
+    <li>Not enough to have parallel work, need big chunks!</li>
+    <li>How big the chunks must be depends on the machine.</li>
+  </ul>
+</section>
+
+
+<section>
+  <h1>Patterns and Benchmarks</h1>
+  
+  <p>If your task is not pleasingly parallel, you ask:</p>
+  <ul>
+    <li>What is the best performance I reasonably expect?</li>
+    <li>How do I get that performance?</li>
+  </ul>
+</section>
+
+
+<section>
+  <h1>Patterns and Benchmarks</h1>
+
+  <p>
+    Look at examples somewhat like yours – a
+    <em>parallel pattern</em> – and maybe seek an informative
+    benchmark. Better yet: reduce to a previously well-solved problem
+    (build on tuned <em>kernels</em>).
+  </p>
+  
+  <p>NB: Easy to pick uninformative benchmarks and go astray.</p>
+</section>
