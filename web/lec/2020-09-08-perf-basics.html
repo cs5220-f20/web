@@ -249,7 +249,8 @@ audio: 2020-09-03-perf-basics
 
 
   <section>
-    <h2>The Cost of (Single Core) Computing</h2>
+    <h2>The Cost of Computing</h2>
+    <h3>(Single core)</h3>
   </section>
 
 
@@ -273,13 +274,15 @@ for (i = 0; i &lt; n; ++i)
       <li>Dominant cost is <span class="math inline">\(2n^3\)</span>
         flops (adds and multiplies)</li>
       <li>One flop per clock cycle</li>
-      <li>Expected time is
-        <span class="math display">\[
-          \mbox{Time (s)} \approx
-          \frac{2n^3 \mbox{ flops}}
-          {2.4 \cdot 10^9 \mbox{ cycle/s} \times 1 \mbox{ flop/cycle}}
+      <li>
+        <p>
+          Expected time is
+          \[
+            \mbox{Time (s)} \approx
+            \frac{2n^3 \mbox{ flops}}
+            {25.6 \cdot 10^9 \mbox{ flop/s}}
           \]
-        </span>
+        </p>
       </li>
     </ol>
     <p>Problem: Model assumptions are wrong!</p>
@@ -343,66 +346,24 @@ for (i = 0; i &lt; n; ++i)
 
   <section>
     <h3>The Cost of Computing</h3>
-    <p>
-      One flop per clock cycle? For cluster CPU cores:
-      <span class="math display">\[
-        2 \frac{\mbox{flops}}{\mbox{FMA}} \times
-        4 \frac{\mbox{FMA}}{\mbox{vector FMA}} \times
-        2 \frac{\mbox{vector FMA}}{\mbox{cycle}} =
-        16 \frac{\mbox{flops}}{\mbox{cycle}}\]
-      </span>
-      Theoretical peak (one core) is
-      <span class="math display">\[
-        \mbox{Time (s)} \approx
-        \frac{2n^3 \mbox{ flops}}
-        {2.4 \cdot 10^9 \mbox{ cycle/s} \times 16 \mbox{ flop/cycle}}\]
-      </span>
-    </p>
-  </section>
-
-
-  <section>
-    <h3>The Cost of Computing</h3>
     <p>Makes DRAM (<span class="math inline">\(\sim 100\)</span> ns)
       look even worse:
-      <span class="math display">\[
+      \[
         100 \mbox{ ns} \times
-        2.4 \frac{\mbox{cycle}}{\mbox{ns}} \times
-        16 \frac{\mbox{flops}}{\mbox{cycle}} =
-        3840 \mbox{ flops}\]
+        25.6 \mbox{ Gflop/s} = 2560 \mbox{ flops}
+      \]
       </span>
     </p>
   </section>
 
-
-  <section>
-    <h3>The Cost of Computing</h3>
-    <p>
-      Theoretical peak for matrix-matrix product (one core) is <span class="math display">\[\mbox{Time (s)} \approx
-        \frac{2n^3 \mbox{ flops}}
-        {2.4 \cdot 10^9 \mbox{ cycle/s} \times 16 \mbox{
-        flop/cycle}}\]</span> For 12 core node, theoretical peak
-      is <span class="math inline">\(12 \times\)</span> faster.
-    </p>
-  </section>
 
   <section>
     <h3>The Cost of Computing</h3>
     <ul>
       <li><p>Lose orders of magnitude if too many memory refs</p></li>
       <li><p>And getting full vectorization is also not easy!</p></li>
-      <li><p>We’ll talk more about (single-core) arch next week</p></li>
+      <li><p>We’ll talk more about (single-core) arch next time</p></li>
     </ul>
-  </section>
-
-
-  <section>
-    <h3>The Cost of Computing</h3>
-    <p>
-      Sanity check: What is the theoretical peak of a Xeon Phi 5110P accelerator?<br />
-      <a href="https://en.wikipedia.org/wiki/Xeon_Phi">Wikipedia to the
-        rescue!</a>
-    </p>
   </section>
 
 
@@ -434,7 +395,6 @@ for (i = 0; i &lt; n; ++i)
       <li><p>Memory/communication costs are often killers</p></li>
       <li><p>Integer computation may play a role as well</p></li>
     </ul>
-    <p>Account for instruction-level parallelism, too!</p>
   </section>
 
 
@@ -449,7 +409,8 @@ for (i = 0; i &lt; n; ++i)
 <section> <!-- Cost of parallel computing -->
 
   <section>
-    <h2>The Cost of (Parallel) Computing</h2>
+    <h2>The Cost of Computing</h2>
+    <h3>(in parallel)
   </section>
 
   <section>
