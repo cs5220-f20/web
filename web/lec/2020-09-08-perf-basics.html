@@ -36,6 +36,24 @@ audio: 2020-09-03-perf-basics
 
   <section>
     <h2>Starting on the Soap Box</h2>
+
+    <aside class="notes">
+      Let me start with a good, old-fashioned rant.
+
+      Computers are a very powerful tool, and they are worthy of study
+      in their own right.  But too much of CS is wrapped up in beating
+      the state-of-the-art on one benchmark of the other.   In HPC, we
+      have Linpack and the obsession with exafflopos, but we are not
+      alone -- look at ML!
+
+      Richard Hamming said the purpose of computation is insight, not
+      numbers.  Well, sometimes the purpose is numbers.  You need to
+      know how much load your bridge can handle, how loud your
+      speakers will be.  That's well and good, and HPC can help.
+      But sometimes you don't need HPC.  A cheaper simulation or a
+      more clever algorithm may let you get the number you need on
+      your laptop or desktop, without programming heroics.
+    </aside>
   </section>
 
 
@@ -43,6 +61,13 @@ audio: 2020-09-03-perf-basics
     <h3>Starting on the Soap Box</h3>
 
     <p>The goal is right enough, fast enough — not flop/s.</p>
+
+    <aside class="notes">
+      All of this is to say: if you care about the applications, your
+      goal should not be to achieve peak flop rates.  Your goal should
+      be to get answers that are right enough and fast enough to be
+      useful to figure out whatever you want to figure out.
+    </aside>
   </section>
 
 
@@ -54,6 +79,22 @@ audio: 2020-09-03-perf-basics
       <li>Portability, readability, debuggability matter too!</li>
       <li>Want to make intelligent trade-offs.</li>
     </ul>
+
+    <aside class="notes">
+      So suppose you have decided that a computation is important
+      enough that you want to spend effort to build a really
+      high-performance code.  Presumably, you want that effort to pay
+      off for more than the duration of a single computation.  Maybe
+      you'd like it to run fast on the next generation of HPC systems,
+      too.  And maybe you'd like it to be something that people can
+      use and extend for follow-up research -- including yourself.
+      So performance is not all that matters.
+
+      Performance matters.  So do issues like portability,
+      readability, and debuggability of your code.   You need too
+      understand a little about all of these things in order to make
+      intelligent design choices.
+    </aside>
   </section>
 
 
@@ -68,6 +109,17 @@ audio: 2020-09-03-perf-basics
       <li>Even single-core performance is hard.</li>
       <li>Helps to build on well-engineered libraries.</li>
     </ul>
+
+    <aside class="notes">
+      The title of the course may be Applications of Parallel
+      Computers, but the first step to good performance is to go fast
+      on a single core.  As we'll see, going fast on even a single
+      core is not so easy!  One of the ways that we can get good
+      serial performance without too much agony is by using fast
+      libraries and letting others do the hard work.  Of course,
+      that means figuring out how to express the computations we want
+      in terms of the library calls we know about  (or can find).
+    </aside>
   </section>
 
 
@@ -79,6 +131,20 @@ audio: 2020-09-03-perf-basics
       <li>Different algorithms parallelize differently.</li>
       <li>Speed vs untuned serial code is cheating!</li>
     </ul>
+
+    <aside class="notes">
+      When it does come time to parallelize code, you will quickly
+      find that p processors does not mean a p-fold performance boost.
+      Ironically, if we do a good job of writing our single core code,
+      it's even harder to get the code to parallelize well.
+      Different algorithms parallelize differently, and often the
+      algorithms that are easiest to parallelize are not the most
+      efficient methods we know about.  It's easy to make your
+      parallel code look good if you compare to an untuned
+      implementation that may not use the best algorithm for the
+      serial case.  But that comparison is sort of a cheat.
+
+      OK.  Let me step off my soap box now.
   </section>
 
 </section>
@@ -88,6 +154,13 @@ audio: 2020-09-03-perf-basics
 
   <section>
     <h2>Peak performance</h2>
+
+    <aside class="notes">
+      In the last deck, we looked up the Linpack benchmark numbers for
+      a few top machines.  It's useful to know the theoretical "speed
+      of light" for a given platform, and to understand how it is
+      computed, so let's dig into these numbers a bit now.
+    </aside
   </section>
 
 
@@ -102,18 +175,44 @@ audio: 2020-09-03-perf-basics
       <li>Rpeak: Theoretical peak flop/s</li>
     </ul>
     <p>Measure the first; how do we know the second?</p>
+
+    <aside class="notes">
+      More specifically, the first two numbers reported for each
+      machine in the Top 500 list are the maximum flop rate on the
+      benchmark (Rmax) and the theoretical peak flop rate (Rpeak).
+      We measure the former experimentally.  Where does the latter
+      come from?
+    </aside>
   </section>
 
 
   <section>
     <h3>What is a float?</h3>
 
-    <p>Start with what is floating point:</p>
+    <p>Start with what is <a href="https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html">floating point</a>:</p>
     <ul>
       <li><p>(Binary) scientific notation</p></li>
       <li><p>Extras: inf, NaN, de-normalized numbers</p></li>
       <li><p>IEEE 754 standard: encodings, arithmetic rules</p></li>
     </ul>
+
+    <aside class="notes">
+      Before we talk about floating point operations for second, we
+      have to talk about floating point operations.  And before that,
+      we have to talk about floating point, though briefly.  Floating
+      point arithmetic is how we approximate real arithmetic on
+      computers.  It's essentially scientific notation, but in base 2
+      instead of base 10.  The IEEE 754 standard defines how the
+      encodings work for floating point numbers, including special
+      encodings for denormalized representations near zero,
+      infinity, and not-a-number.  It also defines the rules used for
+      floating point operations.  We'll talk about the details a bit
+      more later in the class.
+
+      David Goldberg wrote a great article about What Every Computer
+      Scientist Should Know About Floating-Point Arithmetic.  I highly
+      recommend it if you are fuzzy about how floating point works.
+    </aside>
   </section>
 
 
@@ -126,6 +225,14 @@ audio: 2020-09-03-perf-basics
       <li>32-bit single precision (SP)</li>
     </ul>
     <p>Linpack results are double precision</p>
+
+    <aside class="notes">
+      The two most common floating point standards in numerical codes
+      are the IEEE 754 double and single precision formats, which are
+      64 bits and 32 bits in memory, respectively.  When we specify
+      flop rates, we need to specify a precision.  The Linpack results
+      are all reported in double precision.
+    </aside>
   </section>
 
 
@@ -140,6 +247,26 @@ audio: 2020-09-03-perf-basics
       <li><p>Decimal formats</p></li>
     </ul>
     <p>Lots of interest in 16-bit formats for ML</p>
+
+    <aside class="notes">
+      Of course, there are other formats as well.  Some have more than
+      64-bits, like the 128-bit quad format or the more-flexible
+      extended precision specification (usually 80 bits).  In
+      addition, there is a lot of recent interest in 16-bit half
+      precision formats.  There are two of these -- Float16 and
+      BFloat16 -- and there is a lot of interest in using them for
+      machine learning tasks.  But there are a lot of things you can
+      get away from in double or single precision that become very dangerous in
+      half precision, so these formats should be treated with some
+      care.
+
+      In addition, the 754 standard also specifies decimal floating
+      point formats.  This used to be a completely different standard
+      (IEEE 854), but both formats appeared in IEEE 754-2008.  I was
+      actually active on the 754-2008 committee for a time while I was
+      a graduate student at Berkeley.  It was a learning experience!
+      The most recent version of the standard is IEEE 754-2019.
+    </aside>
   </section>
 
 
@@ -163,6 +290,20 @@ audio: 2020-09-03-perf-basics
       </li>
       <li><p>Costs depend on precision and op</p></li>
       <li><p>Often focus on add, multiply, FMA (<q>flams</q>)</p></li>
+
+      <aside class="notes">
+        Floating point numbers are pretty useless if you can't use
+        them for arithmetic!  The standard describes a few basic
+        operations: addition, subtraction, negation, multiplication, division,
+        and square root.  Many modern processors also support fused
+        multiply-add (FMA), which does an addition and a
+        multiplication with a single rounding error.
+
+        The rate at which we can do floating point operations depends
+        on the format and the type of operation.  In much of linear
+        algebra, most of the work goes into additions and
+        multiplications.  Pete Stewart calls these flams.
+      </aside>
     </ul>
 
   </section>
@@ -180,6 +321,18 @@ audio: 2020-09-03-perf-basics
       <li><p>Vector FMA does four DP FMAs at once<p></li>
       <li><p>Often count an FMA as two flops</p></li>
     </ul>
+
+    <aside class="notes">
+      Even single-core systems have instruction level parallelism.  My
+      laptop, a 2018 MacBook Air, has a chip with two vector units
+      capable of simultaneous fused multiply-add operations on 256
+      bits of data -- four double precision numbers -- per operand.
+      More than one instruction can be started in a single cycle, and
+      the units are pipelined.  We'll talk more about what this means
+      in the next deck, but for now you should just know that, at
+      theoretical peak, we can actually start two vector FMA per unit
+      per cycle.  And we often count an FMA as two flops.
+    </aside>
   </section>
 
 
@@ -192,6 +345,12 @@ audio: 2020-09-03-perf-basics
       2 \frac{\mbox{vector FMA}}{\mbox{cycle}} =
       16 \frac{\mbox{flops}}{\mbox{cycle}}\]
     </span>
+
+    <aside class="notes">
+      So, putting this together, we have two flops per FMA, times four
+      FMA operations per vector vector FMA instruction, times two
+      vector operations per cycle, or 16 flops per cycle.
+    </aside>
   </section>
 
 
@@ -204,6 +363,12 @@ audio: 2020-09-03-perf-basics
     &= 25.6 \times 10^9 \frac{\mbox{flops}}{\mbox{sec}} \\
     &= 25.6~\mbox{Gflop/s}
     \end{aligned}\]
+
+    <aside class="notes">
+      Multiply 16 flops per cycle by a clock rate of 1.6 GHz or 1.6
+      billion cycles per second, and we have a single core flop rate
+      of 25.6 GFlop/s.
+    </aside>
   </section>
 
 
@@ -219,6 +384,16 @@ audio: 2020-09-03-perf-basics
       Things get more complicated if there are different core types
       (e.g. CPU cores and GPU cores)
     </p>
+
+    <aside class="notes">
+      My laptop has two cores, so the theoretical peak is 51.2
+      GFlop/s.  Many high-performance systems have a mix of different
+      types of cores -- CPUs and GPUs -- and so the computation for
+      them is more complicated.  But the basic picture remains the
+      same.  To compute the peak flop rate, we want to figure out how
+      many flops per cycle we can manage, and then multiply by the
+      clock rate.
+    </aside>
   </section>
 
 
@@ -231,6 +406,15 @@ audio: 2020-09-03-perf-basics
     <p>This was the top machine on the first Linpack benchmark list
       (July 1993).
     </p>
+
+    <aside class="notes">
+      It is sort of impressive that my dinky MacBook Air has a
+      theoretical peak of 51.2 GFlop/s.  For historical context, the
+      first Linpack benchmark list came out in July 1993, and the top
+      machine at the time (the CM-5/1024 from Thinking Machines) came
+      in at a theoretical peak of 131 GFlop/s.  Maybe that seems like
+      a long time ago to you, but I was in high school in 1993!
+    </aside>
   </section>
 
 
@@ -242,6 +426,15 @@ audio: 2020-09-03-perf-basics
       <a href="https://stackoverflow.com/questions/15655835/flops-per-cycle-for-sandy-bridge-and-haswell-sse2-avx-avx2#:~:text=Intel%20Haswell%2FBroadwell%2FSkylake%2F,(fused%20multiply%2Dadd)%20instructions">This
       StackOverflow thread</a> might help you figure out your flops/cycle.
     </p>
+
+    <aside class="notes">
+      All right.  Assuming that you are not using the same model of
+      MacBook Air, what is the theoretical peak (double precision)
+      flop rate on the CPUs on your machine, whatever it may be?
+      I've linked a StackOverflow thread that discusses some of the
+      relevant parameters for various families of processors.
+      I suggest going to look it up!
+    </aside>
   </section>
 
 
@@ -254,6 +447,12 @@ audio: 2020-09-03-perf-basics
   <section>
     <h2>The Cost of Computing</h2>
     <h3>(Single core)</h3>
+
+    <aside class="notes">
+      All right.  So I have cores capable of a theoretical peak of
+      25.6 GFlop/s.  Let's talk about what fraction of that peak I
+      might reasonably expect to get.
+    </aside>
   </section>
 
 
@@ -267,6 +466,31 @@ for (i = 0; i &lt; n; ++i)
     for (k = 0; k &lt; n; ++k)
       C[i+j*n] += A[i+k*n] * B[k+j*n];
     </code></pre>
+
+    <aside class="notes">
+      It helps to be concrete, so let's consider a numerical method
+      that multiplies two square n-by-n matrices.  We will use the
+      classic three nested loops approach that you probably first
+      learned when you learned how to multiply matrices.  If you no
+      longer remember how to multiply two matrices, now is a good time
+      to remind yourself!  It will come up again soon enough.
+
+      The innermost loop computes a dot product between a row of
+      matrix A and a column of matrix B; that takes n multiplies and n
+      adds.  The outer two loops iterate over n^2 such products.  The
+      total cost is therefore 2n^3 flops.
+
+      The code assumes the matrices A, B, and C are laid out in
+      column-major order in memory: that is, all the entries of the
+      first column appear first, followed by all the entries of the
+      second column, and so forth.  This is the order used by Fortran,
+      MATLAB, and Python.  C uses row-major ordering, to the extent
+      that it supports multi-dimensional arrays at all.  So we have to
+      manually compute the access function that maps from row and
+      column indices into a one-dimensional representation.
+      We'll have more to say about memory layouts for
+      multi-dimensional arrays in future lectures.
+    </aside>
   </section>
 
 
@@ -289,6 +513,34 @@ for (i = 0; i &lt; n; ++i)
       </li>
     </ol>
     <p>Problem: Model assumptions are wrong!</p>
+
+    <aside class="notes">
+      So how long does it actually take to multiply two matrices?  A
+      very simple estimate might go as follows: let's assume that we
+      are close to peak performance.  Then the time (in seconds) is
+      the number of flops divided by the flop rate (in flops per
+      second).  Certainly the units work out!  For my laptop, with a
+      theoretical peak on one core of 25.6 Gflop/s, this model would
+      predict that I could multiply two 2400-by-2400 matrices in a bit
+      over a second (1.08 seconds).  Of course, the assumption that we
+      are running at peak flop rate is probably wrong.  So how long
+      does it actually take?
+    </aside>
+  </section>
+
+
+  <section>
+    <pre>
+dbindel@MacBook-Air-5 codes % gcc naive-matmul.c
+dbindel@MacBook-Air-5 codes % time ./a.out
+./a.out  112.04s user 0.43s system 99% cpu 1:53.25 total
+    </pre>
+
+    <aside class="notes">
+      The answer: it takes almost two minutes on my laptop.  Our naive
+      estimate was off by almost two orders of magnitude.  Clearly,
+      something was missing from our performance model.
+    </aside>
   </section>
 
 
@@ -301,6 +553,24 @@ for (i = 0; i &lt; n; ++i)
       <li><p>Dominant cost is often memory traffic!</p></li>
       <li><p>Special case of a <em>communication cost</em></p></li>
     </ul>
+
+    <aside class="notes">
+      The main problem with our naive estimate is that we neglected
+      the cost to fetch the data from memory.  In fact, memory
+      accesses cost a lot more than flops!  And the way we wrote our
+      code makes it so that we will have to do a slow memory access
+      for almost every flop, so the computation is not the dominant
+      cost.  There are alternate ways of writing the code that make it
+      so that we can re-use many of the slow memory accesses, and
+      actually get close to the peak speed.  We will talk about these
+      alternate approaches in future lectures.
+
+      More generally, communication -- whether with memory or with
+      other processors -- has not improved at the same rate that peak
+      flop rates have improved.  So a lot of the games that we will
+      play have to do with minimizing communication with slow memory,
+      or communication between processors.
+    </aside>
   </section>
 
 
@@ -315,6 +585,14 @@ for (i = 0; i &lt; n; ++i)
       <dd><p>Rate at which data arrives (bytes/s)</p>
       </dd>
     </dl>
+
+    <aside class="notes">
+      When we think about the cost of memory accesses, or other
+      communications, we usually think about two distinct things.  The
+      first is the latency, or the time between when an operation
+      starts and when we get the first result.  The second is
+      bandwidth, or the rate at which data arrives (in steady state).
+    </aside>
   </section>
 
 
@@ -341,9 +619,27 @@ for (i = 0; i &lt; n; ++i)
       <li><p>Partial solution: caches (to discuss next time)</p></li>
     </ul>
     <p>
-      See: <a href="https://gist.github.com/jboner/2841832">Latency
-        numbers every programmer should know</a>
+      See: <a href="https://colin-scott.github.io/personal_website/research/interactive_latency.html">Latency numbers every programmer should know</a>
     </p>
+
+    <aside class="notes">
+      Your computer has several different types of memory.  For the
+      larger, slower memories, the latency can be really long.  Once
+      one has started getting data, the bandwidth seems OK -- though
+      what I've written on the slide, that latency is much greater
+      than inverse bandwidth, is not really sensible (because they have
+      different units).  But the inverse bandwidth is certainly much bigger
+      than the flop rate.
+
+      Fortunately, modern computers also come with small, fast memories with
+      lower latencies and higher bandwidths than the main memory.
+      These fast memories, called caches, are key to single-core
+      performance of things like matrix-matrix products.
+
+      It's worthwhile having some idea of how long it takes to fetch
+      data from different types of memory.  I recommend taking a minute or two
+      to look over the numbers on the web page linked from this slide.
+    </aside>
   </section>
 
 
@@ -355,8 +651,19 @@ for (i = 0; i &lt; n; ++i)
         100 \mbox{ ns} \times
         25.6 \mbox{ Gflop/s} = 2560 \mbox{ flops}
       \]
-      </span>
     </p>
+
+    <aside class="notes">
+      The main memory typically uses synchronous dynamic random-access
+      memory or SDRAM.  There are several different latency numbers
+      for SDRAM, but the right order of magnitude for a new, random
+      read to memory is on the order of a few tens of nanoseconds
+      (ns).  A good ballpark estimate is 100 ns.  This is pessimistic,
+      but it is certainly not off by an order of magnitude.
+
+      How long is 100 ns in flops?  On my machine, it is 2560 flops,
+      which is a lot.
+    </aside>
   </section>
 
 
@@ -367,6 +674,16 @@ for (i = 0; i &lt; n; ++i)
       <li><p>And getting full vectorization is also not easy!</p></li>
       <li><p>We’ll talk more about (single-core) arch next time</p></li>
     </ul>
+
+    <aside class="notes">
+      So: we lose orders of magnitude in performance if we have too
+      many random references to slow memory (DRAM).  And even if we
+      manage to finesse this issue, getting enough vectorization to
+      approach 16 flops per cycle turns out to be nontrivial.  We'll
+      talk about these things in more detail over the next few
+      lectures, starting with the upcoming lecture on single-core
+      architecture.
+    </aside>
   </section>
 
 
@@ -375,6 +692,11 @@ for (i = 0; i &lt; n; ++i)
     <p>
       What to take away from this example?
     </p>
+
+    <aside class="notes">
+      All right.  Aside from the fact that compute is fast and memory
+      is slow, what should we take away from this example?
+    </aside>
   </section>
 
 
@@ -386,6 +708,21 @@ for (i = 0; i &lt; n; ++i)
       <li><p>Counting <em>every</em> detail just complicates life</p></li>
       <li><p>But we want enough detail to predict something</p></li>
     </ul>
+
+    <aside class="notes">
+      Even more than the numbers or the conclusions about the relative
+      speed of compute and memory, I'd like you to remember how we
+      thought about modeling performance in this example.  We started
+      off just keeping track of flops, and that gave us a lower bound
+      on the time it would take to do a computation.  But because our
+      model was too simple, we missed something important; namely, the
+      memory.  It's natural to skip over this detail when we think
+      about algorithm complexity; and, really, it only affects the
+      constants in a big-O view of the world.  But constants are
+      important in HPC, and if we want a model that will be at all
+      predictive, we need some details about communication and memory
+      costs.
+    </aside>
   </section>
 
 
@@ -398,12 +735,26 @@ for (i = 0; i &lt; n; ++i)
       <li><p>Memory/communication costs are often killers</p></li>
       <li><p>Integer computation may play a role as well</p></li>
     </ul>
+
+    <aside class="notes">
+      There are a lot of situations in which memory and communication
+      costs a lot more than computation!  It's also worth noting that
+      floating point operations are not the only part of a
+      computation -- things like integer computation costs may also
+      play a role.
+    </aside>
   </section>
 
 
   <section>
     <h3>The Cost of Computing</h3>
     <p>Haven’t even talked about &gt; 1 core yet!</p>
+
+    <aside class="notes">
+      And this depressing complexity all came about from discussing a
+      serial code written in four lines of C!  Things get even more
+      complicated when we talk about parallel code, of course.
+    </aside>
   </section>
 
 </section>
@@ -414,6 +765,12 @@ for (i = 0; i &lt; n; ++i)
   <section>
     <h2>The Cost of Computing</h2>
     <h3>(in parallel)
+
+      <aside class="notes">
+        So, now that we've depressed ourselves with the single-core
+        case, let's talk about some basic concepts for reasoning about the
+        complexity and performance of parallel codes.
+      </aside>
   </section>
 
   <section>
@@ -425,6 +782,14 @@ for (i = 0; i &lt; n; ++i)
       <li><p>Parallel time is <span class="math inline">\(T(n)/p\)</span></p></li>
     </ul>
     <p>... and you should be suspicious by now!</p>
+
+    <aside class="notes">
+      A naive view of the world, one that is trotted forward far too
+      often by people who ought to know better, is that p processors
+      will result in a p-fold improvement over the execution time of a
+      serial code for the same task.  You should be suspicious of this
+      reasoning by now.  In fact, it rarely holds.
+    </aside>
   </section>
 
 
@@ -437,6 +802,21 @@ for (i = 0; i &lt; n; ++i)
       <li><p><strong>Idle time</strong> due to synchronization</p></li>
       <li><p><strong>Contention</strong> for resources</p></li>
     </ul>
+
+    <aside class="notes">
+      One problem in the parallel case is communication overhead.
+      Just as it takes time to ask a memory for data, it takes time to
+      send messages from one processor to another.  In addition, just
+      because we have p processors available, that does not mean that
+      we can use them all effectively at once!  Sometimes we have
+      intrinsically serial tasks, or tasks that offer little
+      parallelism.  We might have issues of load balance that leave
+      some processors idle much of the time.  Or we might spend all our
+      time contending for access to shared resources (which is a type
+      of communication overhead, I suppose).  In each case, we are
+      going to have factors that keep us from getting close to
+      perfect parallel efficiency.
+    </aside>
   </section>
 
 
@@ -455,6 +835,23 @@ for (i = 0; i &lt; n; ++i)
           <li><p>Parallel overheads (communication, synchronization)</p></li>
       </ul></li>
     </ul>
+
+    <aside class="notes">
+      A (strong) scaling study is an experiment in which we compare
+      the performance of a parallel code to the performance of a
+      well-tuned serial code.  In strong scaling, we look at speedup,
+      or the ratio of serial to parallel time, versus the number of
+      processors.  The efficiency is the speedup relative to the
+      number of processors; 100 percent efficiency means that you get
+      the p-fold speedup of your dreams.
+
+      The tuning of the serial code matters!  You can get
+      beautiful-looking speedups if you compare to a bad serial code,
+      but those attractive speedup curves don't actually tell you that
+      you are going to get answers fast as you add processors to
+      your parallel code.  Rather, they tell you that you are going to
+      get answers slower than you ought to, pretty much across the board.
+    </aside>
   </section>
 
 
@@ -467,7 +864,16 @@ for (i = 0; i &lt; n; ++i)
         t_p = &amp; \mbox{ parallel time} \geq s t_s + (1-s) t_s / p
         \end{aligned}\]</span></p>
     <p><span class="math display">\[\mbox{Speedup} =
-        \frac{t_s}{t_p} = \frac{1}{s + (1-s) / p} &lt; \frac{1}{s}\]</span></p>
+        \frac{t_s}{t_p} = \frac{1}{s + (1-s) / p} &lt;
+        \frac{1}{s}\]</span></p>
+
+    <aside class="notes">
+      Last time, we talked about one of the fundamental modeling
+      results for strong scaling: Amdahl's law.  Amdahl says that if
+      some fraction s of the serial code cannot be parallelized, then
+      our speedup will be no more than 1/s, no matter how many
+      processors we use.
+    </aside>
   </section>
 
 
@@ -475,6 +881,15 @@ for (i = 0; i &lt; n; ++i)
     <h3>Amdahl’s Law</h3>
     <p><span class="math display">\[\mbox{Speedup} &lt; \frac{1}{s}\]</span></p>
     <p>So <span class="math inline">\(1\%\)</span> serial work <span class="math inline">\(\implies\)</span> max speedup &lt; <span class="math inline">\(100 \times\)</span>, regardless of <span class="math inline">\(p\)</span>.</p>
+
+    <aside class="notes">
+      So, for example, if our serial code spends one percent of our
+      time loading up a problem and the other 99 percent computing,
+      then parallelizing only the computational section will limit our
+      overall speedup to at most 100.  That's bad news if we're trying
+      to impress a sponsor with parallel efficiency of our code on
+      their 10000-core supercomputer!
+    </aside>
   </section>
 
 
@@ -489,12 +904,38 @@ for (i = 0; i &lt; n; ++i)
       <dd><p>Fix work per processor, vary <span class="math inline">\(p\)</span></p>
       </dd>
     </dl>
+
+    <aside class="notes">
+      When we talk about Amdahl's law, we're talking about performance
+      for a fixed problem, or strong scaling.  But often, we want a
+      bigger computer so that we can solve bigger problems, not just
+      to solve the same problem repeatedly.  In a weak scaling study,
+      we fix the amount of work per processor rather than fixing the
+      overall problem size.  This leads to very different reasoning.
+    </aside>
   </section>
 
   <section>
     <h3>Strong and weak scaling</h3>
-    <p>For weak scaling, study <em>scaled speedup</em> <span class="math display">\[S(p) =
-        \frac{T_{\mbox{serial}}(n(p))}{T_{\mbox{parallel}}(n(p), p)}\]</span> Gustafson’s Law: <span class="math display">\[S(p) \leq p - \alpha(p-1)\]</span> where <span class="math inline">\(\alpha\)</span> is the fraction of work that is serial.</p>
+    <p>For weak scaling, study <em>scaled speedup</em>
+      \[
+      S(p) =
+      \frac{T_{\mbox{serial}}(n(p))}{T_{\mbox{parallel}}(n(p), p)}
+      \]
+      Gustafson’s Law:
+      \[
+      S(p) \leq p - \alpha(p-1)
+      \]
+      where <span class="math inline">\(\alpha\)</span> is the
+      fraction of work that is serial.
+    </p>
+
+    <aside class="notes">
+      The analogue to Amdahl's law is Gustafson's law.  Gutsafson
+      says that when we scale the problem size with the number of
+      processors, the scaled speedup grows linearly with the processor
+      count.
+    </aside>
   </section>
 
 
@@ -508,6 +949,20 @@ for (i = 0; i &lt; n; ++i)
       <li>Work that offers limited parallelism</li>
       <li>Coordination overheads.</li>
     </ul>
+
+    <aside class="notes">
+      Amdahl's law and Gustafson's law are phrased in terms of serial
+      work.  But many algorithms have sections that, while not serial,
+      have limited parallelism.  For example, consider processing a
+      tree from the leaves to the root: lots of parallelism at the
+      leaves, little close too the root.  There are also cases where
+      we have to worry about coordination overheads that might
+      actually grow with the number of processsors!  Amdahl and
+      Gustafson capture the spirit of all these problems, if not all
+      the details.  The point is that we have to keep the
+      less-parallel overheads small relative to the work being done
+      per processor if we want to see reasonable parallel efficiency.
+    </aside>
   </section>
 
 
@@ -521,7 +976,21 @@ for (i = 0; i &lt; n; ++i)
     </code></pre>
     <p>Compute a and b in parallel, but finish both before c!<br />
       Limits amount of parallel work available.</p>
-    <p>This is a true dependency (read-after-write). Also have false dependencies (write-after-read and write-after-write) that can be dealt with more easily.</p>
+    <p>This is a true dependency (read-after-write). Also have false
+    dependencies (write-after-read and write-after-write) that can be
+      dealt with more easily.</p>
+
+    <aside class="notes">
+      What keeps us from achieving high parallelism?  In a word:
+      dependencies.  If the output of one computation is an input to
+      another computation, those computations cannot run in parallel.
+      This is a true dependency, but there are also false dependencies
+      -- things that shouldn't really matter, but cause problems with
+      so-called data races in practice.  Copied data structures or
+      synchronization strategies can address false dependencies, but
+      the only way to deal with a true dependency is to rethink the
+      algorithm.
+    </aside>
   </section>
 
 
@@ -535,6 +1004,17 @@ for (i = 0; i &lt; n; ++i)
       <li>Not enough to have parallel work, need big chunks!</li>
       <li>Chunk size depends on the machine.</li>
     </ul>
+
+    <aside class="notes">
+      As it turns out, having lots of latent parallelism isn't
+      enough.  We need long, expensive chunks of work that can be done
+      completely independently of other long, expensive chunks of
+      work.  Otherwise, we spend more time coordinating than we do
+      getting work done.  Of course, as we will see, there can also be
+      downsides to big independent chunks of work.  This will come up
+      in particularly when we talk about issues surrounding problem
+      partitioning and load balancing.
+    </aside>
   </section>
 
 </section>
@@ -543,7 +1023,20 @@ for (i = 0; i &lt; n; ++i)
 
   <section>
     <h2>Patterns and Benchmarks</h2>
+
+    <aside class="notes">
+      So far, I've mostly told you that serial performance is hard and
+      parallel performance is harder, and that things like data
+      movement, serial setup costs, and communication overheads can
+      easily keep us from getting good speedup.  Indeed, we might even
+      slow down.  But we can look for computational patterns that
+      particularly lend themselves to parallelism -- or not.
+      Benchmarks of a model problem that follows a similar pattern may
+      tell us what type of performance to hope or and  how to think
+      about getting that performance.
+    </aside>
   </section>
+
 
   <section>
     <h3>Pleasing Parallelism</h3>
@@ -560,6 +1053,20 @@ for (i = 0; i &lt; n; ++i)
       speedups!
     </p>
     <p>Says nothing about hard-to-parallelize tasks.</p>
+
+    <aside class="notes">
+      Maybe the easiest class to deal with was already suggested in
+      our discussion.  If dependencies and communication are barriers
+      to performance, we should do well when we have independent
+      tasks and require little communication.  These used to be called
+      embarrassingly parallel problems, until someone realized that
+      maybe we should not be embarrassed by good fortune.  So now the
+      terminology is pleasingly parallel.  Examples include Monte
+      Carlo computations and map calculations in map-reduce workflows.
+      The whole area of high-throughput computing (related to, but not
+      the same as, HPC) involves dealing with these types of workflows
+      effectively.
+    </aside>
   </section>
 
 
@@ -571,6 +1078,13 @@ for (i = 0; i &lt; n; ++i)
       <li>What is the best performance I reasonably expect?</li>
       <li>How do I get that performance?</li>
     </ul>
+
+    <aside class="notes">
+      If you don't have a pleasingly parallel task, you will probably
+      face a fight to get good parallel scaling.  The question, then,
+      is what you can reasonably hope to get, and how do you reach
+      those hopes.
+    </aside>
   </section>
 
 
@@ -584,6 +1098,14 @@ for (i = 0; i &lt; n; ++i)
       <li>Is a prototype for much dense linear algebra.</li>
       <li>Is the key to the Linpack benchmark.</li>
     </ul>
+
+    <aside class="notes">
+      We've seen one example of a parallel pattern for which we can
+      achieve good scaling even though it is not pleasingly parallel.
+      That is, dense linear algebra and its relatives (for which
+      matrix multiply and linear solves are good benchmark examples)
+      can be done in an efficient and parallel way.
+    </aside>
   </section>
 
 
@@ -598,6 +1120,19 @@ for (i = 0; i &lt; n; ++i)
     </p>
 
     <p>NB: Uninformative benchmarks will lead you astray.</p>
+
+    <aside class="notes">
+      Not everything is pleasingly parallel or dense linear algebra.  But
+      we will spend a couple lectures talking about other types of
+      patterns that occur often in scientific computing, and how we
+      think about parallelizing those computational patterns.
+      Sometimes, we can even reduce our problem to a common kernel of
+      computation that appears in many settings; ideally, we'd then
+      like to find a library that does that kernel fast, so we can use
+      it to make our code go fast!  Of course, we have to watch out
+      for getting the pattern wrong, but that's a hazard in all sorts
+      of endeavors, and not just HPC.
+    </aside>
   </section>
 
 </section>
@@ -605,4 +1140,15 @@ for (i = 0; i &lt; n; ++i)
 
 <section>
   <h2>Onward!</h2>
+
+  <aside class="notes">
+    So now that we've seen the speed of light calculation, and the
+    things that prevent us from reaching the speed of light both in serial
+    and in parallel, we will turn next to serial architecture.
+    In particular will talk about two aspects that are very important
+    to high-performance computing: instruction level parallelism and
+    memory architecture.
+
+    Talk to you again soon!
+  </aside>
 </section>
