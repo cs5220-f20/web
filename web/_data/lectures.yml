@@ -21,7 +21,7 @@
   info: Performance basics
   files:
     - info: Slides
-      file: lec/2020-09-03-perf-basics.html
+      file: lec/2020-09-08-perf-basics.html
 -
   date: 2020-09-10
   info: Single processor architecture
