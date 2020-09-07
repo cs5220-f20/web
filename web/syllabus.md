@@ -11,7 +11,7 @@ Lecture location: Online
 
 Prof: [David Bindel](http://www.cs.cornell.edu/~bindel)  
 E-mail: <bindel@cornell.edu>  
-OH: TBA or [by appointment](http://www.meetme.so/DavidBindel).
+OH: [Thu 2-4](https://www.cs.cornell.edu/courses/CS5220/2020fa/netid/index.html) or [by appointment](http://www.meetme.so/DavidBindel).
 
 *Enrollment*: In order to ensure CS students are able to meet their
 requirements, initial enrollment in several upper-level CS courses
