@@ -91,7 +91,7 @@ audio: 2020-09-03-perf-basics
       So performance is not all that matters.
 
       Performance matters.  So do issues like portability,
-      readability, and debuggability of your code.   You need too
+      readability, and debuggability of your code.   You need to
       understand a little about all of these things in order to make
       intelligent design choices.
     </aside>
@@ -118,7 +118,7 @@ audio: 2020-09-03-perf-basics
       serial performance without too much agony is by using fast
       libraries and letting others do the hard work.  Of course,
       that means figuring out how to express the computations we want
-      in terms of the library calls we know about  (or can find).
+      in terms of the library calls we know about (or can find).
     </aside>
   </section>
 
@@ -200,7 +200,7 @@ audio: 2020-09-03-perf-basics
     </ul>
 
     <aside class="notes">
-      Before we talk about floating point operations for second, we
+      Before we talk about floating point operations per second, we
       have to talk about floating point operations.  And before that,
       we have to talk about floating point, though briefly.  Floating
       point arithmetic is how we approximate real arithmetic on
@@ -230,7 +230,7 @@ audio: 2020-09-03-perf-basics
     <p>Linpack results are double precision</p>
 
     <aside class="notes">
-      The two most common floating point standards in numerical codes
+      The two most common floating point formats in numerical codes
       are the IEEE 754 double and single precision formats, which are
       64 bits and 32 bits in memory, respectively.  When we specify
       flop rates, we need to specify a precision.  The Linpack results
@@ -259,13 +259,13 @@ audio: 2020-09-03-perf-basics
       precision formats.  There are two of these -- Float16 and
       BFloat16 -- and there is a lot of interest in using them for
       machine learning tasks.  But there are a lot of things you can
-      get away from in double or single precision that become very dangerous in
+      get away with in double or single precision that become very dangerous in
       half precision, so these formats should be treated with some
       care.
 
       In addition, the 754 standard also specifies decimal floating
       point formats.  This used to be a completely different standard
-      (IEEE 854), but both formats appeared in IEEE 754-2008.  I was
+      (IEEE 854), but both formats appeared together in IEEE 754-2008.  I was
       actually active on the 754-2008 committee for a time while I was
       a graduate student at Berkeley.  It was a learning experience!
       The most recent version of the standard is IEEE 754-2019.
@@ -333,7 +333,7 @@ audio: 2020-09-03-perf-basics
       More than one instruction can be started in a single cycle, and
       the units are pipelined.  We'll talk more about what this means
       in the next deck, but for now you should just know that, at
-      theoretical peak, we can actually start two vector FMA per unit
+      theoretical peak, we can actually start two vector FMA 
       per cycle.  And we often count an FMA as two flops.
     </aside>
   </section>
@@ -432,10 +432,10 @@ audio: 2020-09-03-perf-basics
 
     <aside class="notes">
       All right.  Assuming that you are not using the same model of
-      MacBook Air, what is the theoretical peak (double precision)
-      flop rate on the CPUs on your machine, whatever it may be?
-      I've linked a StackOverflow thread that discusses some of the
-      relevant parameters for various families of processors.
+      MacBook Air, take a moment: what is the theoretical peak (double
+      precision) flop rate on the CPUs on your machine, whatever it
+      may be?  I've linked a StackOverflow thread that discusses some
+      of the relevant parameters for various families of processors.
       I suggest going to look it up!
     </aside>
   </section>
@@ -934,10 +934,10 @@ dbindel@MacBook-Air-5 codes % time ./a.out
     </p>
 
     <aside class="notes">
-      The analogue to Amdahl's law is Gustafson's law.  Gutsafson
-      says that when we scale the problem size with the number of
-      processors, the scaled speedup grows linearly with the processor
-      count.
+      The analogue of Amdahl's law for weak scaling is Gustafson's
+      law.  Gutsafson says that when we scale the problem size with
+      the number of processors, the scaled speedup grows linearly with
+      the processor count.
     </aside>
   </section>
 
@@ -958,9 +958,9 @@ dbindel@MacBook-Air-5 codes % time ./a.out
       work.  But many algorithms have sections that, while not serial,
       have limited parallelism.  For example, consider processing a
       tree from the leaves to the root: lots of parallelism at the
-      leaves, little close too the root.  There are also cases where
+      leaves, little close to the root.  There are also cases where
       we have to worry about coordination overheads that might
-      actually grow with the number of processsors!  Amdahl and
+      actually grow with the number of processors!  Amdahl and
       Gustafson capture the spirit of all these problems, if not all
       the details.  The point is that we have to keep the
       less-parallel overheads small relative to the work being done
@@ -1035,8 +1035,9 @@ dbindel@MacBook-Air-5 codes % time ./a.out
       easily keep us from getting good speedup.  Indeed, we might even
       slow down.  But we can look for computational patterns that
       particularly lend themselves to parallelism -- or not.
-      Benchmarks of a model problem that follows a similar pattern may
-      tell us what type of performance to hope or and  how to think
+      Benchmarks of a model problem that follows a similar
+      computational pattern may
+      tell us what type of performance to hope or and how to think
       about getting that performance.
     </aside>
   </section>
@@ -1149,7 +1150,7 @@ dbindel@MacBook-Air-5 codes % time ./a.out
     So now that we've seen the speed of light calculation, and the
     things that prevent us from reaching the speed of light both in serial
     and in parallel, we will turn next to serial architecture.
-    In particular will talk about two aspects that are very important
+    In particular we will talk about two aspects that are very important
     to high-performance computing: instruction level parallelism and
     memory architecture.
 
