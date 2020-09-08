@@ -22,6 +22,8 @@
   files:
     - info: Slides
       file: lec/2020-09-08-perf-basics.html
+    - info: Meeting notes
+      file: lec/2020-09-08-meeting.html
 -
   date: 2020-09-10
   info: Single processor architecture
