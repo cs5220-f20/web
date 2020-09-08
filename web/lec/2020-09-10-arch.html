@@ -24,64 +24,80 @@ audio: 2020-09-10-arch
 
 
 <section>
-  <h3>Just for fun</h3>
-</section>
 
-
-<section data-background-iframe="https://www.youtube.com/embed/fKK933KK6Gg?autoplay=1">
-</section>
-
-
-<section>
-  <h3>Is this fair?</h3>
-  <p>
-    See:
-    <a href="http://web.eecs.utk.edu/~dongarra/ccgsc2010/slides/talk27-vuduc.pdf">“Should
-      I port my code to a GPU?”</a>)
-  </p>
-</section>
-
-
-<section>
-  <h3>The idealized machine</h3>
-  <ul>
-    <li><p>Address space of named words</p></li>
-    <li><p>Basic ops: register read/write, logic, arithmetic</p></li>
-    <li><p>Everything runs in the program order</p></li>
-    <li><p>High-level language <span class="math inline">\(\rightarrow\)</span> “obvious” machine code</p></li>
-    <li><p>All operations take about the same amount of time</p></li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>The real world</h3>
-
-  <p>Memory operations are <em>not</em> all the same!</p>
-  <ul>
-    <li><p>Speeds vary (registers and caches)</p></li>
-    <li><p>Memory layout dramatically affects performance</p></li>
-  </ul>
+  <section>
+    <h2>Just for fun</h2>
   </section>
+
+
+  <section data-background-iframe="https://www.youtube.com/embed/fKK933KK6Gg?autoplay=1">
+  </section>
+
+
+  <section>
+    <h3>Is this fair?</h3>
+    <p>
+      See:
+      <a href="http://web.eecs.utk.edu/~dongarra/ccgsc2010/slides/talk27-vuduc.pdf">“Should
+        I port my code to a GPU?”</a>)
+    </p>
+  </section>
+
 </section>
 
 
 <section>
-  <h3>The real world</h3>
-  <p>Instructions are non-obvious!</p>
-  <ul>
-    <li><p>Pipelining allows instructions to overlap</p></li>
-    <li><p>Functional units run in parallel (and out of order)</p></li>
-    <li><p>Instructions take different amounts of time</p></li>
-    <li><p>Different costs for different orders and instruction mixes</p></li>
-  </ul>
-</section>
 
 
-<section>
-  <h3>The real world</h3>
-  <p>Our goal: enough understanding to help the compiler out.</p>
+  <section>
+    <h2>The real world</h2>
+  </section>
+
+
+  <section>
+    <h3>The idealized machine</h3>
+    <ul>
+      <li><p>Address space of named words</p></li>
+      <li><p>Basic ops: register read/write, logic, arithmetic</p></li>
+      <li><p>Everything runs in the program order</p></li>
+      <li><p>High-level language <span class="math inline">\(\rightarrow\)</span> “obvious” machine code</p></li>
+      <li><p>All operations take about the same amount of time</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>The real world</h3>
+
+    <p>Memory operations are <em>not</em> all the same!</p>
+    <ul>
+      <li><p>Speeds vary (registers and caches)</p></li>
+      <li><p>Memory layout dramatically affects performance</p></li>
+    </ul>
+    </section>
+  </section>
+
+
+  <section>
+    <h3>The real world</h3>
+    <p>Instructions are non-obvious!</p>
+    <ul>
+      <li><p>Pipelining allows instructions to overlap</p></li>
+      <li><p>Functional units run in parallel (and out of order)</p></li>
+      <li><p>Instructions take different amounts of time</p></li>
+      <li><p>Different costs for different orders and instruction mixes</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>The real world</h3>
+    <p>Our goal: enough understanding to help the compiler out.</p>
+  </section>
+
+
 </section>
+
 
 
 <section>
