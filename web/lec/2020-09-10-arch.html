@@ -298,36 +298,6 @@ audio: 2020-09-10-arch
 
 
   <section>
-    <h3>Out-of-order execution</h3>
-    <p>Modern CPUs are <em>wide</em> and <em>out-of-order</em>:</p>
-    <ul>
-      <li><p>Wide: Fetch/decode or retire multiple ops at once</p>
-        <ul>
-          <li><p>Limits: Instruction mix<br/>
-              (Different ops use different ports)</p></li>
-          <li><p>NB: May dynamically translate to micro-ops</p></li>
-      </ul></li>
-      <li><p>Out-of-order: <em>Looks</em> in-order, internally not!</p>
-        <ul>
-          <li>Limits: Data dependencies</li>
-      </ul></li>
-    </ul>
-  </section>
-
-
-  <section>
-    <h3>Out-of-order execution</h3>
-    <p>Details are <em>very</em> hard to work out manually</p>
-    <ul>
-      <li><p>Don’t generally know the micro-op breakdown!</p></li>
-      <li><p>Tricky to think through even if we did</p></li>
-      <li><p>Compilers help a lot with this</p></li>
-      <li><p>But they need a good mix of independent ops</p></li>
-    </ul>
-  </section>
-
-
-  <section>
     <h3>SIMD</h3>
     <ul>
       <li><p><em>S</em>ingle <em>I</em>nstruction <em>M</em>ultiple <em>D</em>ata</p></li>
@@ -340,12 +310,50 @@ audio: 2020-09-10-arch
 
 
   <section>
+    <h3>Wide front-end</h3>
+
+    <p>Fetch/decode or retire multiple ops at once</p>
+    <ul>
+      <li><p>Limited by instruction mix<br/>
+          (Different ops use different ports)</p></li>
+      <li><p>NB: May dynamically translate to micro-ops</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Hyperthreading</h3>
+
+    <p>Support multiple HW threads / core</p>
+    <ul>
+      <li>Independent registers, program counter</li>
+      <li>Shared functional units</li>
+      <li>Helps feed core independent work</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Out-of-order execution</h3>
+    <ul>
+      <li><p>Out-of-order: <em>Looks</em> in-order, internally not!</p>
+        <ul>
+          <li>Limits: Data dependencies</li>
+      </ul></li>
+      <li><p>Don’t generally know the micro-op breakdown!</p></li>
+      <li><p>Tricky to think through even if we did</p></li>
+      <li><p>Compilers help a lot with this</p></li>
+      <li><p>But they need a good mix of independent ops</p></li>
+    </ul>
+  </section>
+
+
+  <section>
     <h3>Example: My laptop</h3>
     <ul>
       <li><p>Intel Core i5-8210Y CPU at 1.6 GHz (3.6 GHz turbo).<br/>
           2 core / 4 thread.</p></li>
-      <li><p>AVX units provide up to 8 double flops/cycle<br />
-          (Simultaneous vector add + vector multiply)</p></li>
+      <li><p>AVX units work on 256-bit registers</p></li>
       <li><p>Wide dynamic execution (up to four ops/cycle)</p>
         <ul>
           <li>Haswell: two FMA ports, can retire two at a time</li>
@@ -369,6 +377,7 @@ audio: 2020-09-10-arch
       </ul></li>
     </ul>
   </section>
+
 
   <section>
     <h3>Punchline</h3>
