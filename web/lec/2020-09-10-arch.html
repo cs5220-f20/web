@@ -356,6 +356,7 @@ audio: 2020-09-10-arch
       <li>Out-of-order scheduling to functional units</li>
       <li>Pipelining within functional units</li>
       <li>In-order commit of finished ops</li>
+      <li>Can discard before commit<br/>(speculative execution)</li>
     </ul>
   </section>
 
@@ -390,10 +391,22 @@ audio: 2020-09-10-arch
     <ul>
       <li><p>Set optimization flags, pragmas, etc</p></li>
       <li><p>Make code obvious and predictable</p></li>
+      <li><p>Expose local independent work</p></li>
       <li><p>Use special intrinsics or library routines</p></li>
       <li><p>Data layouts, algorithms to suit machine</p></li>
     </ul>
     <p>You handle high-level, compiler handles low-level.</p>
+  </section>
+
+
+  <section>
+    <h3>Punchline</h3>
+
+    <p>The goal:</p>
+    <ul>
+      <li>You handle high-level optimization</li>
+      <li>Compiler handles low-level stuff</li>
+    </ul>
   </section>
 
 
