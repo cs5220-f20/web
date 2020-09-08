@@ -33,9 +33,12 @@ audio: 2020-09-10-arch
 
 
 <section>
-  <p><a href="http://www.youtube.com/watch?v=fKK933KK6Gg" class="uri">http://www.youtube.com/watch?v=fKK933KK6Gg</a></p>
-  <p>Is this a fair portrayal of your CPU?<br />
-    (See Rich Vuduc’s talk, <a href="http://web.eecs.utk.edu/~dongarra/ccgsc2010/slides/talk27-vuduc.pdf">“Should I port my code to a GPU?”</a>)</p>
+  <h3>Is this fair?</h3>
+  <p>
+    See:
+    <a href="http://web.eecs.utk.edu/~dongarra/ccgsc2010/slides/talk27-vuduc.pdf">“Should
+      I port my code to a GPU?”</a>)
+  </p>
 </section>
 
 
@@ -43,29 +46,40 @@ audio: 2020-09-10-arch
   <h3>The idealized machine</h3>
   <ul>
     <li><p>Address space of named words</p></li>
-    <li><p>Basic operations are register read/write, logic, arithmetic</p></li>
+    <li><p>Basic ops: register read/write, logic, arithmetic</p></li>
     <li><p>Everything runs in the program order</p></li>
     <li><p>High-level language <span class="math inline">\(\rightarrow\)</span> “obvious” machine code</p></li>
     <li><p>All operations take about the same amount of time</p></li>
   </ul>
 </section>
 
+
 <section>
   <h3>The real world</h3>
+
+  <p>Memory operations are <em>not</em> all the same!</p>
   <ul>
-    <li><p>Memory operations are <em>not</em> all the same!</p>
-      <ul>
-        <li><p>Registers and caches lead to variable access speeds</p></li>
-        <li><p>Different memory layouts dramatically affect performance</p></li>
-    </ul></li>
-    <li><p>Instructions are non-obvious!</p>
-      <ul>
-        <li><p>Pipelining allows instructions to overlap</p></li>
-        <li><p>Functional units run in parallel (and out of order)</p></li>
-        <li><p>Instructions take different amounts of time</p></li>
-        <li><p>Different costs for different orders and instruction mixes</p></li>
-    </ul></li>
+    <li><p>Speeds vary (registers and caches)</p></li>
+    <li><p>Memory layout dramatically affects performance</p></li>
   </ul>
+  </section>
+</section>
+
+
+<section>
+  <h3>The real world</h3>
+  <p>Instructions are non-obvious!</p>
+  <ul>
+    <li><p>Pipelining allows instructions to overlap</p></li>
+    <li><p>Functional units run in parallel (and out of order)</p></li>
+    <li><p>Instructions take different amounts of time</p></li>
+    <li><p>Different costs for different orders and instruction mixes</p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>The real world</h3>
   <p>Our goal: enough understanding to help the compiler out.</p>
 </section>
 
@@ -73,13 +87,18 @@ audio: 2020-09-10-arch
 <section>
   <h3>Prelude</h3>
   <p>We hold these truths to be self-evident:</p>
-  <ol type="1">
+  <ol>
     <li><p>One should not sacrifice correctness for speed</p></li>
     <li><p>One should not re-invent (or re-tune) the wheel</p></li>
     <li><p>Your time matters more than computer time</p></li>
   </ol>
+</section>
+
+
+<section>
+  <h3>Prelude</h3>
   <p>Less obvious, but still true:</p>
-  <ol type="1">
+  <ol>
     <li><p>Most of the time goes to a few bottlenecks</p></li>
     <li><p>The bottlenecks are hard to find without measuring</p></li>
     <li><p>Communication is expensive (and often a bottleneck)</p></li>
@@ -93,8 +112,8 @@ audio: 2020-09-10-arch
 
 <section>
   <h3>A sketch of reality</h3>
-  <p>Today, a play in two acts: <a href="#/fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
-  <ol type="1">
+  <p>Today, a play in two acts:</p>
+  <ol>
     <li><p>Act 1: One core is not so serial</p></li>
     <li><p>Act 2: Memory matters</p></li>
   </ol>
@@ -102,78 +121,81 @@ audio: 2020-09-10-arch
 
 
 <section>
-  <h3>Act 1</h3>
-  <p>One core is not so serial.</p>
-</section>
+
+  <section>
+    <h3>Act 1</h3>
+    <p>One core is not so serial.</p>
+  </section>
 
 
-<section>
-  <h3>Parallel processing at the laundromat</h3>
-  <ul>
-    <li><p>Three stages to laundry: wash, dry, fold.</p></li>
-    <li><p>Three loads: darks, lights, underwear</p></li>
-    <li><p>How long will this take?</p></li>
-  </ul>
-</section>
+  <section>
+    <h3>Parallel processing at the laundromat</h3>
+    <ul>
+      <li><p>Three stages to laundry: wash, dry, fold.</p></li>
+      <li><p>Three loads: darks, lights, underwear</p></li>
+      <li><p>How long will this take?</p></li>
+    </ul>
+  </section>
 
 
-<section>
-  <h3>Parallel processing at the laundromat</h3>
-  <ul>
-    <li><p>Serial version:<br />
-      </p>
-      <table>
-        <thead>
-          <tr class="header">
-            <th style="text-align: left;">1</th>
-            <th style="text-align: left;">2</th>
-            <th style="text-align: left;">3</th>
-            <th style="text-align: left;">4</th>
-            <th style="text-align: left;">5</th>
-            <th style="text-align: left;">6</th>
-            <th style="text-align: left;">7</th>
-            <th style="text-align: left;">8</th>
-            <th style="text-align: left;">9</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="odd">
-            <td style="text-align: left;">wash</td>
-            <td style="text-align: left;">dry</td>
-            <td style="text-align: left;">fold</td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-          </tr>
-          <tr class="even">
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;">wash</td>
-            <td style="text-align: left;">dry</td>
-            <td style="text-align: left;">fold</td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-          </tr>
-          <tr class="odd">
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;">wash</td>
-            <td style="text-align: left;">dry</td>
-            <td style="text-align: left;">fold</td>
-          </tr>
-        </tbody>
-    </table></li>
-    <li><p>Pipeline version:<br />
-      </p>
+  <section>
+    <h3>Parallel processing at the laundromat</h3>
+    <p>Serial version:</p>
+    <table>
+      <thead>
+        <tr class="header">
+          <th style="text-align: left;">1</th>
+          <th style="text-align: left;">2</th>
+          <th style="text-align: left;">3</th>
+          <th style="text-align: left;">4</th>
+          <th style="text-align: left;">5</th>
+          <th style="text-align: left;">6</th>
+          <th style="text-align: left;">7</th>
+          <th style="text-align: left;">8</th>
+          <th style="text-align: left;">9</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="odd">
+          <td style="text-align: left;">wash</td>
+          <td style="text-align: left;">dry</td>
+          <td style="text-align: left;">fold</td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+        </tr>
+        <tr class="even">
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;">wash</td>
+          <td style="text-align: left;">dry</td>
+          <td style="text-align: left;">fold</td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+        </tr>
+        <tr class="odd">
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;">wash</td>
+          <td style="text-align: left;">dry</td>
+          <td style="text-align: left;">fold</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h3>Parallel processing at the laundromat</h3>
+      <p>Pipeline version:</p>
       <table>
         <thead>
           <tr class="header">
@@ -201,7 +223,7 @@ audio: 2020-09-10-arch
             <td style="text-align: left;">fold</td>
             <td style="text-align: left;"></td>
             <td>Cat videos?</td>
-          </tr>
+            </tr>
           <tr class="odd">
             <td style="text-align: left;"></td>
             <td style="text-align: left;"></td>
@@ -211,272 +233,281 @@ audio: 2020-09-10-arch
             <td>Gym and tanning?</td>
           </tr>
         </tbody>
-    </table></li>
-  </ul>
+      </table>
+
+  </section>
+
+
+  <section>
+    <h3>Pipelining</h3>
+    <ul>
+      <li><p>Pipelining improves <em>bandwidth</em>, but not <em>latency</em></p></li>
+      <li><p>Potential speedup = number of stages</p>
+        <ul>
+          <li>But what if there’s a branch?</li>
+      </ul></li>
+      <li><p>Different pipelines for different functional units</p>
+        <ul>
+          <li><p>Front-end has a pipeline</p></li>
+          <li><p>Functional units have own pipelines</p>
+            <ul>
+              <li>Example: FP adder, FP multiplier</li>
+              <li>Divider often not pipelined</li>
+            </ul></li>
+        </ul>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Out-of-order execution</h3>
+    <p>Modern CPUs are <em>wide</em> and <em>out-of-order</em>:</p>
+    <ul>
+      <li><p>Wide: Fetch/decode or retire multiple ops at once</p>
+        <ul>
+          <li><p>Limits: Instruction mix (different ops, different ports)</p></li>
+          <li><p>NB: May dynamically translate to micro-ops</p></li>
+      </ul></li>
+      <li><p>Out-of-order: <em>Looks</em> in-order, internally not!</p>
+        <ul>
+          <li>Limits: Data dependencies</li>
+      </ul></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Out-of-order execution</h3>
+    <p>Details are <em>very</em> hard to work out manually</p>
+    <ul>
+      <li><p>Don’t generally know the micro-op breakdown!</p></li>
+      <li><p>Tricky to think through even if we did</p></li>
+      <li><p>Compilers help a lot with this</p></li>
+      <li><p>But they need a good mix of independent ops</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>SIMD</h3>
+    <ul>
+      <li><p><em>S</em>ingle <em>I</em>nstruction <em>M</em>ultiple <em>D</em>ata</p></li>
+      <li><p>Cray-1 (1976): 8 registers <span class="math inline">\(\times\)</span> 64 words of 64 bits each</p></li>
+      <li><p>Resurgence in mid-late 90s (for graphics)</p></li>
+      <li><p>Now short vectors are ubiquitous</p></li>
+      <li><p>Alignment often matters</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Example: My laptop</h3>
+    <ul>
+      <li><p>Intel Core i5-8210Y CPU at 1.6 GHz (3.6 GHz turbo).<br/>
+          2 core / 4 thread.</p></li>
+      <li><p>AVX units provide up to 8 double flops/cycle<br />
+          (Simultaneous vector add + vector multiply)</p></li>
+      <li><p>Wide dynamic execution: up to four full instructions at once</p>
+        <ul>
+          <li>Haswell: two FMA ports, can retire two at a time</li>
+      </ul></li>
+      <li><p>Operations internally broken down into “micro-ops”</p>
+        <ul>
+          <li>Cache micro-ops – like a hardware JIT?!</li>
+      </ul></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Punchline</h3>
+    <ul>
+      <li><p>Special features: SIMD instructions, maybe FMAs, ...</p></li>
+      <li><p>Compiler understands how to utilize these <em>in principle</em></p>
+        <ul>
+          <li><p>Rearranges instructions to get a good mix</p></li>
+          <li><p>Tries to make use of FMAs, SIMD instructions, etc</p></li>
+      </ul></li>
+      <li><p>In practice, needs some help:</p>
+        <ul>
+          <li><p>Set optimization flags, pragmas, etc</p></li>
+          <li><p>Rearrange code to make things obvious and predictable</p></li>
+          <li><p>Use special intrinsics or library routines</p></li>
+          <li><p>Choose data layouts, algorithms that suit the machine</p></li>
+      </ul></li>
+      <li><p>Goal: You handle high-level, compiler handles low-level.</p></li>
+    </ul>
+  </section>
+
 </section>
 
 
 <section>
-  <h3>Pipelining</h3>
-  <ul>
-    <li><p>Pipelining improves <em>bandwidth</em>, but not <em>latency</em></p></li>
-    <li><p>Potential speedup = number of stages</p>
-      <ul>
-        <li>But what if there’s a branch?</li>
-    </ul></li>
-    <li><p>Different pipelines for different functional units</p>
-      <ul>
-        <li><p>Front-end has a pipeline</p></li>
-        <li><p>Functional units (FP adder, FP multiplier) pipelined</p></li>
-        <li><p>Divider is frequently not pipelined</p></li>
-    </ul></li>
-  </ul>
+
+
+  <section>
+    <h3>Act 2</h3>
+    <p>Memory matters.</p>
+  </section>
+
+
+  <section>
+    <h3>My machine</h3>
+    <ul>
+      <li><p>Theoretical peak flop rate: 83.2 GFlop/s</p></li>
+      <li><p>Peak memory bandwidth: 25.6 GB/s</p></li>
+      <li><p>Arithmetic intensity = flops / memory accesses</p></li>
+      <li><p>Example: Sum several million doubles (AI = 1) – how fast?</p></li>
+      <li><p>So what can we do? Not much if lots of fetches, but...</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Cache basics</h3>
+    <p>Programs usually have <em>locality</em></p>
+    <ul>
+      <li><p><em>Spatial locality</em>: things close to each other tend to be accessed consecutively</p></li>
+      <li><p><em>Temporal locality</em>: use a “working set” of data repeatedly</p></li>
+    </ul>
+    <p>Cache hierarchy built to use locality.</p>
+  </section>
+
+
+  <section>
+    <h3>Cache basics</h3>
+    <ul>
+      <li><p>Memory <em>latency</em> = how long to get a requested item</p></li>
+      <li><p>Memory <em>bandwidth</em> = how fast memory can provide data</p></li>
+      <li><p>Bandwidth improving faster than latency</p></li>
+    </ul>
+    <p>Caches help:</p>
+    <ul>
+      <li><p>Hide memory costs by reusing data</p>
+        <ul>
+          <li>Exploit temporal locality</li>
+      </ul></li>
+      <li><p>Use bandwidth to fetch a <em>cache line</em> all at once</p>
+        <ul>
+          <li>Exploit spatial locality</li>
+      </ul></li>
+      <li><p>Use bandwidth to support multiple outstanding reads</p></li>
+      <li><p>Overlap computation and communication with memory</p>
+        <ul>
+          <li>Prefetching</li>
+      </ul></li>
+    </ul>
+    <p>This is mostly automatic and implicit.</p>
+  </section>
+
+
+  <section>
+    <h3>Cache basics</h3>
+    <ul>
+      <li><p>Store cache <em>line</em>s of several bytes</p></li>
+      <li><p>Cache <em>hit</em> when copy of needed data in cache</p></li>
+      <li><p>Cache <em>miss</em> otherwise. Three basic types:</p>
+        <ul>
+          <li><p><em>Compulsory</em> miss: never used this data before</p></li>
+          <li><p><em>Capacity</em> miss: filled the cache with other things since this was last used – working set too big</p></li>
+          <li><p><em>Conflict</em> miss: insufficient associativity for access pattern</p></li>
+      </ul></li>
+      <li><p><em>Associativity</em></p>
+        <ul>
+          <li><p>Direct-mapped: each address can only go in one cache location (e.g. store address xxxx1101 only at cache location 1101)</p></li>
+          <li><p><span class="math inline">\(n\)</span>-way: each address can go into one of <span class="math inline">\(n\)</span> possible cache locations (store up to 16 words with addresses xxxx1101 at cache location 1101).</p></li>
+        </ul>
+        <p>Higher associativity is more expensive.</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Teaser</h3>
+    <p>We have <span class="math inline">\(N = 10^6\)</span> two-dimensional coordinates, and want their centroid. Which of these is faster and why?</p>
+    <ol type="1">
+      <li><p>Store an array of <span class="math inline">\((x_i, y_i)\)</span> coordinates. Loop <span class="math inline">\(i\)</span> and simultaneously sum the <span class="math inline">\(x_i\)</span> and the <span class="math inline">\(y_i\)</span>.</p></li>
+      <li><p>Store an array of <span class="math inline">\((x_i, y_i)\)</span> coordinates. Loop <span class="math inline">\(i\)</span> and sum the <span class="math inline">\(x_i\)</span>, then sum the <span class="math inline">\(y_i\)</span> in a separate loop.</p></li>
+      <li><p>Store the <span class="math inline">\(x_i\)</span> in one array, the <span class="math inline">\(y_i\)</span> in a second array. Sum the <span class="math inline">\(x_i\)</span>, then sum the <span class="math inline">\(y_i\)</span>.</p></li>
+    </ol>
+    <p>Let’s see!</p>
+  </section>
+
+
+  <section>
+    <h3>Caches on my laptop (I think)</h3>
+    <ul>
+      <li><p>32 KB L1 data and memory caches (per core),<br />
+          8-way associative</p></li>
+      <li><p>256 KB L2 cache (per core),<br />
+          8-way associative</p></li>
+      <li><p>3 MB L3 cache (shared by all cores)</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>A memory benchmark (membench)</h3>
+    <pre><code>  for array A of length L from 4 KB to 8MB by 2x
+        for stride s from 4 bytes to L/2 by 2x
+        time the following loop
+        for i = 0 to L by s
+        load A[i] from memory</code></pre>
+  </section>
+
+
+  <section>
+    <h3>membench on my laptop – what do you see?</h3>
+    <figure>
+      <embed data-src="figs/membench/timings_laptop-line.pdf" /><figcaption>image</figcaption>
+    </figure>
+  </section>
+
+
+  <section>
+    <h3>membench on my laptop – what do you see?</h3>
+    <figure>
+      <embed data-src="figs/membench/timings_laptop-heat.pdf" /><figcaption>image</figcaption>
+    </figure>
+  </section>
+
+
+  <section>
+    <h3>membench on my laptop – what do you see?</h3>
+    <figure>
+      <embed data-src="figs/membench/timings_laptop-heat.pdf" style="width:75.0%" /><figcaption>image</figcaption>
+    </figure>
+    <ul>
+      <li><p>Vertical: 64B line size (<span class="math inline">\(2^5\)</span>), 4K page size (<span class="math inline">\(2^{12}\)</span>)</p></li>
+      <li><p>Horizontal: 32K L1 (<span class="math inline">\(2^{15}\)</span>), 256K L2 (<span class="math inline">\(2^{18}\)</span>), 6 MB L3</p></li>
+      <li><p>Diagonal: 8-way cache associativity, 512 entry L2 TLB</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>membench on Totient – what do you see?</h3>
+    <figure>
+      <embed data-src="figs/membench/timings_totient-heat.pdf" /><figcaption>image</figcaption>
+    </figure>
+  </section>
+
+
+  <section>
+    <h3>The moral</h3>
+    <p>Even for simple programs, performance is a complicated function of architecture!</p>
+    <ul>
+      <li><p>Need to understand at least a little to write fast programs</p></li>
+      <li><p>Would like simple models to help understand efficiency</p></li>
+      <li><p>Would like common tricks to help design fast codes</p>
+        <ul>
+          <li>Example: <em>blocking</em> (also called <em>tiling</em>)</li>
+      </ul></li>
+    </ul>
+  </section>
+
+
 </section>
-
-
-<section>
-  <h3>Out-of-order execution</h3>
-  <p>Modern CPUs are <em>wide</em> and <em>out-of-order</em>:</p>
-  <ul>
-    <li><p>Wide: Fetch/decode or retire multiple ops at once</p>
-      <ul>
-        <li><p>Limits: Instruction mix (different ports for different ops)</p></li>
-        <li><p>NB: May dynamically translate to micro-ops</p></li>
-    </ul></li>
-    <li><p>Out-of-order: <em>Looks</em> in-order, internally not!</p>
-      <ul>
-        <li>Limits: Data dependencies</li>
-    </ul></li>
-    <li><p>Details are <em>very</em> hard to work out manually</p>
-      <ul>
-        <li><p>Don’t generally know the micro-op breakdown!</p></li>
-        <li><p>Tricky to think through even if we did</p></li>
-        <li><p>Compilers help a lot with this</p></li>
-        <li><p>But they need a good mix of independent ops</p></li>
-    </ul></li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>SIMD</h3>
-  <ul>
-    <li><p><em>S</em>ingle <em>I</em>nstruction <em>M</em>ultiple <em>D</em>ata</p></li>
-    <li><p>Cray-1 (1976): 8 registers <span class="math inline">\(\times\)</span> 64 words of 64 bits each</p></li>
-    <li><p>Old idea had a resurgence in mid-late 90s (for graphics)</p></li>
-    <li><p>Now short vectors are ubiquitous...</p>
-      <ul>
-        <li><p>Totient CPUs: 256 bits (four doubles) in a vector (AVX)</p></li>
-        <li><p>Totient accel: 512 bits (eight doubles) in a vector (AVX-512)</p></li>
-        <li><p>And then there are GPUs!</p></li>
-    </ul></li>
-    <li><p>Alignment often matters</p></li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Example: My laptop</h3>
-  <p><a href="http://ark.intel.com/products/75991/Intel-Core-i5-4288U-Processor-3M-Cache-up-to-3_10-GHz">MacBook Pro (Retina, 13 in, late 2013).</a></p>
-  <ul>
-    <li><p>Intel Core i5-4288U CPU at 2.6 GHz. 2 core / 4 thread.</p></li>
-    <li><p>AVX units provide up to 8 double flops/cycle<br />
-        (Simultaneous vector add + vector multiply)</p></li>
-    <li><p>Wide dynamic execution: up to four full instructions at once</p>
-      <ul>
-        <li>Haswell has two FMA ports, so can retire two at a time</li>
-    </ul></li>
-    <li><p>Operations internally broken down into “micro-ops”</p>
-      <ul>
-        <li>Cache micro-ops – like a hardware JIT?!</li>
-    </ul></li>
-  </ul>
-  <p>Theoretical peak: 83.2 GFlop/s?</p>
-</section>
-
-
-<section>
-  <h3>Punchline</h3>
-  <ul>
-    <li><p>Special features: SIMD instructions, maybe FMAs, ...</p></li>
-    <li><p>Compiler understands how to utilize these <em>in principle</em></p>
-      <ul>
-        <li><p>Rearranges instructions to get a good mix</p></li>
-        <li><p>Tries to make use of FMAs, SIMD instructions, etc</p></li>
-    </ul></li>
-    <li><p>In practice, needs some help:</p>
-      <ul>
-        <li><p>Set optimization flags, pragmas, etc</p></li>
-        <li><p>Rearrange code to make things obvious and predictable</p></li>
-        <li><p>Use special intrinsics or library routines</p></li>
-        <li><p>Choose data layouts, algorithms that suit the machine</p></li>
-    </ul></li>
-    <li><p>Goal: You handle high-level, compiler handles low-level.</p></li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Act 2</h3>
-  <p>Memory matters.</p>
-</section>
-
-
-<section>
-  <h3>My machine</h3>
-  <ul>
-    <li><p>Theoretical peak flop rate: 83.2 GFlop/s</p></li>
-    <li><p>Peak memory bandwidth: 25.6 GB/s</p></li>
-    <li><p>Arithmetic intensity = flops / memory accesses</p></li>
-    <li><p>Example: Sum several million doubles (AI = 1) – how fast?</p></li>
-    <li><p>So what can we do? Not much if lots of fetches, but...</p></li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Cache basics</h3>
-  <p>Programs usually have <em>locality</em></p>
-  <ul>
-    <li><p><em>Spatial locality</em>: things close to each other tend to be accessed consecutively</p></li>
-    <li><p><em>Temporal locality</em>: use a “working set” of data repeatedly</p></li>
-  </ul>
-  <p>Cache hierarchy built to use locality.</p>
-</section>
-
-
-<section>
-  <h3>Cache basics</h3>
-  <ul>
-    <li><p>Memory <em>latency</em> = how long to get a requested item</p></li>
-    <li><p>Memory <em>bandwidth</em> = how fast memory can provide data</p></li>
-    <li><p>Bandwidth improving faster than latency</p></li>
-  </ul>
-  <p>Caches help:</p>
-  <ul>
-    <li><p>Hide memory costs by reusing data</p>
-      <ul>
-        <li>Exploit temporal locality</li>
-    </ul></li>
-    <li><p>Use bandwidth to fetch a <em>cache line</em> all at once</p>
-      <ul>
-        <li>Exploit spatial locality</li>
-    </ul></li>
-    <li><p>Use bandwidth to support multiple outstanding reads</p></li>
-    <li><p>Overlap computation and communication with memory</p>
-      <ul>
-        <li>Prefetching</li>
-    </ul></li>
-  </ul>
-  <p>This is mostly automatic and implicit.</p>
-</section>
-
-
-<section>
-  <h3>Cache basics</h3>
-  <ul>
-    <li><p>Store cache <em>line</em>s of several bytes</p></li>
-    <li><p>Cache <em>hit</em> when copy of needed data in cache</p></li>
-    <li><p>Cache <em>miss</em> otherwise. Three basic types:</p>
-      <ul>
-        <li><p><em>Compulsory</em> miss: never used this data before</p></li>
-        <li><p><em>Capacity</em> miss: filled the cache with other things since this was last used – working set too big</p></li>
-        <li><p><em>Conflict</em> miss: insufficient associativity for access pattern</p></li>
-    </ul></li>
-    <li><p><em>Associativity</em></p>
-      <ul>
-        <li><p>Direct-mapped: each address can only go in one cache location (e.g. store address xxxx1101 only at cache location 1101)</p></li>
-        <li><p><span class="math inline">\(n\)</span>-way: each address can go into one of <span class="math inline">\(n\)</span> possible cache locations (store up to 16 words with addresses xxxx1101 at cache location 1101).</p></li>
-      </ul>
-      <p>Higher associativity is more expensive.</p></li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Teaser</h3>
-  <p>We have <span class="math inline">\(N = 10^6\)</span> two-dimensional coordinates, and want their centroid. Which of these is faster and why?</p>
-  <ol type="1">
-    <li><p>Store an array of <span class="math inline">\((x_i, y_i)\)</span> coordinates. Loop <span class="math inline">\(i\)</span> and simultaneously sum the <span class="math inline">\(x_i\)</span> and the <span class="math inline">\(y_i\)</span>.</p></li>
-    <li><p>Store an array of <span class="math inline">\((x_i, y_i)\)</span> coordinates. Loop <span class="math inline">\(i\)</span> and sum the <span class="math inline">\(x_i\)</span>, then sum the <span class="math inline">\(y_i\)</span> in a separate loop.</p></li>
-    <li><p>Store the <span class="math inline">\(x_i\)</span> in one array, the <span class="math inline">\(y_i\)</span> in a second array. Sum the <span class="math inline">\(x_i\)</span>, then sum the <span class="math inline">\(y_i\)</span>.</p></li>
-  </ol>
-  <p>Let’s see!</p>
-</section>
-
-
-<section>
-  <h3>Caches on my laptop (I think)</h3>
-  <ul>
-    <li><p>32 KB L1 data and memory caches (per core),<br />
-        8-way associative</p></li>
-    <li><p>256 KB L2 cache (per core),<br />
-        8-way associative</p></li>
-    <li><p>3 MB L3 cache (shared by all cores)</p></li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>A memory benchmark (membench)</h3>
-  <pre><code>  for array A of length L from 4 KB to 8MB by 2x
-      for stride s from 4 bytes to L/2 by 2x
-      time the following loop
-      for i = 0 to L by s
-      load A[i] from memory</code></pre>
-</section>
-
-
-<section>
-  <h3>membench on my laptop – what do you see?</h3>
-  <figure>
-    <embed data-src="figs/membench/timings_laptop-line.pdf" /><figcaption>image</figcaption>
-  </figure>
-</section>
-
-
-<section>
-  <h3>membench on my laptop – what do you see?</h3>
-  <figure>
-    <embed data-src="figs/membench/timings_laptop-heat.pdf" /><figcaption>image</figcaption>
-  </figure>
-</section>
-
-
-<section>
-  <h3>membench on my laptop – what do you see?</h3>
-  <figure>
-    <embed data-src="figs/membench/timings_laptop-heat.pdf" style="width:75.0%" /><figcaption>image</figcaption>
-  </figure>
-  <ul>
-    <li><p>Vertical: 64B line size (<span class="math inline">\(2^5\)</span>), 4K page size (<span class="math inline">\(2^{12}\)</span>)</p></li>
-    <li><p>Horizontal: 32K L1 (<span class="math inline">\(2^{15}\)</span>), 256K L2 (<span class="math inline">\(2^{18}\)</span>), 6 MB L3</p></li>
-    <li><p>Diagonal: 8-way cache associativity, 512 entry L2 TLB</p></li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>membench on Totient – what do you see?</h3>
-  <figure>
-    <embed data-src="figs/membench/timings_totient-heat.pdf" /><figcaption>image</figcaption>
-  </figure>
-</section>
-
-
-<section>
-  <h3>The moral</h3>
-  <p>Even for simple programs, performance is a complicated function of architecture!</p>
-  <ul>
-    <li><p>Need to understand at least a little to write fast programs</p></li>
-    <li><p>Would like simple models to help understand efficiency</p></li>
-    <li><p>Would like common tricks to help design fast codes</p>
-      <ul>
-        <li>Example: <em>blocking</em> (also called <em>tiling</em>)</li>
-    </ul></li>
-  </ul>
-</section>
-
 
 <section>
   <h3>Coda</h3>
