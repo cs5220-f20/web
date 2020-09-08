@@ -518,7 +518,7 @@ audio: 2020-09-10-arch
 
 
   <section>
-    <h3>A memory benchmark (membench)</h3>
+    <h3>A memory benchmark (<a href="https://github.com/cornell-cs5220-f15/membench">membench</a>)</h3>
     <pre><code>  for array A of length L from 4 KB to 8MB by 2x
         for stride s from 4 bytes to L/2 by 2x
         time the following loop
@@ -530,7 +530,12 @@ audio: 2020-09-10-arch
   <section>
     <h3>membench on my laptop</h3>
     <figure>
-      <img data-src="figs/membench/timings-line.png" style="width:80%"/><figcaption>image</figcaption>
+      <img data-src="figs/membench/timings-line.png"
+           alt="Line graph of membench timing data"
+           style="width:80%"/>
+      <figcaption>
+        <small><a href="figs/membench/timings.csv">Raw timings (CSV)</a></small>
+      </figcaption>
     </figure>
   </section>
 
@@ -538,16 +543,18 @@ audio: 2020-09-10-arch
   <section>
     <h3>membench on my laptop</h3>
     <figure>
-      <img data-src="figs/membench/timings-heat.png" style="width:80%"/><figcaption>image</figcaption>
+      <img data-src="figs/membench/timings-heat.png"
+           alt="Heat map of membench timing data"
+           style="width:80%"/>
+      <figcaption>
+        <small><a href="figs/membench/timings.csv">Raw timings (CSV)</a></small>
+      </figcaption>
     </figure>
   </section>
 
 
   <section>
     <h3>membench on my laptop</h3>
-    <figure>
-      <img data-src="figs/membench/timings-heat.png" style="width:50.0%" /><figcaption>image</figcaption>
-    </figure>
     <ul>
       <li><p>Vertical: 64B line size (<span class="math inline">\(2^5\)</span>), 4K page size (<span class="math inline">\(2^{12}\)</span>)</p></li>
       <li><p>Horizontal: 32K L1 (<span class="math inline">\(2^{15}\)</span>), 256K L2 (<span class="math inline">\(2^{18}\)</span>), 6 MB L3</p></li>
