@@ -377,10 +377,9 @@ audio: 2020-09-10-arch
       <li><p>Set optimization flags, pragmas, etc</p></li>
       <li><p>Make code obvious and predictable</p></li>
       <li><p>Use special intrinsics or library routines</p></li>
-      <li><p>Choose data layouts, algorithms that suit the
-          machine</p></li>
+      <li><p>Data layouts, algorithms to suit machine</p></li>
     </ul>
-    <p>Goal: You handle high-level, compiler handles low-level.</p>
+    <p>You handle high-level, compiler handles low-level.</p>
   </section>
 
 </section>
@@ -419,13 +418,17 @@ audio: 2020-09-10-arch
 
 
   <section>
-    <h3>Cache basics</h3>
+    <h3>Basic problem</h3>
     <ul>
       <li><p>Memory <em>latency</em> = how long to get a requested item</p></li>
-      <li><p>Memory <em>bandwidth</em> = how fast memory can provide data</p></li>
+      <li><p>Memory <em>bandwidth</em> = steady-state rate</p></li>
       <li><p>Bandwidth improving faster than latency</p></li>
     </ul>
-    <p>Caches help:</p>
+  </section>
+
+
+  <section>
+    <p>Caches help</p>
     <ul>
       <li><p>Hide memory costs by reusing data</p>
         <ul>
