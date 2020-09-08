@@ -362,18 +362,6 @@ audio: 2020-09-10-arch
 
 
   <section>
-    <h3>All together, now...</h3>
-
-    <ul>
-      <li><p>Don’t generally know the micro-op breakdown!</p></li>
-      <li><p>Tricky to think through even if we did</p></li>
-      <li><p>Compilers help a lot with this</p></li>
-      <li><p>But they need a good mix of independent ops</p></li>
-    </ul>
-  </section>
-
-
-  <section>
     <h3>Punchline</h3>
 
     <p>Compiler understands CPU <em>in principle</em></p>
@@ -424,10 +412,12 @@ audio: 2020-09-10-arch
   <section>
     <h3>My machine</h3>
     <ul>
-      <li><p>Theoretical peak flop rate: 83.2 GFlop/s</p></li>
-      <li><p>Peak memory bandwidth: 25.6 GB/s</p></li>
+      <li><p>Theoretical peak flop rate: 51.2 GFlop/s (w/o turbo)</p></li>
+      <li><p>Peak memory bandwidth: 17 GB/s</p></li>
       <li><p>Arithmetic intensity = flops / memory accesses</p></li>
-      <li><p>Example: Sum several million doubles (AI = 1) – how fast?</p></li>
+      <li><p>Example: Sum several million doubles (AI = 1)?</p>
+        <ul><li><p>Just over 2 GFlop/s peak if BW limited</p></li></ul>
+      </li>
       <li><p>So what can we do? Not much if lots of fetches, but...</p></li>
     </ul>
   </section>
