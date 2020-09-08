@@ -336,10 +336,34 @@ audio: 2020-09-10-arch
   <section>
     <h3>Out-of-order execution</h3>
     <ul>
-      <li><p>Out-of-order: <em>Looks</em> in-order, internally not!</p>
-        <ul>
-          <li>Limits: Data dependencies</li>
-      </ul></li>
+      <li><p>Internally reorder operations</p></li>
+      <li><p>Have to commit instructions in order</p></li>
+      <li><p>May throw away uncommited results<br/>
+          (speculative execution)</li>
+      <li><p>Limited by data dependencies</p></li>
+    </ul>
+  </section>
+
+
+
+  <section>
+    <h3>All together, now...</h3>
+
+    <ul>
+      <li>Front-end reads several ops at once</li>
+      <li>Ops may act on vectors (SIMD)</li>
+      <li>Break into mystery micro-ops (and cache)</li>
+      <li>Out-of-order scheduling to functional units</li>
+      <li>Pipelining within functional units</li>
+      <li>In-order commit of finished ops</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>All together, now...</h3>
+
+    <ul>
       <li><p>Don’t generally know the micro-op breakdown!</p></li>
       <li><p>Tricky to think through even if we did</p></li>
       <li><p>Compilers help a lot with this</p></li>
@@ -349,39 +373,20 @@ audio: 2020-09-10-arch
 
 
   <section>
-    <h3>Example: My laptop</h3>
+    <h3>Punchline</h3>
+
+    <p>Compiler understands CPU <em>in principle</em></p>
     <ul>
-      <li><p>Intel Core i5-8210Y CPU at 1.6 GHz (3.6 GHz turbo).<br/>
-          2 core / 4 thread.</p></li>
-      <li><p>AVX units work on 256-bit registers</p></li>
-      <li><p>Wide dynamic execution (up to four ops/cycle)</p>
-        <ul>
-          <li>Haswell: two FMA ports, can retire two at a time</li>
-      </ul></li>
-      <li><p>Operations internally broken down into “micro-ops”</p>
-        <ul>
-          <li>Cache micro-ops – like a hardware JIT?!</li>
-      </ul></li>
+      <li><p>Rearranges instructions to get a good mix</p></li>
+      <li><p>Tries to make use of FMAs, SIMD instructions, etc</p></li>
     </ul>
   </section>
 
 
   <section>
     <h3>Punchline</h3>
-    <ul>
-      <li><p>Special features: SIMD instructions, maybe FMAs, ...</p></li>
-      <li><p>Compiler understands these <em>in principle</em></p>
-        <ul>
-          <li><p>Rearranges instructions to get a good mix</p></li>
-          <li><p>Tries to make use of FMAs, SIMD instructions, etc</p></li>
-      </ul></li>
-    </ul>
-  </section>
 
-
-  <section>
-    <h3>Punchline</h3>
-    <p>Compiler needs some help:</p>
+    <p>Needs help in practice:</p>
     <ul>
       <li><p>Set optimization flags, pragmas, etc</p></li>
       <li><p>Make code obvious and predictable</p></li>
@@ -390,6 +395,7 @@ audio: 2020-09-10-arch
     </ul>
     <p>You handle high-level, compiler handles low-level.</p>
   </section>
+
 
 </section>
 
