@@ -407,7 +407,7 @@ audio: 2020-09-10-arch
 
 
   <section>
-    <h3>Cache basics</h3>
+    <h3>Locality</h3>
     <p>Programs usually have <em>locality</em></p>
     <ul>
       <li><p><em>Spatial locality</em>: things close to each other tend to be accessed consecutively</p></li>
@@ -428,18 +428,18 @@ audio: 2020-09-10-arch
 
 
   <section>
-    <p>Caches help</p>
+    <h3>How caches help</h3>
     <ul>
       <li><p>Hide memory costs by reusing data</p>
         <ul>
           <li>Exploit temporal locality</li>
       </ul></li>
-      <li><p>Use bandwidth to fetch a <em>cache line</em> all at once</p>
+      <li><p>Use andwidth to fetch a <em>cache line</em> all at once</p>
         <ul>
           <li>Exploit spatial locality</li>
       </ul></li>
-      <li><p>Use bandwidth to support multiple outstanding reads</p></li>
-      <li><p>Overlap computation and communication with memory</p>
+      <li><p>Use bandwidth to support multiple reads</p></li>
+      <li><p>Overlap computation with memory communication</p>
         <ul>
           <li>Prefetching</li>
       </ul></li>
