@@ -415,6 +415,7 @@ audio: 2020-09-10-arch
       <li><p>Memory <em>latency</em> = how long to get a requested item</p></li>
       <li><p>Memory <em>bandwidth</em> = steady-state rate</p></li>
       <li><p>Bandwidth improving faster than latency</p></li>
+      <li><p>Inverse bandwidth remains worse than flop rate</p></li>
     </ul>
   </section>
 
@@ -476,12 +477,18 @@ audio: 2020-09-10-arch
           <li><p><em>Capacity</em> miss: filled the cache with other things since this was last used – working set too big</p></li>
           <li><p><em>Conflict</em> miss: insufficient associativity for access pattern</p></li>
       </ul></li>
-      <li><p><em>Associativity</em></p>
-        <ul>
-          <li><p>Direct-mapped: each address can only go in one cache location (e.g. store address xxxx1101 only at cache location 1101)</p></li>
-          <li><p><span class="math inline">\(n\)</span>-way: each address can go into one of <span class="math inline">\(n\)</span> possible cache locations (store up to 16 words with addresses xxxx1101 at cache location 1101).</p></li>
-        </ul>
-        <p>Higher associativity is more expensive.</p></li>
+    </ul>
+  </section>
+  
+  <section>
+    <h3>Cache associativity</h3>
+
+    <p>Where can data go in cache?</p>
+    <ul>
+      <li><p>Direct-mapped: each address can only go in one cache location (e.g. store address xxxx1101 only at cache location 1101)</p></li>
+      <li><p><span class="math inline">\(n\)</span>-way: each address can go into one of <span class="math inline">\(n\)</span> possible cache locations (store up to 16 words with addresses xxxx1101 at cache location 1101).</p></li>
+    </ul>
+    <p>Higher associativity is more expensive.</p></li>
     </ul>
   </section>
 
@@ -494,18 +501,18 @@ audio: 2020-09-10-arch
       <li><p>Store an array of <span class="math inline">\((x_i, y_i)\)</span> coordinates. Loop <span class="math inline">\(i\)</span> and sum the <span class="math inline">\(x_i\)</span>, then sum the <span class="math inline">\(y_i\)</span> in a separate loop.</p></li>
       <li><p>Store the <span class="math inline">\(x_i\)</span> in one array, the <span class="math inline">\(y_i\)</span> in a second array. Sum the <span class="math inline">\(x_i\)</span>, then sum the <span class="math inline">\(y_i\)</span>.</p></li>
     </ol>
-    <p>Let’s see!</p>
   </section>
 
 
   <section>
-    <h3>Caches on my laptop (I think)</h3>
+    <h3>Caches on my laptop</h3>
     <ul>
       <li><p>32 KB L1 data and memory caches (per core),<br />
           8-way associative</p></li>
       <li><p>256 KB L2 cache (per core),<br />
-          8-way associative</p></li>
-      <li><p>3 MB L3 cache (shared by all cores)</p></li>
+          4-way associative</p></li>
+      <li><p>2 MB L3 cache (per core),<br/>
+          12-way associative</p></li>
     </ul>
   </section>
 
@@ -550,14 +557,6 @@ audio: 2020-09-10-arch
 
 
   <section>
-    <h3>membench on Totient – what do you see?</h3>
-    <figure>
-      <embed data-src="figs/membench/timings_totient-heat.pdf" /><figcaption>image</figcaption>
-    </figure>
-  </section>
-
-
-  <section>
     <h3>The moral</h3>
     <p>Even for simple programs, performance is a complicated function of architecture!</p>
     <ul>
@@ -571,29 +570,4 @@ audio: 2020-09-10-arch
   </section>
 
 
-</section>
-
-<section>
-  <h3>Coda</h3>
-  <p>The Roofline Model.</p>
-</section>
-
-
-<section>
-  <h3>Roofline model</h3>
-  <p>S. Williams, A. Waterman, D. Patterson, “<a href="http://www.eecs.berkeley.edu/Pubs/TechRpts/2008/EECS-2008-134.pdf">Roofline: An Insightful Visual Performance Model for Floating-Point Programs and Multicore Architectures</a>,” CACM, April 2009.</p>
-</section>
-
-
-<section>
-  <h3>Roofline plot basics</h3>
-  <p>Log-log plot (base 2)</p>
-  <ul>
-    <li><p><span class="math inline">\(x\)</span>: Operational intensity (flops/byte)</p></li>
-    <li><p><span class="math inline">\(y\)</span>: Attainable performance (GFlop/s)</p></li>
-    <li><p>Diagonals: Memory limits</p></li>
-    <li><p>Horizontals: Compute limits</p></li>
-    <li><p>Papers: <a href="https://crd.lbl.gov/departments/computer-science/PAR/research/roofline/" class="uri">https://crd.lbl.gov/departments/computer-science/PAR/research/roofline/</a></p></li>
-    <li><p>Tools: <a href="https://bitbucket.org/berkeleylab/cs-roofline-toolkit" class="uri">https://bitbucket.org/berkeleylab/cs-roofline-toolkit</a></p></li>
-  </ul>
 </section>
