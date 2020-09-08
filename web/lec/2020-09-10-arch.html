@@ -410,15 +410,26 @@ audio: 2020-09-10-arch
 
 
   <section>
+    <h3>Basic problem</h3>
+    <ul>
+      <li><p>Memory <em>latency</em> = how long to get a requested item</p></li>
+      <li><p>Memory <em>bandwidth</em> = steady-state rate</p></li>
+      <li><p>Bandwidth improving faster than latency</p></li>
+    </ul>
+  </section>
+
+
+  <section>
     <h3>My machine</h3>
     <ul>
       <li><p>Theoretical peak flop rate: 51.2 GFlop/s (w/o turbo)</p></li>
-      <li><p>Peak memory bandwidth: 17 GB/s</p></li>
+      <li><p>Peak memory bandwidth: 31.79 GB/s (2 banks)</p></li>
       <li><p>Arithmetic intensity = flops / memory accesses</p></li>
       <li><p>Example: Sum several million doubles (AI = 1)?</p>
-        <ul><li><p>Just over 2 GFlop/s peak if BW limited</p></li></ul>
+        <ul><li><p>About 4 GFlop/s peak if BW limited</p></li></ul>
+        <ul><li><p>Much worse if latency limited</p></li></ul>
       </li>
-      <li><p>So what can we do? Not much if lots of fetches, but...</p></li>
+      <li><p>So what can we do?</p></li>
     </ul>
   </section>
 
@@ -435,31 +446,20 @@ audio: 2020-09-10-arch
 
 
   <section>
-    <h3>Basic problem</h3>
-    <ul>
-      <li><p>Memory <em>latency</em> = how long to get a requested item</p></li>
-      <li><p>Memory <em>bandwidth</em> = steady-state rate</p></li>
-      <li><p>Bandwidth improving faster than latency</p></li>
-    </ul>
-  </section>
-
-
-  <section>
     <h3>How caches help</h3>
     <ul>
       <li><p>Hide memory costs by reusing data</p>
         <ul>
           <li>Exploit temporal locality</li>
       </ul></li>
-      <li><p>Use andwidth to fetch a <em>cache line</em> all at once</p>
-        <ul>
-          <li>Exploit spatial locality</li>
-      </ul></li>
-      <li><p>Use bandwidth to support multiple reads</p></li>
-      <li><p>Overlap computation with memory communication</p>
-        <ul>
-          <li>Prefetching</li>
-      </ul></li>
+      <li><p>Use bandwidth to<p>
+          <ul>
+            <li>Fetch by <em>cache line</em> (spatial
+              locality)</li>
+            <li>Support multiple reads</li>
+            <li>Prefetch data</li>
+          </ul>
+      </li>
     </ul>
     <p>This is mostly automatic and implicit.</p>
   </section>
