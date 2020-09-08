@@ -132,11 +132,11 @@ audio: 2020-09-10-arch
   <section>
     <h3>Prelude</h3>
     <p>A little good hygiene will save your sanity</p>
-    <ul>
+    <ol>
       <li>Automate testing</li>
       <li>Time carefully</li>
       <li>Use version control</li>
-    </ul>
+    </ol>
   </section>
 
 
@@ -147,8 +147,8 @@ audio: 2020-09-10-arch
   <h3>A sketch of reality</h3>
   <p>Today, a play in two acts:</p>
   <ol>
-    <li><p>Act 1: One core is not so serial</p></li>
-    <li><p>Act 2: Memory matters</p></li>
+    <li><p>One core is not so serial</p></li>
+    <li><p>Memory matters</p></li>
   </ol>
 </section>
 
@@ -279,15 +279,20 @@ audio: 2020-09-10-arch
         <ul>
           <li>But what if there’s a branch?</li>
       </ul></li>
-      <li><p>Different pipelines for different functional units</p>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Pipelining</h3>
+    <p>Different pipelines for different functional units</p>
+    <ul>
+      <li><p>Front-end has a pipeline</p></li>
+      <li><p>Functional units have own pipelines</p>
         <ul>
-          <li><p>Front-end has a pipeline</p></li>
-          <li><p>Functional units have own pipelines</p>
-            <ul>
-              <li>Example: FP adder, FP multiplier</li>
-              <li>Divider often not pipelined</li>
-            </ul></li>
-        </ul>
+          <li>Example: FP adder, FP multiplier</li>
+          <li>Divider often not pipelined</li>
+      </ul></li>
     </ul>
   </section>
 
@@ -298,7 +303,8 @@ audio: 2020-09-10-arch
     <ul>
       <li><p>Wide: Fetch/decode or retire multiple ops at once</p>
         <ul>
-          <li><p>Limits: Instruction mix (different ops, different ports)</p></li>
+          <li><p>Limits: Instruction mix<br/>
+              (Different ops use different ports)</p></li>
           <li><p>NB: May dynamically translate to micro-ops</p></li>
       </ul></li>
       <li><p>Out-of-order: <em>Looks</em> in-order, internally not!</p>
@@ -340,7 +346,7 @@ audio: 2020-09-10-arch
           2 core / 4 thread.</p></li>
       <li><p>AVX units provide up to 8 double flops/cycle<br />
           (Simultaneous vector add + vector multiply)</p></li>
-      <li><p>Wide dynamic execution: up to four full instructions at once</p>
+      <li><p>Wide dynamic execution (up to four ops/cycle)</p>
         <ul>
           <li>Haswell: two FMA ports, can retire two at a time</li>
       </ul></li>
@@ -356,20 +362,25 @@ audio: 2020-09-10-arch
     <h3>Punchline</h3>
     <ul>
       <li><p>Special features: SIMD instructions, maybe FMAs, ...</p></li>
-      <li><p>Compiler understands how to utilize these <em>in principle</em></p>
+      <li><p>Compiler understands these <em>in principle</em></p>
         <ul>
           <li><p>Rearranges instructions to get a good mix</p></li>
           <li><p>Tries to make use of FMAs, SIMD instructions, etc</p></li>
       </ul></li>
-      <li><p>In practice, needs some help:</p>
-        <ul>
-          <li><p>Set optimization flags, pragmas, etc</p></li>
-          <li><p>Rearrange code to make things obvious and predictable</p></li>
-          <li><p>Use special intrinsics or library routines</p></li>
-          <li><p>Choose data layouts, algorithms that suit the machine</p></li>
-      </ul></li>
-      <li><p>Goal: You handle high-level, compiler handles low-level.</p></li>
     </ul>
+  </section>
+
+  <section>
+    <h3>Punchline</h3>
+    <p>Compiler needs some help:</p>
+    <ul>
+      <li><p>Set optimization flags, pragmas, etc</p></li>
+      <li><p>Make code obvious and predictable</p></li>
+      <li><p>Use special intrinsics or library routines</p></li>
+      <li><p>Choose data layouts, algorithms that suit the
+          machine</p></li>
+    </ul>
+    <p>Goal: You handle high-level, compiler handles low-level.</p>
   </section>
 
 </section>
