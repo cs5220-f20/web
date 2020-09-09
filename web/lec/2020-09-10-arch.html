@@ -27,6 +27,11 @@ audio: 2020-09-10-arch
 
   <section>
     <h2>Just for fun</h2>
+
+    <aside class="notes">
+      Let's start with something fun this is an Nvidia promotional
+      thing that the MythBusters guys did a couple years ago.
+    </aside>
   </section>
 
 
@@ -36,11 +41,21 @@ audio: 2020-09-10-arch
 
   <section>
     <h3>Is this fair?</h3>
+
     <p>
       See:
       <a href="http://web.eecs.utk.edu/~dongarra/ccgsc2010/slides/talk27-vuduc.pdf">“Should
         I port my code to a GPU?”</a>)
     </p>
+
+    <aside class="notes">
+      I told you it would be fun right. Unfortunately this is not a
+      fair representation of what happens with well-tuned codes.  See
+      Rich Vuduc's talk, linked.  GPUs do have an edge, but a lot
+      of the advantage people attribute to GPUs comes from them taking
+      more care in writing fast GPU code than they took in writing
+      fast CPU code.
+    </aside>
   </section>
 
 </section>
@@ -51,11 +66,20 @@ audio: 2020-09-10-arch
 
   <section>
     <h2>The real world</h2>
+
+    <aside class="notes">
+      The video clips leans on some of the stereotypes we talked about
+      last time: namely, the idea that p processors gives you a p-fold
+      speedup.  Well, we'll get to the parallel case.   But for today,
+      we're talking about serial architecture.  And people make equally
+      naive assumptions about the serial case.
+    </aside>
   </section>
 
 
   <section>
     <h3>The idealized machine</h3>
+
     <ul>
       <li><p>Address space of named words</p></li>
       <li><p>Basic ops: register read/write, logic, arithmetic</p></li>
@@ -63,6 +87,19 @@ audio: 2020-09-10-arch
       <li><p>High-level language <span class="math inline">\(\rightarrow\)</span> “obvious” machine code</p></li>
       <li><p>All operations take about the same amount of time</p></li>
     </ul>
+
+    <aside class="notes">
+      The problem isn't so much that people are naïve. Is that when we
+      tell people about computers and introductory programming classes
+      we tell them lies. We tell them that memory is an address space
+      of named words laid out in linear order. Basic operations like
+      register reading logic and arithmetic take about the same amount
+      of time as each other. Everything runs in program order, and
+      high-level language statements translate to "obvious" machine
+      code.  But none of this is really true.  These abstractions are
+      adequate for thinking about correctness, but they fail to predict
+      performance.
+    </aside>
   </section>
 
 
@@ -74,11 +111,20 @@ audio: 2020-09-10-arch
       <li><p>Speeds vary (registers and caches)</p></li>
       <li><p>Memory layout dramatically affects performance</p></li>
     </ul>
+
+    <aside class="notes">
+      In the real world, memory is not all the same. The one
+      dimensional address space we think of is an abstraction layered on
+      much more complicated hardware. Different parts of the memory
+      hardware have different speeds, and memory layout dramatically
+      affects performance.
+    </aside>
   </section>
 
 
   <section>
     <h3>The real world</h3>
+
     <p>Instructions are non-obvious!</p>
     <ul>
       <li><p>Pipelining allows instructions to overlap</p></li>
@@ -86,13 +132,32 @@ audio: 2020-09-10-arch
       <li><p>Instructions take different amounts of time</p></li>
       <li><p>Cost depends on order, instruction mix</p></li>
     </ul>
+
+    <aside class="notes">
+      In the real world, instructions don't all take the same amount
+      of time, they don't all run in program order, and they run
+      willy-nilly on top of each other. Well, not willy-nilly.  We
+      need rules to provide programmers the illusion of the idealized
+      machine.  But the reality is a complicated mess, and that shows
+      up when we think about performance.
+    </aside>
   </section>
 
 
   <section>
     <h3>The real world</h3>
+
     <p>Our goal:<br/>
       enough understanding to help the compiler out.</p>
+
+    <aside class="notes">
+      So our idealized picture is too simple, and the real world is a
+      complicated mess. What are we going to do? Fortunately, we don't
+      need to understand the whole complicated mess to write
+      high-performance code. We just need to know enough to manage the
+      high-level design decisions that matter, and then we can try to
+      hand off the low-level details to the compiler.
+    </aside>
   </section>
 
 
@@ -104,39 +169,74 @@ audio: 2020-09-10-arch
 
   <section>
     <h2>Prelude</h2>
+
+    <aside class="notes">
+      You shouldn't be surprised might be climbing on a soapbox before
+      we get to the technical stuff.  So here goes.
+    </aside>
   </section>
 
 
   <section>
     <h3>Prelude</h3>
+
     <p>We hold these truths to be self-evident:</p>
     <ol>
       <li><p>One should not sacrifice correctness for speed</p></li>
       <li><p>One should not re-invent (or re-tune) the wheel</p></li>
       <li><p>Your time matters more than computer time</p></li>
     </ol>
+
+    <aside class="notes">
+      Somethings are obvious. First, getting the wrong answer fast is
+      not success. Second, torturing yourself to do something that somebody
+      already has done better is not productive. Your time matters
+      more than the computer time does.
+    </aside>
   </section>
 
 
   <section>
     <h3>Prelude</h3>
+
     <p>Less obvious, but still true:</p>
     <ol>
       <li><p>Most of the time goes to a few bottlenecks</p></li>
       <li><p>The bottlenecks are hard to find without measuring</p></li>
       <li><p>Communication is expensive (often a bottleneck)</p></li>
     </ol>
+
+    <aside class="notes">
+      May be less obvious but still true: most of your code does not
+      matter to performance. There are probably a few bottleneck
+      sections that account for most of the time. You really don't
+      know where those bottlenecks are in advance; you need to
+      measure. Often, though, the bottlenecks are associated with
+      communication which cost a lot more than computation.
+    </aside>
   </section>
 
 
   <section>
     <h3>Prelude</h3>
+
     <p>A little good hygiene will save your sanity</p>
     <ol>
       <li>Automate testing</li>
       <li>Time carefully</li>
       <li>Use version control</li>
     </ol>
+
+    <aside class="notes">
+      Finally, when you turn your code to run fast on modern
+      architecture's, your code may get more complicated or at least
+      change a lot. Don't spend all your time debugging problems you
+      introduce during tuning. Start with good test cases. Start with
+      good timing. And make sure you use version control, so you can
+      roll back to a working version when you break something.
+
+      All right.  Climbing off my soap box.
+    </aside>
   </section>
 
 
@@ -150,6 +250,14 @@ audio: 2020-09-10-arch
     <li><p>One core is not so serial</p></li>
     <li><p>Memory matters</p></li>
   </ol>
+
+  <aside class="notes">
+    All right, on to the technical meat of the lecture. With apologies
+    to This American Life, today is a play in two acts.  Act 1: One
+    Core is Not So Serial, in which we find out what parallelism lurks
+    in a single core.  And Act 2: Memory Matters, in which we delve into
+    some of the messy details in the memory subsystem.
+  </aside>
 </section>
 
 
@@ -158,6 +266,10 @@ audio: 2020-09-10-arch
   <section>
     <h3>Act 1</h3>
     <p>One core is not so serial.</p>
+
+    <aside class="notes">
+      Let's start by talking about all the parallelism in a single core.
+    </aside>
   </section>
 
 
@@ -168,6 +280,16 @@ audio: 2020-09-10-arch
       <li><p>Three loads: darks, lights, underwear</p></li>
       <li><p>How long will this take?</p></li>
     </ul>
+
+    <aside class="notes">
+      We'll start with pipelining. I love an overused metaphor, so
+      let's go with one of the most overused: pipelining as
+      laundry. There are three stages to laundry washing drying and
+      folding. Suppose for simplicity that each takes an hour; I'm a
+      slow folder, I guess.  And suppose I have three loads: darks and
+      lights and underwear. How long will it take for me to wash my
+      laundry?
+    </aside>
   </section>
 
 
@@ -224,55 +346,73 @@ audio: 2020-09-10-arch
         </tr>
       </tbody>
     </table>
+
+    <aside class="notes">
+      The strawman approach, used by nobody who has ever done laundry
+      in practice, is to do each load of laundry in sequence: first
+      darks, then lights, then underwear.  Each load takes three hours
+      therefore it's nine hours in total.
+    </aside>
   </section>
 
   <section>
     <h3>Parallel processing at the laundromat</h3>
-      <p>Pipeline version:</p>
-      <table>
-        <thead>
-          <tr class="header">
-            <th style="text-align: left;">1</th>
-            <th style="text-align: left;">2</th>
-            <th style="text-align: left;">3</th>
-            <th style="text-align: left;">4</th>
-            <th style="text-align: left;">5</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="odd">
-            <td style="text-align: left;">wash</td>
-            <td style="text-align: left;">dry</td>
-            <td style="text-align: left;">fold</td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-            <td>Dinner?</td>
-          </tr>
-          <tr class="even">
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;">wash</td>
-            <td style="text-align: left;">dry</td>
-            <td style="text-align: left;">fold</td>
-            <td style="text-align: left;"></td>
-            <td>Cat videos?</td>
-            </tr>
-          <tr class="odd">
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;"></td>
-            <td style="text-align: left;">wash</td>
-            <td style="text-align: left;">dry</td>
-            <td style="text-align: left;">fold</td>
-            <td>Gym and tanning?</td>
-          </tr>
-        </tbody>
-      </table>
+    <p>Pipeline version:</p>
+    <table>
+      <thead>
+        <tr class="header">
+          <th style="text-align: left;">1</th>
+          <th style="text-align: left;">2</th>
+          <th style="text-align: left;">3</th>
+          <th style="text-align: left;">4</th>
+          <th style="text-align: left;">5</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="odd">
+          <td style="text-align: left;">wash</td>
+          <td style="text-align: left;">dry</td>
+          <td style="text-align: left;">fold</td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+          <td>Dinner?</td>
+        </tr>
+        <tr class="even">
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;">wash</td>
+          <td style="text-align: left;">dry</td>
+          <td style="text-align: left;">fold</td>
+          <td style="text-align: left;"></td>
+          <td>Cat videos?</td>
+        </tr>
+        <tr class="odd">
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;"></td>
+          <td style="text-align: left;">wash</td>
+          <td style="text-align: left;">dry</td>
+          <td style="text-align: left;">fold</td>
+          <td>Gym and tanning?</td>
+        </tr>
+      </tbody>
+    </table>
 
+    <aside class="notes">
+      The smarter approach, probably used by most of you, is to make
+      sure the washer, drier, folding table are all used at once, as
+      much as possible.  This is called the laundry pipeline.  Of
+      course, we won't be using the folding table at the beginning, or
+      the washer at the very end; it takes time to start and drain the
+      pipeline.  But still, by overlapping the loads of laundry we
+      take only five hours, and have plenty of time left for cat
+      videos or dinner.
+    </aside>
   </section>
 
 
   <section>
     <h3>Pipelining</h3>
+
     <ul>
       <li><p>Pipelining improves <em>bandwidth</em>, but not <em>latency</em></p></li>
       <li><p>Potential speedup = number of stages</p>
@@ -280,6 +420,23 @@ audio: 2020-09-10-arch
           <li>But what if there’s a branch?</li>
       </ul></li>
     </ul>
+
+    <aside class="notes">
+      Pipelining works for instructions as well as for laundry.  Each
+      instruction or load of laundry takes the same time to complete
+      with or without the pipeline; the latency does not change.  But
+      by overlapping the instructions or the laundry, we can improve
+      the throughput, or completion rate per unit time.  With enough
+      instructions, the potential speedup is equal to the number of
+      overlapping stages, though with fewer instructions we care about
+      the time to start and drain the pipeline.
+
+      Unfortunately, pipelining requires a systematic pattern.  If we
+      are not sure what stage comes next, perhaps because of a branch
+      in our code, we cannot take advantage of the pipeline.  We have
+      to introduce a so-called bubble, and that reduces our effective
+      throughput.
+    </aside>
   </section>
 
 
@@ -294,6 +451,13 @@ audio: 2020-09-10-arch
           <li>Divider often not pipelined</li>
       </ul></li>
     </ul>
+
+    <aside class="notes">
+      Modern processors actually have several different pieces, each
+      with their own pipe lines. These functional units do simple
+      operations like floating point addition or multiplication. Some
+      functional units may not be pipelined (like dividers).
+    </aside>
   </section>
 
 
@@ -304,8 +468,15 @@ audio: 2020-09-10-arch
       <li><p>Cray-1 (1976): 8 registers <span class="math inline">\(\times\)</span> 64 words of 64 bits each</p></li>
       <li><p>Resurgence in mid-late 90s (for graphics)</p></li>
       <li><p>Now short vectors are ubiquitous</p></li>
-      <li><p>Alignment often matters</p></li>
     </ul>
+
+    <aside class="notes">
+      Pipelining is one way to get parallelism.  Another is SIMD or
+      vector instructions. These have a long history, going back to
+      before I was born. There was a resurgence of interest in short
+      vector ops in the late 90s, mostly for graphics.  These
+      instructions are ubiquitous now.
+    </aside>
   </section>
 
 
@@ -318,6 +489,17 @@ audio: 2020-09-10-arch
           (Different ops use different ports)</p></li>
       <li><p>NB: May dynamically translate to micro-ops</p></li>
     </ul>
+
+    <aside class="notes">
+      Modern processors can also start or finish multiple operations
+      within a single cycle. The operations usually have to use
+      different parts of the processor, so a mix of instructions is
+      needed. Making everything more complicated, the instructions you
+      write are not the instructions the processor ultimately sees.
+      The front end translates your x86 instruction set architecture
+      into an internal standard that nobody but Intel knows about.
+      Unless you aren't using an Intel chip, of course.
+    </aside>
   </section>
 
 
@@ -330,11 +512,23 @@ audio: 2020-09-10-arch
       <li>Shared functional units</li>
       <li>Helps feed core independent work</li>
     </ul>
+
+    <aside class="notes">
+      One program might not give us all the different types of
+      instructions needed to efficiently use a core. For that reason,
+      hyperthreading was introduced.  Hyperthreading gives us the
+      illusion of two cores by providing multiple program counters and
+      register sets that sit in front of a common set of functional
+      unit resources.  The idea is that if one program is only using
+      some of the functional units, another program might make use of
+      the rest.
+    </aside>
   </section>
 
 
   <section>
     <h3>Out-of-order execution</h3>
+
     <ul>
       <li><p>Internally reorder operations</p></li>
       <li><p>Have to commit instructions in order</p></li>
@@ -342,6 +536,21 @@ audio: 2020-09-10-arch
           (speculative execution)</li>
       <li><p>Limited by data dependencies</p></li>
     </ul>
+
+    <aside class="notes">
+      Each program looks like it's executed in sequential
+      order. That's a fib. Behind the scenes instructions come into
+      the functional units are scheduled in whatever order makes sense
+      and are completed (or committed) in sequential order.
+      Sometimes, we might start running an instruction to keep a
+      functional unit busy, only to decide later that the result
+      should not be committed.  This is the idea of speculative
+      execution.
+
+      We can reorder instructions any way we want if all the
+      instructions are independent.  Usually, though, our out-of-order
+      unit is limited by data dependencies.
+    </aside>
   </section>
 
 
@@ -358,6 +567,23 @@ audio: 2020-09-10-arch
       <li>In-order commit of finished ops</li>
       <li>Can discard before commit<br/>(speculative execution)</li>
     </ul>
+
+    <aside class="notes">
+      Putting everything together modern processor can read several
+      operations at once. Each operation might act on a full vector of
+      data. We break those operations into mystery micro operations
+      and cash them. Within the chip an out of order scheduling unit
+      dispatch is the micro operations to functional units. The
+      functional units are pipeline and can execute multiple
+      instructions simultaneously. At the end, we commit results in
+      order to retain the illusion of sequential execution.  To keep
+      the functional units from being left idle, we might try work
+      that we don't know we will need, deciding whether to complete
+      the instruction or not at commit time.  This is called
+      speculative execution.
+
+      Does this sound complicated?  It should!
+    </aside>
   </section>
 
 
@@ -369,6 +595,15 @@ audio: 2020-09-10-arch
       <li><p>Rearranges instructions to get a good mix</p></li>
       <li><p>Tries to make use of FMAs, SIMD instructions, etc</p></li>
     </ul>
+
+    <aside class="notes">
+      The compiler understands the low-level details about instruction
+      mixes and vector operations. At least, it should; people have
+      been talking about sufficiently smart compilers for as long as
+      I've been around, but the compilers are not always as smart as
+      I'd like. Still, it's best to leave the low level details
+      to the compiler if we can.
+    </aside>
   </section>
 
 
@@ -383,6 +618,18 @@ audio: 2020-09-10-arch
       <li><p>Use special intrinsics or library routines</p></li>
       <li><p>Data layouts, algorithms to suit machine</p></li>
     </ul>
+
+    <aside class="notes">
+      The compiler won't understand high-level algorithmic changes
+      that might map well to the architecture of a modern machine.
+      The compiler does not need our help scheduling instructions. It
+      does need our help figuring out the layouts and algorithms that
+      suit our machines. We can also help it by calling special
+      intrinsics or library routines, and by making our code as obvious
+      and predictable as possible.  And we can play with different
+      optimization flags for cases when the right approach is neither
+      obvious to the compiler nor to us.
+    </aside>
   </section>
 
 
@@ -394,6 +641,13 @@ audio: 2020-09-10-arch
       <li>You handle high-level optimization</li>
       <li>Compiler handles low-level stuff</li>
     </ul>
+
+    <aside class="notes">
+      The end goal to all of this is that you should let the compiler
+      deal with the low-level details as much as possible.  Your job
+      is to lay out your algorithms and data structures so that the
+      compiler and the processor can best do their jobs.
+    </aside>
   </section>
 
 
@@ -406,6 +660,10 @@ audio: 2020-09-10-arch
   <section>
     <h3>Act 2</h3>
     <p>Memory matters.</p>
+
+    <aside class="notes">
+      Now, let's move on to act two: the memory hierarchy.
+    </aside>
   </section>
 
 
@@ -417,6 +675,15 @@ audio: 2020-09-10-arch
       <li><p>Bandwidth improving faster than latency</p></li>
       <li><p>Inverse bandwidth remains worse than flop rate</p></li>
     </ul>
+
+    <aside class="notes">
+      Last time we talked about the difficulty of slow memory. There
+      are two important numbers here: latency, or the time to get the
+      first item from memory; and bandwidth, or the steady state rate at which
+      items are delivered. Bandwidth is improving faster than
+      latency. But inverse bandwidth remains consistently worse than
+      flop rates.
+    </aside>
   </section>
 
 
@@ -432,6 +699,17 @@ audio: 2020-09-10-arch
       </li>
       <li><p>So what can we do?</p></li>
     </ul>
+
+    <aside class="notes">
+      The arithmetic intensity of a code is the ratio of flops to
+      memory accessories. For example a dot product has arithmetic
+      intensity one; there are 2n operations and 2n data items.
+      What does this imply?  Consider my laptop, with a theoretical
+      peak flop rate of 51 GFlop/s and peak memory bandwidth of about
+      32 GB/s.  At arithmetic intensity 1, we are limited by bandwidth
+      to about 4 GFlop/s, much less than the peak.  And matters are worse
+      if we have lots of latency costs in addition to the bandwidth costs.
+    </aside>
   </section>
 
 
@@ -443,6 +721,23 @@ audio: 2020-09-10-arch
       <li><p><em>Temporal locality</em>: use a “working set” of data repeatedly</p></li>
     </ul>
     <p>Cache hierarchy built to use locality.</p>
+
+    <aside class="notes">
+      Fortunately, we can get around the long latency and low
+      bandwidth of main memory by taking advantage of locality in our
+      programs.  There are two types of locality of access that matter
+      to us: spatial locality, or the tendency to access things close
+      to each other in memory at around the same time; and temporal
+      locality, or the tendency to re-use the same piece of data
+      repeatedly in a short period.
+
+      Modern machines introduce a set of small, fast memories called
+      caches in order to speed up average memory access times.  Caches
+      are designed to take advantage of spatial and temporal locality
+      in our codes.  One implication of this is that if our codes
+      don't exhibit temporal or spatial locality, maybe they should;
+      it will let them run faster!
+    </aside>
   </section>
 
 
@@ -463,11 +758,22 @@ audio: 2020-09-10-arch
       </li>
     </ul>
     <p>This is mostly automatic and implicit.</p>
+
+    <aside class="notes">
+      Caches help us in several ways.  First, they let us re-use data
+      loads; that is, they help us exploit temporal locality.  Second,
+      they let us load data in big chunks instead of one byte at a
+      time, reducing the number of main memory latencies we suffer.
+      Data is typically loaded one cache line at a time, and features
+      like pre-fetching let the memory system grab a bunch of data
+      from memory without involving the processor.
+    </aside>
   </section>
 
 
   <section>
     <h3>Cache basics</h3>
+
     <ul>
       <li><p>Store cache <em>line</em>s of several bytes</p></li>
       <li><p>Cache <em>hit</em> when copy of needed data in cache</p></li>
@@ -478,8 +784,21 @@ audio: 2020-09-10-arch
           <li><p><em>Conflict</em> miss: insufficient associativity for access pattern</p></li>
       </ul></li>
     </ul>
+
+    <aside class="notes">
+      We say a memory read hits the cache if we can find the data we
+      need in cache.  Otherwise, we have a cache miss.  There are
+      three basic types of misses.  Compulsory misses, also called
+      cold-start misses, happen the first time that we touch a piece
+      of data.  Capacity misses happen because we don't have room for
+      all the data we want, and so had to toss out the data item that
+      we missed.  Conflict misses happen because of insufficient
+      associativity; though to make sense of that, we first need to
+      say what associativity is.
+    </aside>
   </section>
-  
+
+
   <section>
     <h3>Cache associativity</h3>
 
@@ -488,19 +807,38 @@ audio: 2020-09-10-arch
       <li><p>Direct-mapped: each address can only go in one cache location (e.g. store address xxxx1101 only at cache location 1101)</p></li>
       <li><p><span class="math inline">\(n\)</span>-way: each address can go into one of <span class="math inline">\(n\)</span> possible cache locations (store up to 16 words with addresses xxxx1101 at cache location 1101).</p></li>
     </ul>
-    <p>Higher associativity is more expensive.</p></li>
-    </ul>
+    <p>Higher associativity is more expensive.</p>
+
+    <aside class="notes">
+      Associativity has to do with where we can cache a given address
+      from main memory.  In a fully associative cache, we can put the
+      data anywhere in cache that we want.  That gives us the most
+      possible flexibility, but the hardware is expensive.  In a
+      direct-mapped cache, each address in main memory can only be
+      stored in one location in the cache.  In an n-way associative
+      cache, each address in main memory can be stored in one of n
+      locations in the cache.
+    </aside>
   </section>
 
 
   <section>
     <h3>Teaser</h3>
+
     <p>We have <span class="math inline">\(N = 10^6\)</span> two-dimensional coordinates, and want their centroid. Which of these is faster and why?</p>
     <ol type="1">
       <li><p>Store an array of <span class="math inline">\((x_i, y_i)\)</span> coordinates. Loop <span class="math inline">\(i\)</span> and simultaneously sum the <span class="math inline">\(x_i\)</span> and the <span class="math inline">\(y_i\)</span>.</p></li>
       <li><p>Store an array of <span class="math inline">\((x_i, y_i)\)</span> coordinates. Loop <span class="math inline">\(i\)</span> and sum the <span class="math inline">\(x_i\)</span>, then sum the <span class="math inline">\(y_i\)</span> in a separate loop.</p></li>
       <li><p>Store the <span class="math inline">\(x_i\)</span> in one array, the <span class="math inline">\(y_i\)</span> in a second array. Sum the <span class="math inline">\(x_i\)</span>, then sum the <span class="math inline">\(y_i\)</span>.</p></li>
     </ol>
+
+    <aside class="notes">
+      All right.  Let's see how much we understand.  Suppose I have a
+      million points in the plane, and I want their centroid.  Which
+      of these ways of computing the centroid is fastest, and why?  I
+      suggest trying it out for yourself.  We'll discuss what you find
+      at the next meeting.
+    </aside>
   </section>
 
 
@@ -514,16 +852,41 @@ audio: 2020-09-10-arch
       <li><p>2 MB L3 cache (per core),<br/>
           12-way associative</p></li>
     </ul>
+
+    <aside class="notes">
+      What do caches look like in practice?  On my Macbook Air, there
+      are three levels of cache.  Fastest are the two 32 KB L1 caches,
+      one for code and one for data on each core.  Then there is a 256
+      KB L2 cache and a 2 MB L3 cache.  We have set associativity at
+      each level: 8-way for L1, 4-way for L2, and 12-way for L3.
+      All the caches are arranged into 64B lines.
+    </aside>
   </section>
 
 
   <section>
     <h3>A memory benchmark (<a href="https://github.com/cornell-cs5220-f15/membench">membench</a>)</h3>
-    <pre><code>  for array A of length L from 4 KB to 8MB by 2x
-        for stride s from 4 bytes to L/2 by 2x
-        time the following loop
-        for i = 0 to L by s
-        load A[i] from memory</code></pre>
+    <pre><code>
+for array A of length L from 4 KB to 8MB by 2x
+  for stride s from 4 bytes to L/2 by 2x
+    time the following loop
+    for i = 0 to L by s
+      load A[i] from memory
+</code></pre>
+
+    <aside class="notes">
+      A useful way to see the effects of the memory system is with a
+      simple benchmark that repeatedly accesses different numbers of
+      array entries at different strides (distances apart in memory).
+      The stride is relevant to the spatial locality, as the
+      the last few bits of the address
+      are often used to determine the set of cache lines where data
+      can be stored.  So accessing with a stride that is a large
+      multiple of two causes us to use the same set of cache lines
+      over and over.  The number of locations we access is important
+      to temporal locality: more locations means more pressure on the
+      cache system.
+    </aside>
   </section>
 
 
@@ -537,6 +900,15 @@ audio: 2020-09-10-arch
         <small><a href="figs/membench/timings.csv">Raw timings (CSV)</a></small>
       </figcaption>
     </figure>
+
+    <aside class="notes">
+      The membench results are usually presented like this: one line
+      for each overall size, the stride on the x axis, and the time
+      in nanoseconds on the y axis.  You can see the graph has a lot
+      of structure.  Maybe those of you with good color vision can
+      suss out what is going on in detail.  For myself I decided a
+      couple years ago that I prefer a different visualization.
+    </aside>
   </section>
 
 
@@ -550,6 +922,40 @@ audio: 2020-09-10-arch
         <small><a href="figs/membench/timings.csv">Raw timings (CSV)</a></small>
       </figcaption>
     </figure>
+
+    <aside class="notes">
+      This is a heatmap picture of the same membench results.  The
+      vertical axis represents array size, and the horizontal
+      represents the stride.  The color represents the observed
+      latency.  Maybe I could use better colors, but let me tell you
+      what I see here.
+
+      Latencies remain lower for strides less than 2^5.  That is
+      partly because a cache line on this machine is 64 bits, so short
+      strides result in multiple hits per line loaded.
+
+      There are also three diagonals near the edge that remain low
+      latency.  This is because near the diagonal, we have a small
+      working set.  If we only ever read eight or fewer elements, then
+      it is fine if they all land on the same eight-line set within
+      the cache.
+
+      Each core has a 2 MB L3 cache, and we see nothing go too bad when
+      all data fits in at least one of the caches.  We can also
+      faintly see a change in color at the vertical line corresponding
+      to 2^18 (256K), which is the L2 cache size.
+
+      We can see another diagonal-ish pattern about ten diagonals in.
+      It turns out that there is another part of the memory system, a
+      cache called the translation lookaside buffer (TLB).  It has 512
+      entries, each corresponding to a 4K page.  Missing in the TLB is
+      rather expensive, too.
+
+      Note that the ballpark estimate of 100 ns to go to main memory
+      seems like it is probably pessimistic.  The worst memory times
+      I see on this machine, at least in this plot, are more like 30
+      ns.  That is still an overhead I'd rather not pay too often.
+    </aside>
   </section>
 
 
@@ -562,21 +968,43 @@ audio: 2020-09-10-arch
       inline">\(2^{18}\)</span>), 2 MB L3 ((<span class="math inline">\(2^{21}\)</span>)</p></li>
       <li><p>Diagonal: 8-way cache associativity, 512 entry L2 TLB</p></li>
     </ul>
-  </section>
 
-
-  <section>
-    <h3>The moral</h3>
-    <p>Even for simple programs, performance is a complicated function of architecture!</p>
-    <ul>
-      <li><p>Need to know a little to write fast programs</p></li>
-      <li><p>Want simple models to understand efficiency</p></li>
-      <li><p>Want tricks to help design fast codes</p>
-        <ul>
-          <li>Example: <em>blocking</em> (also called <em>tiling</em>)</li>
-      </ul></li>
-    </ul>
+    <aside class="notes">
+      OK, here are the numbers for my machine, but without the graph.
+      Really, though, I suggest that you download and run membench on
+      your own machine, and see what you can see about your own
+      memory system.  If you do something better with the
+      visualization, tell me!  I expect there is still a better way to
+      plot this data.
+    </aside>
   </section>
 
 
 </section>
+
+<section>
+  <h3>The moral</h3>
+  <p>Even for simple programs, performance is a complicated function of architecture!</p>
+  <ul>
+    <li><p>Need to know a little to write fast programs</p></li>
+    <li><p>Want simple models to understand efficiency</p></li>
+    <li><p>Want tricks to help design fast codes</p>
+      <ul>
+        <li>Example: <em>blocking</em> (also called <em>tiling</em>)</li>
+    </ul></li>
+  </ul>
+
+  <aside class="notes">
+    All right.  So what is the moral of this whirlwind tour of
+    architecture.  I think it is this: do not despair.  The landscape
+    is complicated, but you only need to know the general contours of
+    that landscape to be able to write fast code.  Design patterns
+    like tiling, which we will discuss in the next few lectures,
+    can help us use the memory subsystem efficiently.  And to get the
+    most instruction-level parallelism for our buck, we just need to
+    write the computation in a way that exposes lots of independent
+    that the compiler (and the processor) can then schedule efficiently.
+  </aside>
+</section>
+
+
