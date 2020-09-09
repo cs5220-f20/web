@@ -29,7 +29,7 @@ audio: 2020-09-10-arch
     <h2>Just for fun</h2>
 
     <aside class="notes">
-      Let's start with something fun this is an Nvidia promotional
+      Let's start with something fun.  This is an Nvidia promotional
       thing that the MythBusters guys did a couple years ago.
     </aside>
   </section>
@@ -45,11 +45,11 @@ audio: 2020-09-10-arch
     <p>
       See:
       <a href="http://web.eecs.utk.edu/~dongarra/ccgsc2010/slides/talk27-vuduc.pdf">“Should
-        I port my code to a GPU?”</a>)
+        I port my code to a GPU?”</a>
     </p>
 
     <aside class="notes">
-      I told you it would be fun right. Unfortunately this is not a
+      I told you it would be fun, right? Unfortunately, this is not a
       fair representation of what happens with well-tuned codes.  See
       Rich Vuduc's talk, linked.  GPUs do have an edge, but a lot
       of the advantage people attribute to GPUs comes from them taking
@@ -89,11 +89,11 @@ audio: 2020-09-10-arch
     </ul>
 
     <aside class="notes">
-      The problem isn't so much that people are naïve. Is that when we
-      tell people about computers and introductory programming classes
+      The problem isn't so much that people are naïve. It's that when we
+      tell people about computers in introductory programming classes,
       we tell them lies. We tell them that memory is an address space
       of named words laid out in linear order. Basic operations like
-      register reading logic and arithmetic take about the same amount
+      register reading, logic, and arithmetic take about the same amount
       of time as each other. Everything runs in program order, and
       high-level language statements translate to "obvious" machine
       code.  But none of this is really true.  These abstractions are
@@ -151,7 +151,7 @@ audio: 2020-09-10-arch
       enough understanding to help the compiler out.</p>
 
     <aside class="notes">
-      So our idealized picture is too simple, and the real world is a
+      So, our idealized picture is too simple, and the real world is a
       complicated mess. What are we going to do? Fortunately, we don't
       need to understand the whole complicated mess to write
       high-performance code. We just need to know enough to manage the
@@ -171,8 +171,8 @@ audio: 2020-09-10-arch
     <h2>Prelude</h2>
 
     <aside class="notes">
-      You shouldn't be surprised might be climbing on a soapbox before
-      we get to the technical stuff.  So here goes.
+      You shouldn't be surprised that I'm climbing on a soapbox before
+      we get to the technical stuff.
     </aside>
   </section>
 
@@ -188,9 +188,9 @@ audio: 2020-09-10-arch
     </ol>
 
     <aside class="notes">
-      Somethings are obvious. First, getting the wrong answer fast is
+      Some things are obvious. First, getting the wrong answer fast is
       not success. Second, torturing yourself to do something that somebody
-      already has done better is not productive. Your time matters
+      already has done better is not productive. Third, your time matters
       more than the computer time does.
     </aside>
   </section>
@@ -207,12 +207,12 @@ audio: 2020-09-10-arch
     </ol>
 
     <aside class="notes">
-      May be less obvious but still true: most of your code does not
+      Maybe less obvious but still true: most of your code does not
       matter to performance. There are probably a few bottleneck
       sections that account for most of the time. You really don't
       know where those bottlenecks are in advance; you need to
       measure. Often, though, the bottlenecks are associated with
-      communication which cost a lot more than computation.
+      communication, which cost a lot more than computation.
     </aside>
   </section>
 
@@ -228,8 +228,8 @@ audio: 2020-09-10-arch
     </ol>
 
     <aside class="notes">
-      Finally, when you turn your code to run fast on modern
-      architecture's, your code may get more complicated or at least
+      Finally, when you tune your code to run fast on modern
+      architectures, your code may get more complicated, or at least
       change a lot. Don't spend all your time debugging problems you
       introduce during tuning. Start with good test cases. Start with
       good timing. And make sure you use version control, so you can
@@ -252,7 +252,7 @@ audio: 2020-09-10-arch
   </ol>
 
   <aside class="notes">
-    All right, on to the technical meat of the lecture. With apologies
+    Now, on to the technical meat of the lecture. With apologies
     to This American Life, today is a play in two acts.  Act 1: One
     Core is Not So Serial, in which we find out what parallelism lurks
     in a single core.  And Act 2: Memory Matters, in which we delve into
@@ -284,10 +284,10 @@ audio: 2020-09-10-arch
     <aside class="notes">
       We'll start with pipelining. I love an overused metaphor, so
       let's go with one of the most overused: pipelining as
-      laundry. There are three stages to laundry washing drying and
+      laundry. There are three stages to laundry: washing, drying, and
       folding. Suppose for simplicity that each takes an hour; I'm a
-      slow folder, I guess.  And suppose I have three loads: darks and
-      lights and underwear. How long will it take for me to wash my
+      slow folder, I guess.  And suppose I have three loads: darks,
+      lights, and underwear. How long will it take me to wash my
       laundry?
     </aside>
   </section>
@@ -350,8 +350,8 @@ audio: 2020-09-10-arch
     <aside class="notes">
       The strawman approach, used by nobody who has ever done laundry
       in practice, is to do each load of laundry in sequence: first
-      darks, then lights, then underwear.  Each load takes three hours
-      therefore it's nine hours in total.
+      darks, then lights, then underwear.  Each load takes three hours;
+      therefore, it's nine hours in total.
     </aside>
   </section>
 
@@ -399,7 +399,7 @@ audio: 2020-09-10-arch
 
     <aside class="notes">
       The smarter approach, probably used by most of you, is to make
-      sure the washer, drier, folding table are all used at once, as
+      sure the washer, drier, and folding table are all used at once, as
       much as possible.  This is called the laundry pipeline.  Of
       course, we won't be using the folding table at the beginning, or
       the washer at the very end; it takes time to start and drain the
@@ -423,7 +423,7 @@ audio: 2020-09-10-arch
 
     <aside class="notes">
       Pipelining works for instructions as well as for laundry.  Each
-      instruction or load of laundry takes the same time to complete
+      instruction, or load of laundry, takes the same time to complete
       with or without the pipeline; the latency does not change.  But
       by overlapping the instructions or the laundry, we can improve
       the throughput, or completion rate per unit time.  With enough
@@ -454,7 +454,7 @@ audio: 2020-09-10-arch
 
     <aside class="notes">
       Modern processors actually have several different pieces, each
-      with their own pipe lines. These functional units do simple
+      with their own pipelines. These functional units do simple
       operations like floating point addition or multiplication. Some
       functional units may not be pipelined (like dividers).
     </aside>
@@ -467,15 +467,18 @@ audio: 2020-09-10-arch
       <li><p><em>S</em>ingle <em>I</em>nstruction <em>M</em>ultiple <em>D</em>ata</p></li>
       <li><p>Cray-1 (1976): 8 registers <span class="math inline">\(\times\)</span> 64 words of 64 bits each</p></li>
       <li><p>Resurgence in mid-late 90s (for graphics)</p></li>
-      <li><p>Now short vectors are ubiquitous</p></li>
+      <li><p>Now short vectors (256-512 bit) are ubiquitous</p></li>
     </ul>
 
     <aside class="notes">
       Pipelining is one way to get parallelism.  Another is SIMD or
       vector instructions. These have a long history, going back to
-      before I was born. There was a resurgence of interest in short
-      vector ops in the late 90s, mostly for graphics.  These
-      instructions are ubiquitous now.
+      before I was born. When the old vector supercomputers gave way
+      to networked commodity systems, people focused on other things
+      for a while.  But then there was a resurgence of interest in
+      short vector ops in the late 90s, mostly for graphics.  After
+      that, vector operations became part of the computer architecture
+      mainstream.  These instructions are ubiquitous now.
     </aside>
   </section>
 
@@ -539,8 +542,8 @@ audio: 2020-09-10-arch
 
     <aside class="notes">
       Each program looks like it's executed in sequential
-      order. That's a fib. Behind the scenes instructions come into
-      the functional units are scheduled in whatever order makes sense
+      order. That's a fib. Behind the scenes, instructions coming into
+      the functional units are scheduled in whatever order makes sense,
       and are completed (or committed) in sequential order.
       Sometimes, we might start running an instruction to keep a
       functional unit busy, only to decide later that the result
@@ -549,7 +552,7 @@ audio: 2020-09-10-arch
 
       We can reorder instructions any way we want if all the
       instructions are independent.  Usually, though, our out-of-order
-      unit is limited by data dependencies.
+      scheduler is limited by data dependencies.
     </aside>
   </section>
 
@@ -569,14 +572,14 @@ audio: 2020-09-10-arch
     </ul>
 
     <aside class="notes">
-      Putting everything together modern processor can read several
+      Putting everything together: modern processor can read several
       operations at once. Each operation might act on a full vector of
       data. We break those operations into mystery micro operations
-      and cash them. Within the chip an out of order scheduling unit
-      dispatch is the micro operations to functional units. The
-      functional units are pipeline and can execute multiple
+      and cache them. Within the chip, an out-of-order scheduling unit
+      dispatches the micro operations to functional units. The
+      functional units are pipelined and can execute multiple
       instructions simultaneously. At the end, we commit results in
-      order to retain the illusion of sequential execution.  To keep
+      order, to retain the illusion of sequential execution.  To keep
       the functional units from being left idle, we might try work
       that we don't know we will need, deciding whether to complete
       the instruction or not at commit time.  This is called
@@ -598,7 +601,7 @@ audio: 2020-09-10-arch
 
     <aside class="notes">
       The compiler understands the low-level details about instruction
-      mixes and vector operations. At least, it should; people have
+      mixes and vector operations. At least, it should. People have
       been talking about sufficiently smart compilers for as long as
       I've been around, but the compilers are not always as smart as
       I'd like. Still, it's best to leave the low level details
@@ -625,8 +628,10 @@ audio: 2020-09-10-arch
       The compiler does not need our help scheduling instructions. It
       does need our help figuring out the layouts and algorithms that
       suit our machines. We can also help it by calling special
-      intrinsics or library routines, and by making our code as obvious
-      and predictable as possible.  And we can play with different
+      intrinsics or library routines, and by making our code as
+      obviously parallelizable as possible, maximizing local
+      independent work and minimizing unpredictable branches.
+      And we can play with different
       optimization flags for cases when the right approach is neither
       obvious to the compiler nor to us.
     </aside>
@@ -677,7 +682,7 @@ audio: 2020-09-10-arch
     </ul>
 
     <aside class="notes">
-      Last time we talked about the difficulty of slow memory. There
+      Last time, we talked about the difficulty of slow memory. There
       are two important numbers here: latency, or the time to get the
       first item from memory; and bandwidth, or the steady state rate at which
       items are delivered. Bandwidth is improving faster than
@@ -725,7 +730,7 @@ audio: 2020-09-10-arch
     <aside class="notes">
       Fortunately, we can get around the long latency and low
       bandwidth of main memory by taking advantage of locality in our
-      programs.  There are two types of locality of access that matter
+      programs.  Two types of locality of access matter
       to us: spatial locality, or the tendency to access things close
       to each other in memory at around the same time; and temporal
       locality, or the tendency to re-use the same piece of data
@@ -767,6 +772,10 @@ audio: 2020-09-10-arch
       Data is typically loaded one cache line at a time, and features
       like pre-fetching let the memory system grab a bunch of data
       from memory without involving the processor.
+
+      For the most part, programmers do not directly control the
+      cache.  Rather, what is cached or evicted (kicked out of cache)
+      depends on the memory access pattern that the hardware sees.
     </aside>
   </section>
 
@@ -791,8 +800,8 @@ audio: 2020-09-10-arch
       three basic types of misses.  Compulsory misses, also called
       cold-start misses, happen the first time that we touch a piece
       of data.  Capacity misses happen because we don't have room for
-      all the data we want, and so had to toss out the data item that
-      we missed.  Conflict misses happen because of insufficient
+      all the data we want, and so had to evict a data item that
+      we needed later.  Conflict misses happen because of insufficient
       associativity; though to make sense of that, we first need to
       say what associativity is.
     </aside>
@@ -815,9 +824,11 @@ audio: 2020-09-10-arch
       data anywhere in cache that we want.  That gives us the most
       possible flexibility, but the hardware is expensive.  In a
       direct-mapped cache, each address in main memory can only be
-      stored in one location in the cache.  In an n-way associative
+      stored in one location in the cache.  In an n-way set associative
       cache, each address in main memory can be stored in one of n
-      locations in the cache.
+      locations in the cache.  Usually, the last few bits of the
+      address are used to determine the cache line or set of cache
+      lines where a given chunk of data can be stored.
     </aside>
   </section>
 
@@ -1002,15 +1013,15 @@ for array A of length L from 4 KB to 8MB by 2x
   </ul>
 
   <aside class="notes">
-    All right.  So what is the moral of this whirlwind tour of
-    architecture.  I think it is this: do not despair.  The landscape
-    is complicated, but you only need to know the general contours of
+    So what is the moral of this whirlwind tour of architecture?  I
+    think it is this: take care, but do not despair.  The landscape is
+    complicated, but you only need to know the general contours of
     that landscape to be able to write fast code.  Design patterns
-    like tiling, which we will discuss in the next few lectures,
-    can help us use the memory subsystem efficiently.  And to get the
-    most instruction-level parallelism for our buck, we just need to
-    write the computation in a way that exposes lots of independent
-    that the compiler (and the processor) can then schedule efficiently.
+    like tiling, which we will discuss in the next few lectures, can
+    help us use the memory subsystem efficiently.  And to get the most
+    instruction-level parallelism for our buck, we just need to write
+    the computation in a way that exposes lots of independent work that the
+    compiler (and the processor) can then schedule efficiently.
   </aside>
 </section>
 
