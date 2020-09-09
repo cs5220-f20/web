@@ -886,6 +886,13 @@ for array A of length L from 4 KB to 8MB by 2x
       over and over.  The number of locations we access is important
       to temporal locality: more locations means more pressure on the
       cache system.
+      I've linked to a repository for the membench code from the
+      slide.  I suggest trying to build it on whatever machine you
+      plan to use for development.  I used the OpenMP timing routines,
+      so it is not necessarily trivial to build everywhere.  On a Mac,
+      for example, you need to be sure to use GCC rather than CLang,
+      since the CLang compiler in XCode doesn't support OpenMP.
+      Anyhow, give it a try, and post on Piazza if you run into trouble.
     </aside>
   </section>
 
