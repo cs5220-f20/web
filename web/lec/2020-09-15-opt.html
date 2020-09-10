@@ -548,10 +548,10 @@ for (; i &lt; n; ++i)
     <h3>Ex: Pointer aliasing</h3>
     <p>Why can this not vectorize easily?</p>
     <pre><code>void add_vecs(int n, double* result, double* a, double* b)
-        {
-        for (int i = 0; i &lt; n; ++i)
+{
+    for (int i = 0; i &lt; n; ++i)
         result[i] = a[i] + b[i];
-        }</code></pre>
+}</code></pre>
     <p>Q: What if result overlaps a or b?</p>
   </section>
 
@@ -559,7 +559,7 @@ for (; i &lt; n; ++i)
   <section>
     <h3>Ex: Pointer aliasing</h3>
     <p>C99: Use restrict keyword</p>
-    <pre><code>  void add_vecs(int n, double* restrict result,
+    <pre><code>void add_vecs(int n, double* restrict result,
         double* restrict a, double* restrict b);
     </code></pre>
     <p>Implicit promise: these point to different things in memory.</p>
@@ -572,12 +572,12 @@ for (; i &lt; n; ++i)
     <h3>Ex: “Black box” function calls</h3>
     <p>Compiler must assume arbitrary wackiness from “black box” function calls</p>
     <pre><code>double foo(double* restrict x)
-        {
-        double y = *x;  // Load x once
-        bar();    // Assume bar is a &#39;black box&#39; fn
-        y += *x;  // Must reload x
-        return y;
-        }</code></pre>
+{
+    double y = *x;  // Load x once
+    bar();    // Assume bar is a &#39;black box&#39; fn
+    y += *x;  // Must reload x
+    return y;
+}</code></pre>
   </section>
 
 
@@ -589,9 +589,14 @@ for (; i &lt; n; ++i)
       <li><p>Use more/less accurate special function routines</p></li>
       <li><p>Underflow is flush-to-zero or gradual</p></li>
     </ul>
+  </section>
+
+
+  <section>
+    <h3>Ex: Floating point issues</h3>
     <p>Problem: This changes semantics!</p>
     <ul>
-      <li><p>A daring compiler will pretend floats are reals and hope</p></li>
+      <li><p>Compiler pretends floats are reals and hopes?</p></li>
       <li><p>This will break some of my codes!</p></li>
       <li><p>Human intervention is indicated</p></li>
     </ul>
@@ -600,22 +605,30 @@ for (; i &lt; n; ++i)
 
   <section>
     <h3>Optimization flags</h3>
+    <p>-O[0123] (no optimization – aggressive optimization)</p>
     <ul>
-      <li><p>-O[0123] (no optimization – aggressive optimization)</p>
-        <ul>
-          <li><p>-O2 is usually the default</p></li>
-          <li><p>-O3 is useful, but might break FP codes (for example)</p></li>
-      </ul></li>
-      <li><p>Architecture targets</p>
-        <ul>
-          <li><p>Usually a “native” mode targets current architecture</p></li>
-          <li><p>Not always the right choice (e.g. consider Totient head/compute)</p></li>
-      </ul></li>
-      <li><p>Specialized optimization flags</p>
-        <ul>
-          <li><p>Turn on/off specific optimization features</p></li>
-          <li><p>Often the basic -Ox has reasonable defaults</p></li>
-      </ul></li>
+      <li><p>-O2 is usually the default</p></li>
+      <li><p>-O3 is useful, but might break FP codes (for example)</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Optimization flags</h3>
+    <p>Architecture targets</p>
+    <ul>
+      <li><p>“Native” mode targets current architecture</p></li>
+      <li><p>Not always the right choice (e.g. head/compute)</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Optimization flags</h3>
+    <p>Specialized optimization flags</p>
+    <ul>
+      <li><p>Turn on/off specific optimization features</p></li>
+      <li><p>Often the basic -Ox has reasonable defaults</p></li>
     </ul>
   </section>
 
