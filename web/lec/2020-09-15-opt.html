@@ -785,48 +785,57 @@ end</code></pre>
   <section id="soa-vs-aos" class="slide level3">
     <h3>SoA vs AoS</h3>
     <pre><code>// Struct of Arrays (parallel arrays)
-        typedef struct {
-        double* x;
-        double* y;
-        } aos_points_t;
+typedef struct {
+    double* x;
+    double* y;
+} aos_points_t;
 
-        // Array of Structs
-        typedef struct {
-        double x;
-        double y;
-        } point_t;
-        typedef point_t* soa_points_t;</code></pre>
+// Array of Structs
+typedef struct {
+    double x;
+    double y;
+} point_t;
+typedef point_t* soa_points_t;</code></pre>
   </section>
 
 
   <section>
     <h3>SoA vs AoS</h3>
+    <p>SoA: Structure of Arrays</p>
     <ul>
-      <li><p>SoA: Structure of Arrays</p>
-        <ul>
-          <li><p>Friendly to vectorization</p></li>
-          <li><p>Poor locality to access all of one item</p></li>
-          <li><p>Awkward for lots of libraries and programs</p></li>
-      </ul></li>
-      <li><p>AoS: Array of Structs</p>
-        <ul>
-          <li><p>Naturally supported default</p></li>
-          <li><p>Not very SIMD-friendly</p></li>
-      </ul></li>
-      <li><p>Possible to combine the two...</p></li>
+      <li><p>Friendly to vectorization</p></li>
+      <li><p>Poor locality to access all of one item</p></li>
+      <li><p>Awkward for lots of libraries and programs</p></li>
     </ul>
   </section>
 
 
   <section>
+    <h3>SoA vs AoS</h3>
+    <p>AoS: Array of Structs</p>
+    <ul>
+      <li><p>Naturally supported default</p></li>
+      <li><p>Not very SIMD-friendly</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>SoA vs AoS</h3>
+    <p>Possible to combine the two...</p>
+  </section>
+
+
+  <section>
     <h3>Copy optimizations</h3>
-    <p>Copy between formats to accelerate computations, e.g.</p>
+    <p>Copy between formats to accelerate, e.g.</p>
     <ul>
       <li><p>Copy piece of AoS to SoA format</p></li>
       <li><p>Perform vector operations on SoA data</p></li>
       <li><p>Copy back out</p></li>
     </ul>
-    <p>Performance gains &gt; copy costs? Plays great with tiling!</p>
+    <p>Performance gains &gt; copy costs?<br/>
+      Plays great with tiling!</p>
   </section>
 
 
