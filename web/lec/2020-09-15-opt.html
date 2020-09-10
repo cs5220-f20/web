@@ -1,0 +1,780 @@
+---
+title: Code optimization
+layout: slides
+audio: 2020-09-15-opt
+---
+
+
+<section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <h3>Code Optimization</h3>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
+  </p>
+  <p>Please click the play button below.</p>
+
+  <aside class="notes">
+  </aside>
+</section>
+
+
+<section>
+  <h3>Reminder: Modern processors</h3>
+  <ul>
+    <li>Modern CPUs are
+      <ul>
+        <li>Wide: start / retire multiple instructions per cycle</li>
+        <li>Pipelined: overlap instruction executions</li>
+        <li>Out-of-order: dynamically schedule instructions</li>
+    </ul></li>
+    <li>Lots of opportunities for instruction-level parallelism (ILP)</li>
+    <li>Complicated! Want the compiler to handle the details</li>
+    <li>Implication: we should give the compiler
+      <ul>
+        <li>Good instruction mixes</li>
+        <li>Independent operations</li>
+        <li>Vectorizable operations</li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Reminder: Memory systems</h3>
+  <ul>
+    <li>Memory access are expensive!</li>
+    <li>Flop time <span class="math inline">\(\ll\)</span> bandwidth<span class="math inline">\(^{-1}\)</span> <span class="math inline">\(\ll\)</span> latency</li>
+    <li>Caches provide intermediate cost/capacity points</li>
+    <li>Cache benefits from
+      <ul>
+        <li>Spatial locality (regular local access)</li>
+        <li>Temporal locality (small working sets)</li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Goal: (Trans)portable performance</h3>
+  <ul>
+    <li>Attention to detail has orders-of-magnitude impact</li>
+    <li>Different systems = different micro-architectures, caches</li>
+    <li>Want (trans)portable performance across HW</li>
+    <li>Need <em>principles</em> for high-perf code along with tricks</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Basic principles</h3>
+  <ul>
+    <li>Think before you write</li>
+    <li>Time before you tune</li>
+    <li>Stand on the shoulders of giants</li>
+    <li>Help your tools help you</li>
+    <li>Tune your data structures</li>
+  </ul>
+</section>
+
+
+<section>
+
+  <section>
+    <h2>Think before you write</h3>
+  </section>
+
+
+  <section>
+    <h3>Premature optimization</h3>
+    <blockquote>
+      <p>We should forget about small efficiencies, say about 97% of the time: premature optimization is the root of all evil.<br />
+        – Don Knuth</p>
+    </blockquote>
+  </section>
+
+
+  <section>
+    <h3>Premature optimization</h3>
+    <p>Wrong reading: “Performance doesn’t matter”</p>
+    <blockquote>
+      <p>We should forget about small efficiencies, say about 97% of the time: premature <strong>optimization is the root of all evil</strong>.<br />
+        – Don Knuth</p>
+    </blockquote>
+  </section>
+
+
+  <section>
+    <h3>Premature optimization</h3>
+    <p>What he actually said (with my emphasis)</p>
+    <blockquote>
+      <p>We should forget about <strong>small</strong> efficiencies, say <strong>about 97%</strong> of the time: <strong>premature</strong> optimization is the root of all evil.<br />
+        – Don Knuth</p>
+    </blockquote>
+    <ul>
+      <li>Don’t forget the big efficiencies!</li>
+      <li>Don’t forget the 3%!</li>
+      <li>Your code is not premature forever!</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Don’t sweat the small stuff</h3>
+    <ul>
+      <li>Speed-up from tuning <span class="math inline">\(\epsilon\)</span> of code <span class="math inline">\(&lt; (1-\epsilon)^{-1}  \approx 1 + \epsilon\)</span></li>
+      <li>OK to write high-level stuff in Matlab or Python</li>
+      <li>OK if configuration file reader is un-tuned</li>
+      <li>OK if <span class="math inline">\(O(n^2)\)</span> prelude to <span class="math inline">\(O(n^3)\)</span> algorithm is not hyper-tuned?</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Lay-of-the-land thinking</h3>
+    <pre><code>    for (i = 0; i &lt; n; ++i)
+        for (j = 0; j &lt; n; ++j)
+        for (k = 0; k &lt; n; ++k)
+        C[i+j*n] += A[i+k*n] * B[k+j*n];
+    </code></pre>
+    <ul>
+      <li>What are the “big computations” in my code?</li>
+      <li>What are the natural algorithmic variants?
+        <ul>
+          <li>Vary loop orders? Different interpretations!</li>
+          <li>Lower complexity algorithm (Strassen?)</li>
+      </ul></li>
+      <li>Should I rule out some options in advance?</li>
+      <li>How can I code so it is easy to experiment?</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>How big is <span class="math inline">\(n\)</span>?</h3>
+    <p>Typical analysis: time is <span class="math inline">\(O(f(n))\)</span></p>
+    <ul>
+      <li><p>Meaning: <span class="math inline">\(\exists C, N : \forall n \geq N, T_n \leq C f(n)\)</span>.</p></li>
+      <li><p>Says <em>nothing</em> about constant factors: <span class="math inline">\(O(10 n) = O(n)\)</span></p></li>
+      <li><p>Ignores lower order term: <span class="math inline">\(O(n^3 + 1000 n^2) = O(n^3)\)</span></p></li>
+      <li><p>Behavior at small <span class="math inline">\(n\)</span> may not match behavior at large <span class="math inline">\(n\)</span>!</p></li>
+    </ul>
+    <p>Beware asymptotic complexity arguments about small-<span class="math inline">\(n\)</span> codes!</p>
+  </section>
+
+
+  <section>
+    <h3>Avoid work</h3>
+    <pre><code>bool any_negative1(int* x, int n)
+        {
+        bool result = false;
+        for (int i = 0; i &lt; n; ++i)
+        result = (result || x[i] &lt; 0);
+        return result;
+        }
+        
+        bool any_negative2(int* x, int n)
+        {
+        for (int i = 0; i &lt; n; ++i)
+        if (x[i] &lt; 0)
+        return false;
+        return true;
+        }</code></pre>
+  </section>
+
+
+  <section>
+    <h3>Be cheap</h3>
+    <p>Fast enough, right enough <span class="math inline">\(\implies\)</span><br />
+      Approximate when you can get away with it.</p>
+  </section>
+  <section id="do-more-with-less-data" class="slide level3">
+    <h3>Do more with less (data)</h3>
+    <p>Want lots of work relative to data loads:</p>
+    <ul>
+      <li><p>Keep data compact to fit in cache</p></li>
+      <li><p>Use short data types for better vectorization</p></li>
+      <li><p>But be aware of tradeoffs!</p>
+        <ul>
+          <li><p>For integers: may want 64-bit ints sometimes!</p></li>
+          <li><p>For floating-point: will discuss in detail in other lectures</p></li>
+      </ul></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Remember the I/O!</h3>
+    <p>Example: Explicit PDE time stepper on <span class="math inline">\(256^2\)</span> mesh</p>
+    <ul>
+      <li><p>0.25 MB per frame (three fit in L3 cache)</p></li>
+      <li><p>Constant work per element (a few flops)</p></li>
+      <li><p>Time to write to disk <span class="math inline">\(\approx\)</span> 5 ms</p></li>
+    </ul>
+    <p>If I write once every 100 frames, how much time is I/O?</p>
+  </section>
+
+
+</section>
+
+
+<section>
+
+  <section>
+    <h3>Time before you tune</h3>
+  </section>
+  <section id="hot-spots-and-bottlenecks" class="slide level3">
+    <h3>Hot spots and bottlenecks</h3>
+    <ul>
+      <li><p>Often a little bit of code takes most of the time</p></li>
+      <li><p>Usually called a “hot spot” or bottleneck</p></li>
+      <li><p>Goal: Find and eliminate</p>
+        <ul>
+          <li>Cute coinage: “de-slugging”</li>
+      </ul></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Practical timing</h3>
+    <p>Need to worry about:</p>
+    <ul>
+      <li><p>System timer resolutions</p></li>
+      <li><p>Wall-clock time vs CPU time</p></li>
+      <li><p>Size of data collected vs how informative it is</p></li>
+      <li><p>Cross-interference with other tasks</p></li>
+      <li><p>Cache warm-start on repeated timings</p></li>
+      <li><p>Overlooked issues from too-small timings</p></li>
+    </ul>
+  </section>
+
+  
+  <section>
+    <h3>Manual instrumentation</h3>
+    <p>Basic picture:</p>
+    <ul>
+      <li><p>Identify stretch of code to be timed</p></li>
+      <li><p>Run it several times with “characteristic” data</p></li>
+      <li><p>Accumulate the total time spent</p></li>
+    </ul>
+    <p>Caveats: Effects from repetition, “characteristic” data</p>
+  </section>
+
+  
+  <section>
+    <h3>Manual instrumentation</h3>
+    <ul>
+      <li><p>Hard to get <em>portable</em> high-resolution wall-clock time!</p></li>
+      <li><p>Solution: omp_get_wtime()</p></li>
+      <li><p>Requires OpenMP support (still not CLang)</p></li>
+    </ul>
+  </section>
+
+  
+  <section>
+    <h3>Types of profiling tools</h3>
+    <ul>
+      <li><p>Sampling vs instrumenting</p>
+        <ul>
+          <li><p>Sampling: Interrupt every <span class="math inline">\(t_{\mathrm{profile}}\)</span> cycles</p></li>
+          <li><p>Instrumenting: Rewrite code to insert timers</p></li>
+          <li><p>Instrument at binary or source level</p></li>
+      </ul></li>
+      <li><p>Function level or line-by-line</p>
+        <ul>
+          <li><p>Function: Inlining can cause mis-attribution</p></li>
+          <li><p>Line-by-line: Usually requires debugging symbols (-g)</p></li>
+      </ul></li>
+      <li><p>Context information?</p>
+        <ul>
+          <li>Distinguish full call stack or not?</li>
+      </ul></li>
+      <li><p>Time full run, or just part?</p></li>
+    </ul>
+  </section>
+
+  
+  <section>
+    <h3>Hardware counters</h3>
+    <ul>
+      <li><p>Counters track cache misses, instruction counts, etc</p></li>
+      <li><p>Present on most modern chips</p></li>
+      <li><p>May require significant permissions to access...</p></li>
+    </ul>
+  </section>
+
+  
+  <section>
+    <h3>Automated analysis tools</h3>
+    <ul>
+      <li><p>Examples: MAQAO and IACA</p></li>
+      <li><p>Symbolic execution of <em>model</em> of a code segment</p></li>
+      <li><p>Usually only practical for short segments</p></li>
+      <li><p>But can give detailed feedback on (assembly) quality</p></li>
+    </ul>
+  </section>
+
+</section>
+
+
+
+<section>
+  
+  <section>
+    <h3>Shoulders of giants</h3>
+  </section>
+  
+  <section>
+    <h3>What makes a good kernel?</h3>
+    <p>Computational kernels are</p>
+    <ul>
+      <li><p>Small and simple to describe</p></li>
+      <li><p>General building blocks (amortize tuning work)</p></li>
+      <li><p>Ideally high arithmetic intensity</p>
+        <ul>
+          <li><p>Arithmetic intensity = flops/byte</p></li>
+          <li><p>Amortizes memory costs</p></li>
+      </ul></li>
+    </ul>
+  </section>
+
+  
+  <section>
+    <h3>Case study: BLAS</h3>
+    <p>Basic Linear Algebra Subroutines</p>
+    <ul>
+      <li><p>Level 1: <span class="math inline">\(O(n)\)</span> work on <span class="math inline">\(O(n)\)</span> data</p></li>
+      <li><p>Level 2: <span class="math inline">\(O(n^2)\)</span> work on <span class="math inline">\(O(n^2)\)</span> data</p></li>
+      <li><p>Level 3: <span class="math inline">\(O(n^3)\)</span> work on <span class="math inline">\(O(n^2)\)</span> data</p></li>
+    </ul>
+    <p>Level 3 BLAS are key for high-perf transportable LA.</p>
+  </section>
+
+
+  <section>
+    <h3>Other common kernels</h3>
+    <ul>
+      <li><p>Apply sparse matrix (or sparse matrix powers)</p></li>
+      <li><p>Compute an FFT</p></li>
+      <li><p>Sort a list</p></li>
+    </ul>
+  </section>
+
+  
+  <section>
+    <h3>Kernel trade-offs</h3>
+    <ul>
+      <li><p>Critical to get <em>properly tuned</em> kernels</p>
+        <ul>
+          <li><p>Kernel <em>interface</em> is consistent across HW types</p></li>
+          <li><p>Kernel <em>implementation</em> varies according to arch details</p></li>
+      </ul></li>
+      <li><p>General kernels <em>may</em> leave performance on the table</p>
+        <ul>
+          <li>Ex: General matrix-matrix multiply for structured matrices</li>
+      </ul></li>
+      <li><p>Overheads may be an issue for small <span class="math inline">\(n\)</span> cases</p>
+        <ul>
+          <li>Ex: Usefulness of batched BLAS extensions</li>
+      </ul></li>
+      <li><p>But: Ideally, someone else writes the kernel!</p>
+        <ul>
+          <li>Or it may be automatically tuned</li>
+      </ul></li>
+    </ul>
+  </section>
+
+</section>
+
+
+<section>
+
+  <section>
+    <h3>Help your tools help you</h3>
+  </section>
+
+  
+  <section>
+    <h3>What can your compiler do for you?</h3>
+    <p>In decreasing order of effectiveness:</p>
+    <ul>
+      <li><p>Local optimization</p>
+        <ul>
+          <li><p>Especially restricted to a “basic block”</p></li>
+          <li><p>More generally, in “simple” functions</p></li>
+      </ul></li>
+      <li><p>Loop optimizations</p></li>
+      <li><p>Global (cross-function) optimizations</p></li>
+    </ul>
+  </section>
+
+  
+  <section>
+    <h3>Local optimizations</h3>
+    <ul>
+      <li><p>Register allocation: compiler &gt; human</p></li>
+      <li><p>Instruction scheduling: compiler &gt; human</p></li>
+      <li><p>Branch joins and jump elim: compiler &gt; human?</p></li>
+      <li><p>Constant folding and propogation: humans OK</p></li>
+      <li><p>Common subexpression elimination: humans OK</p></li>
+      <li><p>Algebraic reductions: humans definitely help</p></li>
+    </ul>
+  </section>
+
+  
+  <section>
+    <h3>Loop optimizations</h3>
+    <p><em>Mostly</em> leave these to modern compilers</p>
+    <ul>
+      <li><p>Loop invariant code motion</p></li>
+      <li><p>Loop unrolling</p></li>
+      <li><p>Loop fusion</p></li>
+      <li><p>Software pipelining</p></li>
+      <li><p>Vectorization</p></li>
+      <li><p>Induction variable substitution</p></li>
+    </ul>
+  </section>
+
+  
+  <section>
+    <h3>Obstacles for the compiler</h3>
+    <ul>
+      <li><p>Long dependency chains</p></li>
+      <li><p>Excessive branching</p></li>
+      <li><p>Pointer aliasing</p></li>
+      <li><p>Complex loop logic</p></li>
+      <li><p>Cross-module optimization</p></li>
+      <li><p>Function pointers and virtual functions</p></li>
+      <li><p>Unexpected FP costs</p></li>
+      <li><p>Missed algebraic reductions</p></li>
+      <li><p>Lack of instruction diversity</p></li>
+    </ul>
+    <p>Let’s look at a few...</p>
+  </section>
+
+  
+  <section>
+    <h3>Ex: Long dependency chains</h3>
+    <p>Sometimes these can be decoupled (e.g. reduction loops)</p>
+    <pre><code>  // Version 0
+        float s = 0;
+        for (int i = 0; i &lt; n; ++i)
+        s += x[i];
+    </code></pre>
+    <p>Apparent linear dependency chain. Compilers might handle this, but let’s try ourselves...</p>
+  </section>
+
+  
+  <section>
+    <h3>Ex: Long dependency chains</h3>
+    <p>Key: Break up chains to expose parallel opportunities</p>
+    <pre><code>  // Version 1
+        float s[4] = {0, 0, 0, 0};
+        int i;
+        
+        // Sum start of list in four independent sub-sums
+        for (i = 0; i &lt; n-3; i += 4)
+        for (int j = 0; j &lt; 4; ++j)
+        s[j] += x[i+j];
+        
+        // Combine sub-sums and handle trailing elements
+        float s = (s[0]+s[1]) + (s[2]+s[3]);
+        for (; i &lt; n; ++i)
+        s += x[i];</code></pre>
+  </section>
+
+  
+  <section>
+    <h3>Ex: Pointer aliasing</h3>
+    <p>Why can this not vectorize easily?</p>
+    <pre><code>void add_vecs(int n, double* result, double* a, double* b)
+        {
+        for (int i = 0; i &lt; n; ++i)
+        result[i] = a[i] + b[i];
+        }</code></pre>
+    <p>Q: What if result overlaps a or b?</p>
+  </section>
+
+  
+  <section>
+    <h3>Ex: Pointer aliasing</h3>
+    <p>C99: Use restrict keyword</p>
+    <pre><code>  void add_vecs(int n, double* restrict result,
+        double* restrict a, double* restrict b);
+    </code></pre>
+    <p>Implicit promise: these point to different things in memory.</p>
+    
+    <p>Fortran forbids aliasing — part of why naive Fortran speed beats naive C speed!</p>
+  </section>
+
+  
+  <section>
+    <h3>Ex: “Black box” function calls</h3>
+    <p>Compiler must assume arbitrary wackiness from “black box” function calls</p>
+    <pre><code>double foo(double* restrict x)
+        {
+        double y = *x;  // Load x once
+        bar();    // Assume bar is a &#39;black box&#39; fn
+        y += *x;  // Must reload x
+        return y;
+        }</code></pre>
+  </section>
+
+  
+  <section>
+    <h3>Ex: Floating point issues</h3>
+    <p>Several possible optimizations available:</p>
+    <ul>
+      <li><p>Use different precisions</p></li>
+      <li><p>Use more/less accurate special function routines</p></li>
+      <li><p>Underflow is flush-to-zero or gradual</p></li>
+    </ul>
+    <p>Problem: This changes semantics!</p>
+    <ul>
+      <li><p>A daring compiler will pretend floats are reals and hope</p></li>
+      <li><p>This will break some of my codes!</p></li>
+      <li><p>Human intervention is indicated</p></li>
+    </ul>
+  </section>
+
+  
+  <section>
+    <h3>Optimization flags</h3>
+    <ul>
+      <li><p>-O[0123] (no optimization – aggressive optimization)</p>
+        <ul>
+          <li><p>-O2 is usually the default</p></li>
+          <li><p>-O3 is useful, but might break FP codes (for example)</p></li>
+      </ul></li>
+      <li><p>Architecture targets</p>
+        <ul>
+          <li><p>Usually a “native” mode targets current architecture</p></li>
+          <li><p>Not always the right choice (e.g. consider Totient head/compute)</p></li>
+      </ul></li>
+      <li><p>Specialized optimization flags</p>
+        <ul>
+          <li><p>Turn on/off specific optimization features</p></li>
+          <li><p>Often the basic -Ox has reasonable defaults</p></li>
+      </ul></li>
+    </ul>
+  </section>
+
+  
+  <section>
+    <h3>Auto-vectorization and compiler reports</h3>
+    <ul>
+      <li><p>Good compilers try to vectorize for you</p>
+        <ul>
+          <li><p>Intel is pretty good at this</p></li>
+          <li><p>GCC / CLang are OK, not as strong</p></li>
+      </ul></li>
+      <li><p>Can get reports about what prevents vectorization</p>
+        <ul>
+          <li><p>Not necessarily by default!</p></li>
+          <li><p>Helps a lot for tuning</p></li>
+      </ul></li>
+    </ul>
+  </section>
+
+  
+  <section>
+    <h3>Profile-guided optimization</h3>
+    <p>Basic workflow:</p>
+    <ul>
+      <li><p>Compile code with optimizations</p></li>
+      <li><p>Run in a profiler</p></li>
+      <li><p>Compile again, provide profiler results</p></li>
+    </ul>
+    <p>Helps compiler optimize branches based on observations.</p>
+  </section>
+
+</section>
+
+
+<section>
+  
+  <section>
+    <h3>Data layout matters</h3>
+  </section>
+  
+  <section>
+    <h3>“Speed-of-light” analysis</h3>
+    <p>For compulsory misses to load cache: <span class="math display">\[T_{\mbox{data}} \mbox{ (s)}
+        \quad \geq \quad
+        \frac{\mbox{data required (bytes)}}
+        {\mbox{peak BW (bytes/s)}}\]</span> Possible optimizations:</p>
+    <ul>
+      <li><p>Shrink working sets to fit in cache (pay this once)</p></li>
+      <li><p>Use simple unit-stride access patterns</p></li>
+    </ul>
+    <p>Reality is generally more complicated...</p>
+  </section>
+
+  
+  <section>
+    <h3>When and how to allocate</h3>
+    <p>Why is this an <span class="math inline">\(O(n^2)\)</span> loop?</p>
+    <div class="sourceCode" id="cb8" data-language="Matlab"><pre class="sourceCode matlab"><code class="sourceCode matlab"><a class="sourceLine" id="cb8-1" data-line-number="1">  x = [];</a>
+          <a class="sourceLine" id="cb8-2" data-line-number="2">  for i = <span class="fl">1</span>:n</a>
+          <a class="sourceLine" id="cb8-3" data-line-number="3">    x(i) = i;</a>
+          <a class="sourceLine" id="cb8-4" data-line-number="4">  end</a></code></pre></div>
+  </section>
+
+  
+  <section>
+    <h3>When and how to allocate</h3>
+    <ul>
+      <li><p>Access is not the only cost!</p>
+        <ul>
+          <li><p>Allocation / de-allocation also costs something</p></li>
+          <li><p>So does garbage collection (where supported)</p></li>
+          <li><p>Beware hidden allocation costs (e.g. on resize)</p></li>
+          <li><p>Often bites naive library users</p></li>
+      </ul></li>
+      <li><p>Two thoughts to consider</p>
+        <ul>
+          <li><p>Pre-allocation (avoid repeated alloc/free)</p></li>
+          <li><p>Lazy allocation (if alloc will often not be needed)</p></li>
+      </ul></li>
+    </ul>
+  </section>
+
+  
+  <section>
+    <h3>Storage layout</h3>
+    <p>Desiderata:</p>
+    <ul>
+      <li><p>Compact (fit lots into cache)</p></li>
+      <li><p>Traverse with simple access patterns</p></li>
+      <li><p>Avoids pointer chasing</p></li>
+    </ul>
+  </section>
+
+  
+  <section>
+    <h3>Multi-dimensional arrays</h3>
+    <p>Two standard formats:</p>
+    <ul>
+      <li><p>Col-major (Fortran): Each column stored consecutively</p></li>
+      <li><p>Row-major (C/C++): Each row stored consecutively</p></li>
+    </ul>
+    <p>Ideally, traverse arrays with unit stride! Layout affects choice.</p>
+  
+    <p>More sophisticated multi-dim array layouts may be useful...</p>
+  </section>
+
+  
+  <section>
+    <h3>Blocking / tiling</h3>
+    <p>Classic example: Matrix multiply</p>
+    <ul>
+      <li><p>Load <span class="math inline">\(b \times b\)</span> block of <span class="math inline">\(A\)</span></p></li>
+      <li><p>Load <span class="math inline">\(b \times b\)</span> block of <span class="math inline">\(B\)</span></p></li>
+      <li><p>Compute product of blocks</p></li>
+      <li><p>Accumulate into <span class="math inline">\(b \times b\)</span> block of <span class="math inline">\(C\)</span></p></li>
+    </ul>
+    <p>Have <span class="math inline">\(O(b^3)\)</span> work for <span class="math inline">\(O(b^2)\)</span> memory references!</p>
+  </section>
+
+  
+  <section>
+    <h3>Data alignment and vectorization</h3>
+    <ul>
+      <li><p>Vector load/stores faster if <em>aligned</em> (start at memory addresses that are multiples of 64 or 256)</p></li>
+      <li><p>Can ask for aligned blocks of memory from allocator</p></li>
+      <li><p>Then want aligned offsets into aligned blocks</p></li>
+      <li><p>Have to help compiler recognize aligned pointers!</p></li>
+    </ul>
+  </section>
+  <section id="data-alignment-and-cache-contention" class="slide level3">
+    <h3>Data alignment and cache contention</h3>
+    <p>Issue: What if strided access causes conflict misses?</p>
+    <ul>
+      <li><p>Example: Walk across row of col-major matrix</p></li>
+      <li><p>Example: Parallel arrays of large-power-of-2 size</p></li>
+    </ul>
+    <p>Not the most common problem, but one to watch for.</p>
+  </section>
+
+
+  <section>
+    <h3>Structure layouts</h3>
+    <ul>
+      <li><p>Want <span class="math inline">\(b\)</span>-byte type to start on <span class="math inline">\(b\)</span>-byte memory boundary.</p></li>
+      <li><p>Compiler may pad structures to enforce this.</p></li>
+      <li><p>Advice: arrange structure fields in decreasing size order.</p></li>
+    </ul>
+  </section>
+  <section id="soa-vs-aos" class="slide level3">
+    <h3>SoA vs AoS</h3>
+    <pre><code>// Struct of Arrays (parallel arrays)
+        typedef struct {
+        double* x;
+        double* y;
+        } aos_points_t;
+        
+        // Array of Structs
+        typedef struct {
+        double x;
+        double y;
+        } point_t;
+        typedef point_t* soa_points_t;</code></pre>
+  </section>
+
+  
+  <section>
+    <h3>SoA vs AoS</h3>
+    <ul>
+      <li><p>SoA: Structure of Arrays</p>
+        <ul>
+          <li><p>Friendly to vectorization</p></li>
+          <li><p>Poor locality to access all of one item</p></li>
+          <li><p>Awkward for lots of libraries and programs</p></li>
+      </ul></li>
+      <li><p>AoS: Array of Structs</p>
+        <ul>
+          <li><p>Naturally supported default</p></li>
+          <li><p>Not very SIMD-friendly</p></li>
+      </ul></li>
+      <li><p>Possible to combine the two...</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Copy optimizations</h3>
+    <p>Copy between formats to accelerate computations, e.g.</p>
+    <ul>
+      <li><p>Copy piece of AoS to SoA format</p></li>
+      <li><p>Perform vector operations on SoA data</p></li>
+      <li><p>Copy back out</p></li>
+    </ul>
+    <p>Performance gains &gt; copy costs? Plays great with tiling!</p>
+  </section>
+
+  
+  <section>
+    <h3>For the control freak</h3>
+    <p>Can get (some) programmer control over</p>
+    <ul>
+      <li><p>Pre-fetching</p></li>
+      <li><p>Uncached memory stores</p></li>
+    </ul>
+    <p>But usually best left to compiler / HW.</p>
+  </section>
+
+</section>
+
+
+<section>
+  <h3>References</h3>
+  <ul>
+    <li><p>My <a href="http://www.cs.cornell.edu/~bindel/class/cs5220-f11/notes/serial-tuning.pdf">serial tuning notes</a>.</p></li>
+    <li><p>Ulrich Drepper, <a href="http://people.redhat.com/drepper/cpumemory.pdf"><em>What Every Programmer Should Know About Memory</em></a></p></li>
+    <li><p><a href="http://www.intel.com/Assets/PDF/manual/248966.pdf">Intel Optimization Manual</a></p></li>
+    <li><p>Hager and Wellein, <a href="https://www.crcpress.com/Introduction-to-High-Performance-Computing-for-Scientists-and-Engineers/Hager-Wellein/p/book/9781439811924"><em>Intro to HPC for Scientists and Engineers</em></a></p></li>
+    <li><p>Goedecker and Hoisie, <a href="http://epubs.siam.org/doi/book/10.1137/1.9780898718218"><em>Performance Optimization of Numerically Intensive Codes</em></a></p></li>
+    <li><p>Agner Fog’s <a href="http://www.agner.org/optimize/">Software Optimization Manuals</a></p></li>
+  </ul>
+</section>
