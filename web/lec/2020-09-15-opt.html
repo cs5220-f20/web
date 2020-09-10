@@ -21,15 +21,20 @@ audio: 2020-09-15-opt
 
 <section>
   <h3>Reminder: Modern processors</h3>
+  <p>Modern CPUs are</p>
   <ul>
-    <li>Modern CPUs are
-      <ul>
-        <li>Wide: start / retire multiple instructions per cycle</li>
-        <li>Pipelined: overlap instruction executions</li>
-        <li>Out-of-order: dynamically schedule instructions</li>
-    </ul></li>
-    <li>Lots of opportunities for instruction-level parallelism (ILP)</li>
-    <li>Complicated! Want the compiler to handle the details</li>
+    <li>Wide: start / retire multiple instructions per cycle</li>
+    <li>Pipelined: overlap instruction executions</li>
+    <li>Out-of-order: dynamically schedule instructions</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Reminder: Modern processors</h3>
+  <ul>
+    <li>Want lots of  instruction-level parallelism (ILP)</li>
+    <li>Complicated! Compiler should handle details</li>
     <li>Implication: we should give the compiler
       <ul>
         <li>Good instruction mixes</li>
@@ -59,7 +64,7 @@ audio: 2020-09-15-opt
   <h3>Goal: (Trans)portable performance</h3>
   <ul>
     <li>Attention to detail has orders-of-magnitude impact</li>
-    <li>Different systems = different micro-architectures, caches</li>
+    <li>Systems differ in micro-architectures, caches</li>
     <li>Want (trans)portable performance across HW</li>
     <li>Need <em>principles</em> for high-perf code along with tricks</li>
   </ul>
