@@ -140,10 +140,11 @@ audio: 2020-09-15-opt
 
   <section>
     <h3>Lay-of-the-land thinking</h3>
-    <pre><code>    for (i = 0; i &lt; n; ++i)
-        for (j = 0; j &lt; n; ++j)
+    <pre><code>
+for (i = 0; i &lt; n; ++i)
+    for (j = 0; j &lt; n; ++j)
         for (k = 0; k &lt; n; ++k)
-        C[i+j*n] += A[i+k*n] * B[k+j*n];
+            C[i+j*n] += A[i+k*n] * B[k+j*n];
     </code></pre>
     <ul>
       <li>What are the “big computations” in my code?</li>
@@ -165,7 +166,6 @@ audio: 2020-09-15-opt
       <li><p>Meaning: <span class="math inline">\(\exists C, N : \forall n \geq N, T_n \leq C f(n)\)</span>.</p></li>
       <li><p>Says <em>nothing</em> about constant factors: <span class="math inline">\(O(10 n) = O(n)\)</span></p></li>
       <li><p>Ignores lower order term: <span class="math inline">\(O(n^3 + 1000 n^2) = O(n^3)\)</span></p></li>
-      <li><p>Behavior at small <span class="math inline">\(n\)</span> may not match behavior at large <span class="math inline">\(n\)</span>!</p></li>
     </ul>
     <p>Beware asymptotic complexity arguments about small-<span class="math inline">\(n\)</span> codes!</p>
   </section>
@@ -173,31 +173,40 @@ audio: 2020-09-15-opt
 
   <section>
     <h3>Avoid work</h3>
-    <pre><code>bool any_negative1(int* x, int n)
-        {
-        bool result = false;
-        for (int i = 0; i &lt; n; ++i)
+    <pre><code>
+bool any_negative1(int* x, int n)
+{
+    bool result = false;
+    for (int i = 0; i &lt; n; ++i)
         result = (result || x[i] &lt; 0);
-        return result;
-        }
-        
-        bool any_negative2(int* x, int n)
-        {
-        for (int i = 0; i &lt; n; ++i)
-        if (x[i] &lt; 0)
+    return result;
+}
+
+bool any_negative2(int* x, int n)
+{
+    for (int i = 0; i &lt; n; ++i)
+    if (x[i] &lt; 0)
         return false;
-        return true;
-        }</code></pre>
+    return true;
+}
+    </code></pre>
   </section>
 
 
   <section>
     <h3>Be cheap</h3>
-    <p>Fast enough, right enough <span class="math inline">\(\implies\)</span><br />
-      Approximate when you can get away with it.</p>
+
+    <p>
+      Fast enough, right enough
+      <span class="math inline">\(\implies\)</span><br />
+      Approximate when you can get away with it.
+    </p>
   </section>
-  <section id="do-more-with-less-data" class="slide level3">
+
+
+  <section>
     <h3>Do more with less (data)</h3>
+
     <p>Want lots of work relative to data loads:</p>
     <ul>
       <li><p>Keep data compact to fit in cache</p></li>
@@ -205,7 +214,7 @@ audio: 2020-09-15-opt
       <li><p>But be aware of tradeoffs!</p>
         <ul>
           <li><p>For integers: may want 64-bit ints sometimes!</p></li>
-          <li><p>For floating-point: will discuss in detail in other lectures</p></li>
+          <li><p>For floating-point: more in other lectures</p></li>
       </ul></li>
     </ul>
   </section>
@@ -257,7 +266,7 @@ audio: 2020-09-15-opt
     </ul>
   </section>
 
-  
+
   <section>
     <h3>Manual instrumentation</h3>
     <p>Basic picture:</p>
@@ -269,7 +278,7 @@ audio: 2020-09-15-opt
     <p>Caveats: Effects from repetition, “characteristic” data</p>
   </section>
 
-  
+
   <section>
     <h3>Manual instrumentation</h3>
     <ul>
@@ -279,7 +288,7 @@ audio: 2020-09-15-opt
     </ul>
   </section>
 
-  
+
   <section>
     <h3>Types of profiling tools</h3>
     <ul>
@@ -302,7 +311,7 @@ audio: 2020-09-15-opt
     </ul>
   </section>
 
-  
+
   <section>
     <h3>Hardware counters</h3>
     <ul>
@@ -312,7 +321,7 @@ audio: 2020-09-15-opt
     </ul>
   </section>
 
-  
+
   <section>
     <h3>Automated analysis tools</h3>
     <ul>
@@ -328,11 +337,11 @@ audio: 2020-09-15-opt
 
 
 <section>
-  
+
   <section>
     <h3>Shoulders of giants</h3>
   </section>
-  
+
   <section>
     <h3>What makes a good kernel?</h3>
     <p>Computational kernels are</p>
@@ -347,7 +356,7 @@ audio: 2020-09-15-opt
     </ul>
   </section>
 
-  
+
   <section>
     <h3>Case study: BLAS</h3>
     <p>Basic Linear Algebra Subroutines</p>
@@ -369,7 +378,7 @@ audio: 2020-09-15-opt
     </ul>
   </section>
 
-  
+
   <section>
     <h3>Kernel trade-offs</h3>
     <ul>
@@ -402,7 +411,7 @@ audio: 2020-09-15-opt
     <h3>Help your tools help you</h3>
   </section>
 
-  
+
   <section>
     <h3>What can your compiler do for you?</h3>
     <p>In decreasing order of effectiveness:</p>
@@ -417,7 +426,7 @@ audio: 2020-09-15-opt
     </ul>
   </section>
 
-  
+
   <section>
     <h3>Local optimizations</h3>
     <ul>
@@ -430,7 +439,7 @@ audio: 2020-09-15-opt
     </ul>
   </section>
 
-  
+
   <section>
     <h3>Loop optimizations</h3>
     <p><em>Mostly</em> leave these to modern compilers</p>
@@ -444,7 +453,7 @@ audio: 2020-09-15-opt
     </ul>
   </section>
 
-  
+
   <section>
     <h3>Obstacles for the compiler</h3>
     <ul>
@@ -461,7 +470,7 @@ audio: 2020-09-15-opt
     <p>Let’s look at a few...</p>
   </section>
 
-  
+
   <section>
     <h3>Ex: Long dependency chains</h3>
     <p>Sometimes these can be decoupled (e.g. reduction loops)</p>
@@ -473,26 +482,26 @@ audio: 2020-09-15-opt
     <p>Apparent linear dependency chain. Compilers might handle this, but let’s try ourselves...</p>
   </section>
 
-  
+
   <section>
     <h3>Ex: Long dependency chains</h3>
     <p>Key: Break up chains to expose parallel opportunities</p>
     <pre><code>  // Version 1
         float s[4] = {0, 0, 0, 0};
         int i;
-        
+
         // Sum start of list in four independent sub-sums
         for (i = 0; i &lt; n-3; i += 4)
         for (int j = 0; j &lt; 4; ++j)
         s[j] += x[i+j];
-        
+
         // Combine sub-sums and handle trailing elements
         float s = (s[0]+s[1]) + (s[2]+s[3]);
         for (; i &lt; n; ++i)
         s += x[i];</code></pre>
   </section>
 
-  
+
   <section>
     <h3>Ex: Pointer aliasing</h3>
     <p>Why can this not vectorize easily?</p>
@@ -504,7 +513,7 @@ audio: 2020-09-15-opt
     <p>Q: What if result overlaps a or b?</p>
   </section>
 
-  
+
   <section>
     <h3>Ex: Pointer aliasing</h3>
     <p>C99: Use restrict keyword</p>
@@ -512,11 +521,11 @@ audio: 2020-09-15-opt
         double* restrict a, double* restrict b);
     </code></pre>
     <p>Implicit promise: these point to different things in memory.</p>
-    
+
     <p>Fortran forbids aliasing — part of why naive Fortran speed beats naive C speed!</p>
   </section>
 
-  
+
   <section>
     <h3>Ex: “Black box” function calls</h3>
     <p>Compiler must assume arbitrary wackiness from “black box” function calls</p>
@@ -529,7 +538,7 @@ audio: 2020-09-15-opt
         }</code></pre>
   </section>
 
-  
+
   <section>
     <h3>Ex: Floating point issues</h3>
     <p>Several possible optimizations available:</p>
@@ -546,7 +555,7 @@ audio: 2020-09-15-opt
     </ul>
   </section>
 
-  
+
   <section>
     <h3>Optimization flags</h3>
     <ul>
@@ -568,7 +577,7 @@ audio: 2020-09-15-opt
     </ul>
   </section>
 
-  
+
   <section>
     <h3>Auto-vectorization and compiler reports</h3>
     <ul>
@@ -585,7 +594,7 @@ audio: 2020-09-15-opt
     </ul>
   </section>
 
-  
+
   <section>
     <h3>Profile-guided optimization</h3>
     <p>Basic workflow:</p>
@@ -601,11 +610,11 @@ audio: 2020-09-15-opt
 
 
 <section>
-  
+
   <section>
     <h3>Data layout matters</h3>
   </section>
-  
+
   <section>
     <h3>“Speed-of-light” analysis</h3>
     <p>For compulsory misses to load cache: <span class="math display">\[T_{\mbox{data}} \mbox{ (s)}
@@ -619,7 +628,7 @@ audio: 2020-09-15-opt
     <p>Reality is generally more complicated...</p>
   </section>
 
-  
+
   <section>
     <h3>When and how to allocate</h3>
     <p>Why is this an <span class="math inline">\(O(n^2)\)</span> loop?</p>
@@ -629,7 +638,7 @@ audio: 2020-09-15-opt
           <a class="sourceLine" id="cb8-4" data-line-number="4">  end</a></code></pre></div>
   </section>
 
-  
+
   <section>
     <h3>When and how to allocate</h3>
     <ul>
@@ -648,7 +657,7 @@ audio: 2020-09-15-opt
     </ul>
   </section>
 
-  
+
   <section>
     <h3>Storage layout</h3>
     <p>Desiderata:</p>
@@ -659,7 +668,7 @@ audio: 2020-09-15-opt
     </ul>
   </section>
 
-  
+
   <section>
     <h3>Multi-dimensional arrays</h3>
     <p>Two standard formats:</p>
@@ -668,11 +677,11 @@ audio: 2020-09-15-opt
       <li><p>Row-major (C/C++): Each row stored consecutively</p></li>
     </ul>
     <p>Ideally, traverse arrays with unit stride! Layout affects choice.</p>
-  
+
     <p>More sophisticated multi-dim array layouts may be useful...</p>
   </section>
 
-  
+
   <section>
     <h3>Blocking / tiling</h3>
     <p>Classic example: Matrix multiply</p>
@@ -685,7 +694,7 @@ audio: 2020-09-15-opt
     <p>Have <span class="math inline">\(O(b^3)\)</span> work for <span class="math inline">\(O(b^2)\)</span> memory references!</p>
   </section>
 
-  
+
   <section>
     <h3>Data alignment and vectorization</h3>
     <ul>
@@ -721,7 +730,7 @@ audio: 2020-09-15-opt
         double* x;
         double* y;
         } aos_points_t;
-        
+
         // Array of Structs
         typedef struct {
         double x;
@@ -730,7 +739,7 @@ audio: 2020-09-15-opt
         typedef point_t* soa_points_t;</code></pre>
   </section>
 
-  
+
   <section>
     <h3>SoA vs AoS</h3>
     <ul>
@@ -761,7 +770,7 @@ audio: 2020-09-15-opt
     <p>Performance gains &gt; copy costs? Plays great with tiling!</p>
   </section>
 
-  
+
   <section>
     <h3>For the control freak</h3>
     <p>Can get (some) programmer control over</p>
