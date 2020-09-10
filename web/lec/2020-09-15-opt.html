@@ -238,9 +238,11 @@ bool any_negative2(int* x, int n)
 <section>
 
   <section>
-    <h3>Time before you tune</h3>
+    <h2>Time before you tune</h2>
   </section>
-  <section id="hot-spots-and-bottlenecks" class="slide level3">
+
+
+  <section>
     <h3>Hot spots and bottlenecks</h3>
     <ul>
       <li><p>Often a little bit of code takes most of the time</p></li>
@@ -291,24 +293,41 @@ bool any_negative2(int* x, int n)
 
   <section>
     <h3>Types of profiling tools</h3>
+
+    <p>Sampling vs instrumenting</p>
     <ul>
-      <li><p>Sampling vs instrumenting</p>
-        <ul>
-          <li><p>Sampling: Interrupt every <span class="math inline">\(t_{\mathrm{profile}}\)</span> cycles</p></li>
-          <li><p>Instrumenting: Rewrite code to insert timers</p></li>
-          <li><p>Instrument at binary or source level</p></li>
-      </ul></li>
-      <li><p>Function level or line-by-line</p>
-        <ul>
-          <li><p>Function: Inlining can cause mis-attribution</p></li>
-          <li><p>Line-by-line: Usually requires debugging symbols (-g)</p></li>
-      </ul></li>
-      <li><p>Context information?</p>
-        <ul>
-          <li>Distinguish full call stack or not?</li>
-      </ul></li>
-      <li><p>Time full run, or just part?</p></li>
+      <li><p>Sampling: Interrupt every <span class="math inline">\(t_{\mathrm{profile}}\)</span> cycles</p></li>
+      <li><p>Instrumenting: Rewrite code to insert timers</p></li>
+      <li><p>Instrument at binary or source level</p></li>
     </ul>
+  </section>
+
+
+  <section>
+    <h3>Types of profiling tools</h3>
+
+    <p>Function level or line-by-line</p>
+    <ul>
+      <li><p>Function: Inlining can cause mis-attribution</p></li>
+      <li><p>Line-by-line: Requires debugging symbols (-g)</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Types of profiling tools</h3>
+
+    <p>Context information?</p>
+    <ul>
+      <li>Distinguish full call stack or not?</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Types of profiling tools</h3>
+
+    <p>Time full run, or just part?</p>
   </section>
 
 
