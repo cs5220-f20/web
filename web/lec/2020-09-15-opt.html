@@ -686,29 +686,33 @@ for (; i &lt; n; ++i)
 
   <section>
     <h3>When and how to allocate</h3>
-    <p>Why is this an <span class="math inline">\(O(n^2)\)</span> loop?</p>
-    <div class="sourceCode" id="cb8" data-language="Matlab"><pre class="sourceCode matlab"><code class="sourceCode matlab"><a class="sourceLine" id="cb8-1" data-line-number="1">  x = [];</a>
-          <a class="sourceLine" id="cb8-2" data-line-number="2">  for i = <span class="fl">1</span>:n</a>
-          <a class="sourceLine" id="cb8-3" data-line-number="3">    x(i) = i;</a>
-          <a class="sourceLine" id="cb8-4" data-line-number="4">  end</a></code></pre></div>
+    <p>Why is this an <span class="math inline">\(O(n^2)\)</span>
+      loop?</p>
+    <pre><code>x = [];
+for i = 1:n
+  x(i) = i;
+end</code></pre>
   </section>
 
 
   <section>
     <h3>When and how to allocate</h3>
+    <p>Access is not the only cost!</p>
     <ul>
-      <li><p>Access is not the only cost!</p>
-        <ul>
-          <li><p>Allocation / de-allocation also costs something</p></li>
-          <li><p>So does garbage collection (where supported)</p></li>
-          <li><p>Beware hidden allocation costs (e.g. on resize)</p></li>
-          <li><p>Often bites naive library users</p></li>
-      </ul></li>
-      <li><p>Two thoughts to consider</p>
-        <ul>
-          <li><p>Pre-allocation (avoid repeated alloc/free)</p></li>
-          <li><p>Lazy allocation (if alloc will often not be needed)</p></li>
-      </ul></li>
+      <li><p>Allocation / de-allocation also costs something</p></li>
+      <li><p>So does garbage collection (where supported)</p></li>
+      <li><p>Beware hidden allocation costs (e.g. on resize)</p></li>
+      <li><p>Often bites naive library users</p></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>When and how to allocate</h3>
+    <p>Two thoughts to consider</p>
+    <ul>
+      <li><p>Pre-allocation (avoid repeated alloc/free)</p></li>
+      <li><p>Lazy allocation (if alloc will often not be needed)</p></li>
     </ul>
   </section>
 
