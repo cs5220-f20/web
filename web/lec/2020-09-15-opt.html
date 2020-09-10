@@ -410,10 +410,11 @@ bool any_negative2(int* x, int n)
         <ul>
           <li>Ex: General matrix ops for structured matrices</li>
       </ul></li>
-      <li><p>Overheads may be an issue for small <span class="math inline">\(n\)</span> cases</p>
+      <li><p>Overheads may be an issue for small <span class="math inline">\(n\)</span> cases</p><!--
         <ul>
           <li>Ex: Usefulness of batched BLAS extensions</li>
-      </ul></li>
+        </ul> -->
+      </li>
       <li><p>But: Ideally, someone else writes the kernel!</p>
         <ul>
           <li>Or it may be automatically tuned</li>
@@ -427,12 +428,13 @@ bool any_negative2(int* x, int n)
 <section>
 
   <section>
-    <h3>Help your tools help you</h3>
+    <h2>Help your tools help you</h2>
   </section>
 
 
   <section>
-    <h3>What can your compiler do for you?</h3>
+    <h3>How can compiler help?</h3>
+
     <p>In decreasing order of effectiveness:</p>
     <ul>
       <li><p>Local optimization</p>
@@ -448,6 +450,7 @@ bool any_negative2(int* x, int n)
 
   <section>
     <h3>Local optimizations</h3>
+
     <ul>
       <li><p>Register allocation: compiler &gt; human</p></li>
       <li><p>Instruction scheduling: compiler &gt; human</p></li>
@@ -461,6 +464,7 @@ bool any_negative2(int* x, int n)
 
   <section>
     <h3>Loop optimizations</h3>
+
     <p><em>Mostly</em> leave these to modern compilers</p>
     <ul>
       <li><p>Loop invariant code motion</p></li>
@@ -475,6 +479,7 @@ bool any_negative2(int* x, int n)
 
   <section>
     <h3>Obstacles for the compiler</h3>
+
     <ul>
       <li><p>Long dependency chains</p></li>
       <li><p>Excessive branching</p></li>
@@ -492,6 +497,7 @@ bool any_negative2(int* x, int n)
 
   <section>
     <h3>Ex: Long dependency chains</h3>
+
     <p>Sometimes these can be decoupled (e.g. reduction loops)</p>
     <pre><code>  // Version 0
         float s = 0;
