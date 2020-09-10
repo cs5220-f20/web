@@ -517,11 +517,10 @@ bool any_negative2(int* x, int n)
     <h3>Ex: Long dependency chains</h3>
 
     <p>Sometimes these can be decoupled (e.g. reduction loops)</p>
-    <pre><code>  // Version 0
-        float s = 0;
-        for (int i = 0; i &lt; n; ++i)
-        s += x[i];
-    </code></pre>
+    <pre><code>// Version 0
+float s = 0;
+for (int i = 0; i &lt; n; ++i)
+    s += x[i];</code></pre>
     <p>Apparent linear dependency chain. Compilers might handle this, but let’s try ourselves...</p>
   </section>
 
@@ -529,19 +528,19 @@ bool any_negative2(int* x, int n)
   <section>
     <h3>Ex: Long dependency chains</h3>
     <p>Key: Break up chains to expose parallel opportunities</p>
-    <pre><code>  // Version 1
-        float s[4] = {0, 0, 0, 0};
-        int i;
+    <pre><code>// Version 1
+float s[4] = {0, 0, 0, 0};
+int i;
 
-        // Sum start of list in four independent sub-sums
-        for (i = 0; i &lt; n-3; i += 4)
-        for (int j = 0; j &lt; 4; ++j)
+// Sum start of list in four independent sub-sums
+for (i = 0; i &lt; n-3; i += 4)
+    for (int j = 0; j &lt; 4; ++j)
         s[j] += x[i+j];
 
-        // Combine sub-sums and handle trailing elements
-        float s = (s[0]+s[1]) + (s[2]+s[3]);
-        for (; i &lt; n; ++i)
-        s += x[i];</code></pre>
+// Combine sub-sums and handle trailing elements
+float s = (s[0]+s[1]) + (s[2]+s[3]);
+for (; i &lt; n; ++i)
+    s += x[i];</code></pre>
   </section>
 
 
