@@ -347,7 +347,7 @@ bool any_negative2(int* x, int n)
       <li><p>Examples: MAQAO and IACA</p></li>
       <li><p>Symbolic execution of <em>model</em> of a code segment</p></li>
       <li><p>Usually only practical for short segments</p></li>
-      <li><p>But can give detailed feedback on (assembly) quality</p></li>
+      <li><p>Can give detailed feedback on (assembly) quality</p></li>
     </ul>
   </section>
 
@@ -358,7 +358,7 @@ bool any_negative2(int* x, int n)
 <section>
 
   <section>
-    <h3>Shoulders of giants</h3>
+    <h2>Shoulders of giants</h2>
   </section>
 
   <section>
@@ -403,12 +403,12 @@ bool any_negative2(int* x, int n)
     <ul>
       <li><p>Critical to get <em>properly tuned</em> kernels</p>
         <ul>
-          <li><p>Kernel <em>interface</em> is consistent across HW types</p></li>
-          <li><p>Kernel <em>implementation</em> varies according to arch details</p></li>
+          <li><p><em>Interface</em> is consistent across HW types</p></li>
+          <li><p><em>Implementation</em> varies according to arch</p></li>
       </ul></li>
       <li><p>General kernels <em>may</em> leave performance on the table</p>
         <ul>
-          <li>Ex: General matrix-matrix multiply for structured matrices</li>
+          <li>Ex: General matrix ops for structured matrices</li>
       </ul></li>
       <li><p>Overheads may be an issue for small <span class="math inline">\(n\)</span> cases</p>
         <ul>
