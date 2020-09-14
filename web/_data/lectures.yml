@@ -40,6 +40,9 @@
 -
   date: 2020-09-15
   info: Basic optimizations
+  files:
+    - info: Slides
+      file: lec/2020-09-15-opt.html
 -
   date: 2020-09-17
   info: Basic optimizations
