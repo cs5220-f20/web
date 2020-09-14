@@ -15,6 +15,8 @@ audio: 2020-09-15-opt
   <p>Please click the play button below.</p>
 
   <aside class="notes">
+    Welcome to another episode of CS 5220.  This is the sole slide
+    deck for the week, but there is a lot here.  So let's get to it.
   </aside>
 </section>
 
@@ -27,6 +29,14 @@ audio: 2020-09-15-opt
     <li>Pipelined: overlap instruction executions</li>
     <li>Out-of-order: dynamically schedule instructions</li>
   </ul>
+
+  <aside class="notes">
+    From the last slide deck, recall that we learned that a single
+    core on a modern CPU is rather complicated.  We can start several
+    instructions at a time, and those instructions can be re-ordered
+    and fed to one of several internal pipelines in the processor.
+    This gives us lots of potential for instruction-level parallelism.
+  </aside>
 </section>
 
 
@@ -42,6 +52,15 @@ audio: 2020-09-15-opt
         <li>Vectorizable operations</li>
     </ul></li>
   </ul>
+  <aside class="notes">
+    But potential instruction-level parallelism is not the same as
+    instruction-level parallelism in practice!  To make full use of
+    instruction-level parallelism, we need a mix of different
+    instructions, ideally vectorizable, without data dependencies
+    between them.  Ideally, compilers and hardware handle the
+    low-level scheduling details, but the programmer has to reveal
+    enough parallelism to let the compiler do its thing.
+  </aside>
 </section>
 
 
@@ -57,6 +76,15 @@ audio: 2020-09-15-opt
         <li>Temporal locality (small working sets)</li>
     </ul></li>
   </ul>
+  <aside class="notes">
+    We also learned some things last time about the memory system. In
+    particular, we learned that unstructured memory access is slow!
+    We can do a lot of flops in the time it takes to access main
+    memory. Fortunately, smaller cache memories help us avoid paying
+    the latency and bandwidth costs of constantly going to main
+    memory. Caches are built to take advantage of spatial and temporal
+    locality that occurs in many types of codes.
+  </aside>
 </section>
 
 
@@ -68,6 +96,16 @@ audio: 2020-09-15-opt
     <li>Want (trans)portable performance across HW</li>
     <li>Need <em>principles</em> for high-perf code along with tricks</li>
   </ul>
+  <aside class="notes">
+    Making full use of instruction-level parallelism and avoiding
+    cache misses can improve the performance of a code by orders of
+    magnitude.  But different chips have different micro-architectures
+    and memory arrangements, and we would rather not have to rewrite
+    our code for performance on every new processor.  Rather, we want
+    performance that is transportable from one hardware platform to
+    another. If we're to achieve this, we don't need tricks; we need
+    organizing principles.
+  </aside>
 </section>
 
 
@@ -80,13 +118,25 @@ audio: 2020-09-15-opt
     <li>Help your tools help you</li>
     <li>Tune your data structures</li>
   </ul>
+  <aside class="notes">
+    So, here are a few principles to start.  They sound like sound
+    bites, but we'll try to fill in some details to make things
+    concrete.  Our approach is: think before you write; time before
+    you tune; build on the work of others; make wise use of tools; and
+    plan to tune your data structures as much as, or more than, you
+    tune your code.
+  </aside>
 </section>
 
 
 <section>
 
   <section>
-    <h2>Think before you write</h3>
+    <h2>Think before you write</h2>
+    <aside class="notes">
+      All right. Let's start with things you should ideally think
+      about before you write code at all.
+    </aside>
   </section>
 
 
@@ -96,6 +146,11 @@ audio: 2020-09-15-opt
       <p>We should forget about small efficiencies, say about 97% of the time: premature optimization is the root of all evil.<br />
         – Don Knuth</p>
     </blockquote>
+    <aside class="notes">
+      If you hang around certain types of programmers for long enough,
+      you're bound to hear this quote from Don Knuth, sometimes
+      trimmed down to "Premature optimization is the root of all evil."
+    </aside>
   </section>
 
 
@@ -106,6 +161,10 @@ audio: 2020-09-15-opt
       <p>We should forget about small efficiencies, say about 97% of the time: premature <strong>optimization is the root of all evil</strong>.<br />
         – Don Knuth</p>
     </blockquote>
+    <aside class="notes">
+      What Knuth didn't say, but some people here, is that
+      optimization is evil.
+    </aside>
   </section>
 
 
@@ -113,14 +172,37 @@ audio: 2020-09-15-opt
     <h3>Premature optimization</h3>
     <p>What he actually said (with my emphasis)</p>
     <blockquote>
-      <p>We should forget about <strong>small</strong> efficiencies, say <strong>about 97%</strong> of the time: <strong>premature</strong> optimization is the root of all evil.<br />
+      <p>We should forget about <strong>small</strong> efficiencies,
+        say <strong>about 97%</strong> of the
+        time: <strong>premature</strong> optimization is the root of
+        all evil. <strong>Yet we should not pass up our opportunities
+        in that critical 3%.</strong><br />
         – Don Knuth</p>
     </blockquote>
+    <aside class="notes">
+      What Knuth actually said is that only a small part of the code
+      needs to be optimized, and we should spend time optimizing that
+      small part.
+    </aside>
+  </section>
+
+
+  <section>
+    <h3>Premature optimization</h3>
     <ul>
       <li>Don’t forget the big efficiencies!</li>
       <li>Don’t forget the 3%!</li>
       <li>Your code is not premature forever!</li>
     </ul>
+    <aside class="notes">
+      So: don't misread Knuth!  The big efficiencies are worth
+      thinking about early, and there are usually some places where
+      you can predict performance bottlenecks.  And while an
+      inefficient prototype code might be fine, you will probably care
+      about efficiency once your code matures enough that you are
+      trying to solve big problems, or are ready to re-run the code
+      many times.
+    </aside>
   </section>
 
 
@@ -135,13 +217,22 @@ audio: 2020-09-15-opt
       <li>Configuration file reader is un-tuned</li>
       <li><span class="math inline">\(O(n^2)\)</span> prelude to <span class="math inline">\(O(n^3)\)</span> algorithm is untuned?</li>
     </ul>
+    <aside class="notes">
+      But while big efficiencies matter, it's easy to overthink the
+      small stuff.  We know from Amdahl's reasoning that if a small part of
+      our code can be tuned to cost almost nothing, we still don't gain much
+      in overall performance.  That means we probably shouldn't spend
+      too much time thinking about performance of high-level logic,
+      configuration readers, and so forth.  It's more important that
+      we think of making those things clear, and spend our performance
+      pondering time on other things.
+    </aside>
   </section>
 
 
   <section>
     <h3>Lay-of-the-land thinking</h3>
-    <pre><code>
-for (i = 0; i &lt; n; ++i)
+    <pre><code>for (i = 0; i &lt; n; ++i)
     for (j = 0; j &lt; n; ++j)
         for (k = 0; k &lt; n; ++k)
             C[i+j*n] += A[i+k*n] * B[k+j*n];
@@ -156,6 +247,18 @@ for (i = 0; i &lt; n; ++i)
       <li>Should I rule out some options in advance?</li>
       <li>How can I code so it is easy to experiment?</li>
     </ul>
+    <aside class="notes">
+      There are sometimes pieces of code that we know in advance to be
+      costly.  Often, there are several possible ways to write the
+      code, and we don't know which variant might be fastest - though
+      we may be able to predict some approaches are slow.  So we want
+      to think about how to write these pieces of code so that it is
+      easy to experiment with different arrangements.  Part of that
+      thinking should go into designing testing frameworks so that we
+      don't break our code in the process of rearranging it, and
+      timing frameworks so that we can easily compare different
+      versions of the code head-too-head.
+    </aside>
   </section>
 
 
@@ -167,14 +270,24 @@ for (i = 0; i &lt; n; ++i)
       <li><p>Says <em>nothing</em> about constant factors: <span class="math inline">\(O(10 n) = O(n)\)</span></p></li>
       <li><p>Ignores lower order term: <span class="math inline">\(O(n^3 + 1000 n^2) = O(n^3)\)</span></p></li>
     </ul>
-    <p>Beware asymptotic complexity arguments about small-<span class="math inline">\(n\)</span> codes!</p>
+    <p>Beware asymptotic complexity arguments about
+      small-<span class="math inline">\(n\)</span> codes!</p>
+    <aside class="notes">
+      We often start thinking about performance in terms of big O
+      notation. Technically, a function is big O of f(n) if it is
+      bounded by C f(n) for n big enough C (and big enough n).  This is
+      great for simple analysis, but for performance we care about the
+      constant.  Also, we don't always care about big n!  So it is
+      useful to think about asymptotic complexity, but we should also
+      think a little about the constants.  And we should think
+      about the typical problem sizes that we will see in our applications.
+    </aside>
   </section>
 
 
   <section>
     <h3>Avoid work</h3>
-    <pre><code>
-bool any_negative1(int* x, int n)
+    <pre><code>bool any_negative1(int* x, int n)
 {
     bool result = false;
     for (int i = 0; i &lt; n; ++i)
@@ -185,11 +298,25 @@ bool any_negative1(int* x, int n)
 bool any_negative2(int* x, int n)
 {
     for (int i = 0; i &lt; n; ++i)
-    if (x[i] &lt; 0)
-        return false;
-    return true;
+        if (x[i] &lt; 0)
+            return true;
+    return false;
 }
     </code></pre>
+    <aside class="notes">
+      Asymptotic analysis generally concerns the worst case, but
+      sometimes algorithms with similar worst-case performance can do
+      much better in the common case. As an overly simple example (but
+      one that fits on a single slide!), consider looking through all
+      the entries of an array to check if any are negative.  To
+      determine that all are positive, we have to check every entry;
+      but if one is negative, we can exit early.  If the common case
+      is that the array has negative entries, this may end up
+      happening well before we have scanned the full array.
+
+      As an aside: unless you have ridiculous amounts of data, this is
+      probably a dumb routine to tune. But it does fit on one slide.
+    </aside>
   </section>
 
 
@@ -201,6 +328,14 @@ bool any_negative2(int* x, int n)
       <span class="math inline">\(\implies\)</span><br />
       Approximate when you can get away with it.
     </p>
+    <aside class="notes">
+      In much of scientific computing, we have options to trade speed
+      against accuracy.  That could mean varying the precision of a
+      computation, or replacing a full matrix by a low-rank
+      approximation (or rank-structured approximation), or using a
+      coarser discretization of a PDE, or something else entirely.  It
+      depends on the application setting.
+    </aside>
   </section>
 
 
@@ -217,6 +352,12 @@ bool any_negative2(int* x, int n)
           <li><p>For floating-point: more in other lectures</p></li>
       </ul></li>
     </ul>
+    <aside class="notes">
+      And thinking of lower precision, and looking ahead to our discussion of
+      data structures, remember: small is beautiful.  You can fit more short
+      integer or floating-point types in a vector or cache line.  You just
+      need to be aware of trade-offs in terms of range and precision.
+    </aside>
   </section>
 
 
@@ -229,6 +370,17 @@ bool any_negative2(int* x, int n)
       <li><p>Time to write to disk <span class="math inline">\(\approx\)</span> 5 ms</p></li>
     </ul>
     <p>If I write once every 100 frames, how much time is I/O?</p>
+    <aside class="notes">
+      Don't just think about data in your computational routines
+      either.  Remember the time you spend reading inputs and writing
+      outputs.  For example, suppose at every time step I am doing a
+      few flops per mesh point on a mesh with 64K points.  If it
+      takes 5 ms to write a frame to disk, and I write every 100
+      steps, what is the ratio of I/O time to compute time?
+
+      I'll let you work out the numbers yourself. We'll discuss I/O
+      more later in the course.
+    </aside>
   </section>
 
 
@@ -239,6 +391,12 @@ bool any_negative2(int* x, int n)
 
   <section>
     <h2>Time before you tune</h2>
+    <aside class="notes">
+      All right, those are some things to think about when we have
+      some notion where bottlenecks might be. But we usually
+      can't tell for sure what the bottlenecks will be until we have the
+      code. And how do we find bottlenecks? We time!
+    </aside
   </section>
 
 
@@ -252,6 +410,13 @@ bool any_negative2(int* x, int n)
           <li>Cute coinage: “de-slugging”</li>
       </ul></li>
     </ul>
+    <aside class="notes">
+      I've talked about bottlenecks. They are also sometimes called
+      hotspots. These are small parts of your code that take a
+      disproportionate amount of time.  Our goal in tuning is largely
+      to get rid of bottlenecks, a process sometimes called
+      de-slugging (as opposed to debugging).
+    </aside>
   </section>
 
 
@@ -266,6 +431,28 @@ bool any_negative2(int* x, int n)
       <li><p>Cache warm-start on repeated timings</p></li>
       <li><p>Overlooked issues from too-small timings</p></li>
     </ul>
+    <aside class="notes">
+      Finding bottlenecks requires timing, and timing code is
+      surprisingly subtle, for several reasons.   First, your system
+      has many timers and not all have the resolution to see an event
+      of a few nanoseconds. Second, there is a difference between CPU
+      time and wall clock time. CPU time is the time your program
+      spends running; but if your code has to wait (e.g. for I/O), it
+      may yield the CPU to let other programs run instead. That
+      waiting time counts toward the wall clock time, but not the CPU
+      time. Third, tracing your program in detail generates an
+      enormous amount of data, enough to cause slow-downs trying to
+      store it all.  There is a balance in timing the right details
+      and letting the rest go.  Fourth, you may find that timings vary
+      depending what other processes are running on our machine (and
+      there are always some).  Fifth, you may find that running the
+      same test repeatedly yields different times, depending on
+      the state of the cache. Usually, the cache is "cold" the first
+      time, so there are more misses.   Finally, cache effects mean
+      that you might see very different behavior for small problems
+      than you see for big problems, so make sure you try some timing
+      with a realistic test problem.
+    </aside>
   </section>
 
 
@@ -278,6 +465,16 @@ bool any_negative2(int* x, int n)
       <li><p>Accumulate the total time spent</p></li>
     </ul>
     <p>Caveats: Effects from repetition, “characteristic” data</p>
+    <aside class="notes">
+      The simplest approach to timing is to manually instrument code.
+      Pick a section that you think is important, and write code to
+      record the times when you enter and exit the section.  If the
+      section is short, it will probably need to be run several times
+      with characteristic input data to get a reasonable result.  Of
+      course, there is always the danger that the inputs are not
+      sufficiently representative, or that repeating the same
+      experiment might not yield the same result because of cache effects.
+    </aside>
   </section>
 
 
@@ -288,6 +485,17 @@ bool any_negative2(int* x, int n)
       <li><p>Solution: omp_get_wtime()</p></li>
       <li><p>Requires OpenMP support (still not CLang)</p></li>
     </ul>
+    <aside class="notes">
+      One of the challenges of manual instrumentation is querying a
+      clock with sufficiently fine resolution.  The right solution is
+      the so-called real-time clock (RTC), but there are few portable
+      ways to access that.  One of the better options here is to use
+      OpenMP timing routines, but that requires a compiler that
+      supports OpenMP (OpenMP is one of the shared memory parallel
+      programming models that we will talk about a bit later in the
+      class).  The version of CLang used in MacOS does not
+      have OpenMP support.
+    </aside>
   </section>
 
 
@@ -300,6 +508,20 @@ bool any_negative2(int* x, int n)
       <li><p>Instrumenting: Rewrite code to insert timers</p></li>
       <li><p>Instrument at binary or source level</p></li>
     </ul>
+    <aside class="notes">
+      Instead of manually instrumenting our code, we can also try
+      using profiling tools that automatically collect timing
+      statistics.  Broadly speaking, there are two standard types of
+      profilers.  Instrumenting profilers automate the type of
+      workflow that we use with manual instrumentation, adding code to
+      record timing information to either a compiled binary or to
+      source code.  Sampling profilers, on the other hand, interrupt
+      the code at regular (but not too frequent!) intervals and record
+      where the program counter was at the time of the interrupt.
+      Sampling profilers are "lighter weight" in the sense that they
+      do not require doing anything to the code, and they often take
+      fewer CPU resources than a fine-grain instrumented profile would.
+    </aside>
   </section>
 
 
@@ -311,6 +533,26 @@ bool any_negative2(int* x, int n)
       <li><p>Function: Inlining can cause mis-attribution</p></li>
       <li><p>Line-by-line: Requires debugging symbols (-g)</p></li>
     </ul>
+    <aside class="notes">
+      There are different ways that we might report profiling
+      results.  We might just report what function we are in, or we
+      might try to report what line of code we are executing.  Neither
+      of these is always straightforward after compiler optimizations
+      are taken into account.  When we inline a function - that is,
+      copy the code into another function instead of actually doing a
+      function call (with a new stack frame, jump, and return) - it is
+      easy for a profiler to mis-attribute work done in the callee to
+      the caller.  And when we attempt line-by-line profiling, we
+      always have to remember that both the compiler and the hardware
+      can re-order instructions on us, so long as that reordering
+      doesn't change the program semantics.  So it is not always so
+      easy to attribute a given instruction to a particular line of
+      code.  And usually we have to ask the compiler nicely to even
+      attempt to label the code at this level.  Since this type of
+      information is generally used for debugging as well as for
+      profiling, it's often called debugging symbol support; the flag
+      used to enable such symbols on many compilers is -g.
+    </aside>
   </section>
 
 
@@ -321,6 +563,18 @@ bool any_negative2(int* x, int n)
     <ul>
       <li>Distinguish full call stack or not?</li>
     </ul>
+    <aside class="notes">
+      If we are going to keep track of which functions are doing most
+      of the work, we often care not just about the individual
+      functions, but about the whole call stack leading up to them.
+      A "flat" profile just tells us how much time was spent in each
+      function without that context information.  Often, flat profiles
+      include information both on the time that was spent in the
+      function and the time that was spent in any calls that function
+      made.  A call tree or call graph splits out the information by
+      calling context.  A flame graph is a visual representation of
+      the most resource-intensive parts of a call graph.
+    </aside>
   </section>
 
 
@@ -328,6 +582,17 @@ bool any_negative2(int* x, int n)
     <h3>Types of profiling tools</h3>
 
     <p>Time full run, or just part?</p>
+
+    <aside class="notes">
+      Sometimes, we are interested in just part of a run.  That part
+      might be distinguished by a span of code, where we only want to
+      know about the timing within certain functions, or it might be
+      distinguished by a span of time.  When we are profiling "real"
+      codes, we usually restrict our scope in some way.  Keeping
+      detailed profiling information for an hour-long parallel code
+      run is going to involve a lot of storage, and is not going to be
+      easy to interpret.
+    </aside>
   </section>
 
 
@@ -338,17 +603,48 @@ bool any_negative2(int* x, int n)
       <li><p>Present on most modern chips</p></li>
       <li><p>May require significant permissions to access...</p></li>
     </ul>
+
+    <aside class="notes">
+      So far, we have only been talking about profiling time (though
+      the same techniques can be used to profile the use of resources
+      like memory).  But in the last lecture, we pointed out that a
+      lot of performance has to do with things like cache misses.  How
+      can we track that information?  It's not as easy as tracking
+      time or heap memory use.  We typically either have to simulate
+      the cache (which is expensive), or we have to rely on
+      performance counter hardware that is on the chip.
+      Unfortunately, getting the information out of these counters is
+      not necessarily easy.  One has to have root-level privileges to
+      read these counters, and that means that one needs either
+      root-level privileges for the profiler or dedicated support in
+      the operating system kernel.  There is such support in Linux
+      (the perf subsystem), and in MacOS with the Instruments
+      application.  On Windows, the Visual Studio profiler is supposed
+      to have access to the hardware counters, though I have less
+      personal experience with that one.
+    </aside>
   </section>
 
 
   <section>
     <h3>Automated analysis tools</h3>
     <ul>
-      <li><p>Examples: MAQAO and IACA</p></li>
+      <li><p>Examples: MAQAO, IACA, LLVM-MCA</p></li>
       <li><p>Symbolic execution of <em>model</em> of a code segment</p></li>
       <li><p>Usually only practical for short segments</p></li>
       <li><p>Can give detailed feedback on (assembly) quality</p></li>
     </ul>
+    <aside class="notes">
+      In addition to profiling tools that measure an actual execution
+      of the code, there are also automated analysis tools that do
+      symbolic execution of the code on a model of the processor.
+      These are often useful for predicting things like pipeline
+      bubbles and cache misses that might not be obvious from reading
+      the code (even at the assembly language level).  However, these
+      types of tools are usually only used for small segments of code,
+      and are not nearly as widely used as the profiling tools that
+      we've discussed in the previous few slides.
+    </aside>
   </section>
 
 </section>
@@ -359,6 +655,16 @@ bool any_negative2(int* x, int n)
 
   <section>
     <h2>Shoulders of giants</h2>
+    <aside class="notes">
+      Once we know where the bottlenecks in our code are, we need to
+      think about speeding them up.  Sometimes, that means rearranging
+      the code to use a different approach entirely, or getting rid of
+      an algorithm with the wrong asymptotic complexity.  Often,
+      though, we want to replace a slow routine that poses a
+      bottleneck with a nearly-equivalent routine that is going to be
+      much faster.  One of the most effective ways to do this is to
+      use someone else's library code!
+    </aside>
   </section>
 
   <section>
@@ -373,6 +679,18 @@ bool any_negative2(int* x, int n)
           <li><p>Amortizes memory costs</p></li>
       </ul></li>
     </ul>
+    <aside class="notes">
+      In particular, we are interested in fast implementations of
+      so-called computational kernels.  By "kernel," I mean a piece of
+      easy-to-describe functionality that is used often enough so that
+      people care about making it fast on many different hardware
+      platforms.  Examples include matrix multiply or FFTs.  I suppose
+      one could also include searching and sorting routines, though
+      these are less often bottlenecks in scientific codes.  A good
+      kernel often has high arithmetic intensity, or a lot of work per
+      memory read; building on these types of kernels is more likely
+      to get us close to the peak flop rates on a machine.
+    </aside>
   </section>
 
 
@@ -385,6 +703,23 @@ bool any_negative2(int* x, int n)
       <li><p>Level 3: <span class="math inline">\(O(n^3)\)</span> work on <span class="math inline">\(O(n^2)\)</span> data</p></li>
     </ul>
     <p>Level 3 BLAS are key for high-perf transportable LA.</p>
+    <aside class="notes">
+      A prototypical example of a kernel interfaces is the BLAS, or
+      Basic Linear Algebra Subroutines.  This is a collection of
+      linear algebra primitives that people care about tuning for a
+      variety of different architectures.  There are three so-called
+      "levels" in the BLAS interfaces, depending on the complexity of
+      the operation relative to the dimensions of the vector spaces
+      involved.  Level 1 BLAS involves order n work on order n data;
+      things like dot products and vector sums and scalings are good examples.
+      Level 2 BLAS involves order n^2 work on order n^2 data; the
+      standard example here is matrix-vector products.  Level 3 BLAS
+      involves order n^3 work on order n^2 data; the standard example
+      here is matrix-matrix products.  Level 3 BLAS makes a good
+      substrate for high-performance linear algebra, because it does a
+      lot of work per data item.  So if we arrange things right, we
+      can get a lot of cache re-use, and high flop rates.
+    </aside>
   </section>
 
 
@@ -395,6 +730,13 @@ bool any_negative2(int* x, int n)
       <li><p>Compute an FFT</p></li>
       <li><p>Sort a list</p></li>
     </ul>
+    <aside class="notes">
+      Other common examples of kernels are sparse matrix operations;
+      Fourier transforms; and algorithms for searching, sorting, and
+      indexing data.  None of these tend to have the same type of
+      arithmetic intensity that level 3 BLAS has, but they are all
+      important to performance in some settings.
+    </aside>
   </section>
 
 
@@ -416,6 +758,21 @@ bool any_negative2(int* x, int n)
         </ul> -->
       </li>
     </ul>
+    <aside class="notes">
+      When we rely on kernel operations, we are often making a
+      trade-off.  Really fast kernels often involve a common
+      interface, consistent across different platforms, but different
+      implementations under the hood.  That means lot of work, and it
+      often doesn't make sense to pay for that work unless it is going
+      to be amortized across many different uses.  So we want kernels
+      that are quite general in their use.  At the same time, most
+      scientific problems of interest are not completely general.
+      They have some type of structure, and clever algorithms can
+      often take advantage of that structure.  We might also find that
+      a kernel that is well-designed for a single big computation has
+      too much setup overhead when we are trying to do many tiny
+      computations of the same type.
+    </aside>
   </section>
 
 
@@ -429,6 +786,20 @@ bool any_negative2(int* x, int n)
     <p>
       (Or it may be automatically tuned)
     </p>
+    <aside class="notes">
+      So kernels may not be a perfect match for what we want to do,
+      and we might leave some performance behind.  At the same time,
+      if someone else writes the kernels for us, that saves us a lot
+      of time and effort!  Alternately, someone may not write the
+      kernel for us, but instead they might write something that
+      automates the process of code tuning, exploring over a space of
+      possible implementations in order to find the fastest one.
+      This idea of auto-tuning is good to know about even if we don't
+      plan to spend our career writing BLAS libraries, as it can be a
+      good way of simultaneously getting the advantages of hardware-specific
+      kernels and problem-specific algorithms that might not merit
+      hand-tuning for each architecture.
+    </aside>
   </section>
 
 
@@ -439,6 +810,10 @@ bool any_negative2(int* x, int n)
 
   <section>
     <h2>Help your tools help you</h2>
+    <aside class="notes">
+      One of the main tools at your disposal is the compiler.  Let's
+      talk now about how you can use that tool most effectively.
+    </aside>
   </section>
 
 
@@ -455,6 +830,18 @@ bool any_negative2(int* x, int n)
       <li><p>Loop optimizations</p></li>
       <li><p>Global (cross-function) optimizations</p></li>
     </ul>
+    <aside class="notes">
+      What can the compiler do on your behalf?  One of the places
+      where it is most effective is in rearranging straight-line
+      chunks of code without function calls, called basic blocks.  The
+      compiler also does pretty well with transforming code in some
+      simple functions that might have a simple loop or some
+      conditional statements.  The compiler may have a harder time
+      with complicated loops, and things get much more complicated
+      when it comes to optimizations that involve understanding more
+      than one function at once (sometimes called inter-procedural
+      optimizations).
+    </aside>
   </section>
 
 
@@ -469,6 +856,24 @@ bool any_negative2(int* x, int n)
       <li><p>Common subexpression elimination: humans OK</p></li>
       <li><p>Algebraic reductions: humans definitely help</p></li>
     </ul>
+    <aside class="notes">
+      There are some things that the compiler is usually much better
+      at than a human.  These include very low-level tasks like
+      register allocation and instruction scheduling, which we mostly
+      don't even end up thinking about explicitly as programmers.
+      For the most part, this is also true of tasks involving the
+      details of how conditional statements work.
+
+      For computation of constants, identifying common subexpressions,
+      and certain types of algebraic reductions, it's useful for a
+      human to be involved.  This is particularly true when we think
+      about floating point arithmetic; lack of associativity means
+      that there are lots of rearrangements that would make sense in
+      real arithmetic, but aren't equivalent in floating point.  The
+      compiler will probably figure out for you that x+1+2 and x+3 are
+      the same thing; it's much less likely to play with trig
+      identities on your behalf.
+    </aside>
   </section>
 
 
@@ -484,6 +889,18 @@ bool any_negative2(int* x, int n)
       <li><p>Vectorization</p></li>
       <li><p>Induction variable substitution</p></li>
     </ul>
+    <aside class="notes">
+      Then there are a bunch of loop optimizations that modern
+      compilers can mostly do on our behalf.  These include moving
+      stuff out of a loop that doesn't change iteration by iteration;
+      unrolling loops in order to be able to optimize instruction
+      ordering across multiple iterations; making use of vector
+      hardware; and so forth.
+
+      There's a caveat with all of this, which is that the compiler is
+      easily stymied if your code is too complicated, or if there are
+      potential complications involving data dependencies.
+    </aside>
   </section>
 
 
@@ -497,6 +914,54 @@ bool any_negative2(int* x, int n)
       <li><p>Complex loop logic</p></li>
       <li><p>Cross-module optimization</p></li>
     </ul>
+    <aside class="notes">
+      Let's be a little more concrete about this.  What are the things
+      that you might do by accident that make it very hard for the
+      compiler to help you?
+
+      One of the obvious ones is setting up long dependency chains.
+      Part of what the code optimizer does for you is to try to
+      rearrange code within a "peephole" as best it can.  If you look
+      like you are writing a lot of instructions that take as input
+      the output of a previous instruction, the compiler might not
+      figure out that it should try to interleave those instructions
+      with a separate stream of instructions doing independent work.
+      You might have to help with that.
+
+      Code that has lots of branches is hard for the compiler (and
+      hardware) to deal with, particularly when those branches aren't
+      easy to predict.  Complicated loop logic can be hard to deal
+      with, too.
+
+      Potential aliasing is another big issue.  In C and C++, two
+      pointers to the same type of data are assumed to be able to
+      refer to the same item in memory, unless the compiler can prove
+      otherwise.  This is a major issue when a function takes in
+      array arguments (as pointers) and writes to some of the array
+      locations.  If we write to one array and read from another, the
+      compiler is not allowed to swap the order of those two
+      operations unless it can prove there is no aliasing.  This type
+      of aliasing effect also interferes with our ability to do
+      vectorization.  In C, the restrict keyword was added to the
+      language to give a way for the programmer to promise that no
+      aliasing is going to happen.  The semantics of restrict get to
+      be a little subtle, but it is very useful.  In C++, there is no
+      standard analog of the restrict keyword, though similar things
+      are implemented in language extensions associated with
+      particular compilers.  In contrast to C and C++, Fortran assumes
+      that there is no aliasing between arguments.  This is one of the
+      things that makes it often easier to write naive Fortran code
+      that is still fast than is the case for C/C++.
+
+      Finally, if a compiler has to invoke code that it can't
+      immediately see, it has to assume that code could do all sorts
+      of crazy things.  So function calls, particularly function calls
+      to modules that are not compiled simultaneously, can severely
+      limit the types of rearrangements the compiler can do on your
+      behalf.  That doesn't mean you should stop using functions!  It
+      does mean that moving around where function calls happen might
+      make a difference to performance for some types of code.
+    </aside>
   </section>
 
 
@@ -510,6 +975,31 @@ bool any_negative2(int* x, int n)
       <li><p>Lack of instruction diversity</p></li>
     </ul>
     <p>Let’s look at a few...</p>
+    <aside class="notes">
+      In languages like C++, one sometimes calls functions through a
+      level of indirection.  These virtual function calls - or calls
+      to functions through pointers in C - are a great mechanism for
+      abstraction.  But they kill all sorts of inter-procedural
+      optimizations that the compiler might do on our behalf.  It's
+      not something to worry about most of the time, but it might
+      matter if it happens in the middle of a performance-critical
+      loop.
+
+      There are also sometimes things that puzzle the compiler because
+      floating point is weird.  We will talk about this in detail
+      later, but examples include: rearrangements that the compiler
+      really shouldn't make on your behalf because of lack of
+      associativity; problems that come about because of the behavior
+      of things like NaN (not-a-number); and so forth.
+
+      We already briefly mentioned that you're probably better at
+      algebra than the compiler is, so you can't always assume it will
+      figure out that it could rewrite an expression on your behalf.
+      And, along with long dependency chains, the peephole optimizer
+      may stumble over long chunks of code that are only using a
+      couple types of instructions.  If you have a mix of different
+      types of operations, you can keep the hardware more fully occupied.
+    </aside>
   </section>
 
 
@@ -522,6 +1012,14 @@ float s = 0;
 for (int i = 0; i &lt; n; ++i)
     s += x[i];</code></pre>
     <p>Apparent linear dependency chain. Compilers might handle this, but let’s try ourselves...</p>
+    <aside class="notes">
+      OK.  Let's make all this concrete with a few examples.  Here's
+      one related to the centroid computation we talked about last
+      time.  Consider taking a sum of a large number of floating point
+      numbers.  The compiler might rearrange this for us, but the lack
+      of associativity in floating point means that it probably
+      shouldn't.  So let's see how we could do it ourselves.
+    </aside>
   </section>
 
 
@@ -541,6 +1039,18 @@ for (i = 0; i &lt; n-3; i += 4)
 float s = (s[0]+s[1]) + (s[2]+s[3]);
 for (; i &lt; n; ++i)
     s += x[i];</code></pre>
+    <aside class="notes">
+      The problem that we face is that we have to finish computing
+      each partial sum before we can start on the next partial sum in
+      the sequence.  But if we are not worried about minor differences
+      in rounding, there is nothing that says we can't reassociate the
+      sums in order to expose more parallel work.  For example, we
+      might keep four independent counters, partly in order to try to
+      make it so that we can make use of the vector unit.  Then we add
+      together the four counters at the end in order to get the grand
+      total.  If n is not a multiple of four, we need some code at the
+      end to add the leftovers.
+    </aside>
   </section>
 
 
@@ -553,6 +1063,14 @@ for (; i &lt; n; ++i)
         result[i] = a[i] + b[i];
 }</code></pre>
     <p>Q: What if result overlaps a or b?</p>
+
+    <aside class="notes">
+      All right; let's do another example, one of vector addition.
+      This looks like it should be completely vectorizable, but it
+      might not be vectorized in practice for a stupid reason: the
+      compiler has to think about what would happen if the result
+      array overlapped with the input arrays a and b.
+    </aside>
   </section>
 
 
@@ -564,7 +1082,18 @@ for (; i &lt; n; ++i)
     </code></pre>
     <p>Implicit promise: these point to different things in memory.</p>
 
-    <p>Fortran forbids aliasing — part of why naive Fortran speed beats naive C speed!</p>
+    <p>Fortran forbids aliasing — part of why naive Fortran speed
+      beats naive C speed!</p>
+
+    <aside class="notes">
+      If we add the restrict keyword to the pointer declarations, we
+      are promising the compiler that the arrays don't overlap, and so
+      it can use vector operations for us.  This is specific to C, and
+      actually to C99 and later (the original ANSI C did not have this
+      keyword).  C++ doesn't have any standard way to declare
+      non-aliasing, while Fortran code has the opposite behavior - it
+      doesn't allow aliasing except via explicit pointer types.
+    </aside>
   </section>
 
 
@@ -578,6 +1107,17 @@ for (; i &lt; n; ++i)
     y += *x;  // Must reload x
     return y;
 }</code></pre>
+
+    <aside class="notes">
+      Just because we promise a compiler that there is no aliasing
+      doesn't mean that we promise that there is no opportunity for
+      things to be changed out from under us.  Whenever we call a
+      "black box" function, the compiler generally has to assume that
+      anything it read from an external array might have changed.
+
+      OK, this isn't a particularly realistic example, but it fits on
+      one slide.  And the problem that I refer to is real.
+    </aside>
   </section>
 
 
@@ -589,6 +1129,18 @@ for (; i &lt; n; ++i)
       <li><p>Use more/less accurate special function routines</p></li>
       <li><p>Underflow is flush-to-zero or gradual</p></li>
     </ul>
+    <aside class="notes">
+      And now let's talk about floating point for an issue.  Aside
+      from pretending that floating point is associative, there are
+      lots of things that the compiler could try to do on my behalf
+      that might or might not make sense from a performance
+      perspective.  It could alter the precision of intermediate
+      variables, or use less accurate versions of various special
+      function routines.  Or it could do things that might subtly
+      change the basic properties of floating point arithmetic, like
+      changing the way the processor behaves on underflow.  Some
+      compilers have a "fast math" mode that enables these types of changes.
+    </aside>
   </section>
 
 
@@ -600,6 +1152,24 @@ for (; i &lt; n; ++i)
       <li><p>This will break some of my codes!</p></li>
       <li><p>Human intervention is indicated</p></li>
     </ul>
+    <aside class="notes">
+      The problem with "fast math" is that it changes the results.  If
+      you believe that floating point is just fuzzy, inexact real
+      arithmetic, maybe what you get from this is OK.  But there are
+      clever tricks that experts play with floating point, and "fast
+      math" breaks these tricks.  For that matter, there are some
+      things that you might assume to be true that manage to be true
+      in ordinary floating point, but not in "fast math" world.  For
+      example, for finite numbers, is the statement that x = y the
+      same as the statement that x - y = 0?  In ordinary floating
+      point, the answer is yes; but not for "fast math" variants that
+      underflow to zero rather than underflowing gradually.
+
+      Unfortunately, we mostly get to turn on and off "fast math"
+      optimizations at a module level, rather than doing something at
+      finer granularity.  I don't necessarily recommend against using
+      it, but I do recommend thinking carefully about it first.
+    </aside>
   </section>
 
 
@@ -610,6 +1180,16 @@ for (; i &lt; n; ++i)
       <li><p>-O2 is usually the default</p></li>
       <li><p>-O3 is useful, but might break FP codes (for example)</p></li>
     </ul>
+    <aside class="notes">
+      More generally, the compiler has different levels of
+      optimization, ranging from "do no optimization at all" to "try
+      optimizations that may be risky."  The default level is usually
+      O2, which involves trying all the optimizations that are not too
+      expensive and that almost always improve timings.  The O3 level
+      brings in some optimization strategies that might not always
+      speed things up, and may also bring in strategies like "fast
+      math" that can subtly alter the program semantics.
+    </aside>
   </section>
 
 
@@ -620,6 +1200,18 @@ for (; i &lt; n; ++i)
       <li><p>“Native” mode targets current architecture</p></li>
       <li><p>Not always the right choice (e.g. head/compute)</p></li>
     </ul>
+    <aside class="notes">
+      Compilers can generate code tuned for a particular architecture
+      version, rather than for general function across a whole family
+      (like x86_64).  In the most common case, we would ask the
+      compiler to tune for the "native" architecture, or the same
+      architecture that the machine is running on.  However, this is
+      not always what we want to do.  Sometimes, we compile the code
+      on a "head node" for a cluster, and run the code on "compute
+      nodes" with rather different capabilities.  In this case, we
+      probably want to tune the code for the compute node architecture
+      rather than for the head node architecture.
+    </aside>
   </section>
 
 
@@ -630,6 +1222,11 @@ for (; i &lt; n; ++i)
       <li><p>Turn on/off specific optimization features</p></li>
       <li><p>Often the basic -Ox has reasonable defaults</p></li>
     </ul>
+    <aside class="notes">
+      Beyond the flags that control the overall optimization level
+      (which often have reasonable defaults), there are usually flags
+      that turn on and off specific optimizations (or warnings, etc).
+    </aside>
   </section>
 
 
@@ -647,6 +1244,15 @@ for (; i &lt; n; ++i)
           <li><p>Helps a lot for tuning</p></li>
       </ul></li>
     </ul>
+    <aside class="notes">
+      One of the optimizations the compiler will try to do for you is
+      to vectorize your code.  That is, it will vectorize the code if
+      it can figure out how to do so and decides that it is safe (no
+      issues with aliasing, for example).  Sometimes it is not obvious
+      what code was vectorized and why it was or was not.  But you can
+      always ask the compiler to tell you!  In GCC, this involves
+      using the -opt-info-vec flag.
+    </aside>
   </section>
 
 
@@ -659,6 +1265,13 @@ for (; i &lt; n; ++i)
       <li><p>Compile again, provide profiler results</p></li>
     </ul>
     <p>Helps compiler optimize branches based on observations.</p>
+    <aside class="notes">
+      The compiler can also take external guidance from a profiler.
+      This is particularly useful for optimizing branches: the
+      profiler records which type of branch is most common, and the
+      compiler optimizer uses that information in tuning the code
+      around the branch.  This is called profile-guided optimization.
+    </aside>
   </section>
 
 </section>
@@ -668,6 +1281,12 @@ for (; i &lt; n; ++i)
 
   <section>
     <h3>Data layout matters</h3>
+    <aside class="notes">
+      Last, but not least, let's talk about data layout.  In many
+      cases, data layout is the single most important thing that you
+      can tune in order to optimize single-core performance (or
+      multi-core performance, for that matter).  So this is really not least!
+    </aside>
   </section>
 
   <section>
@@ -681,6 +1300,15 @@ for (; i &lt; n; ++i)
       <li><p>Use simple unit-stride access patterns</p></li>
     </ul>
     <p>Reality is generally more complicated...</p>
+    <aside class="notes">
+      Remember that many codes are limited not by compute, but by
+      memory.  Even the best codes will need to initially load data
+      from memory, so we pay a certain amount in memory bandwidth
+      right out of the box.  If we can keep the working set small and
+      access arrays in simple unit-stride access patterns, we might
+      hope that this is all we have to pay.  But the reality is, of
+      course, more complicated.
+    </aside>
   </section>
 
 
@@ -692,6 +1320,25 @@ for (; i &lt; n; ++i)
 for i = 1:n
   x(i) = i;
 end</code></pre>
+    <aside class="notes">
+      There are two reasons that we use C for this course.  First, it
+      is a small language (much smaller than C++!).  And, second, it
+      is pretty low-level.  In particular, you have to manage
+      allocating and deallocating data structures for yourself.  There
+      is no automatic allocation or garbage collection.  But one hopes
+      that most of the code that you write in life will not be in raw
+      C code, but using a language that's a little higher level.
+      For example, here's a snippet of MATLAB code that builds up an
+      array of length n.  On the surface, it looks like it ought to
+      take O(n) time.  In reality, it takes O(n^2) time.  Why?
+      Because each time we add a new element to the end of the array,
+      MATLAB has to reallocate a new chunk of space and copy the old
+      data over to the new location!  Unfortunately, this class of
+      problems is not restricted to MATLAB.  There are many situations
+      where the cost of allocating, deallocating, and copying data is
+      substantial - sometimes, more than the cost of computing with
+      the data!
+    </aside>
   </section>
 
 
@@ -704,6 +1351,14 @@ end</code></pre>
       <li><p>Beware hidden allocation costs (e.g. on resize)</p></li>
       <li><p>Often bites naive library users</p></li>
     </ul>
+    <aside class="notes">
+      So, allocation and de-allocation of memory on the heap costs
+      something.  So does resizing an array, and so does garbage
+      collection (in languages where it is supported).  Ignoring the
+      overhead of these operations can often lead to very inefficient use
+      of standard libraries, even if the libraries could be very
+      efficient in the right hands.
+    </aside>
   </section>
 
 
@@ -714,6 +1369,14 @@ end</code></pre>
       <li><p>Pre-allocation (avoid repeated alloc/free)</p></li>
       <li><p>Lazy allocation (if alloc will often not be needed)</p></li>
     </ul>
+    <aside class="notes">
+      So, how do we avoid these costs?  I suggest considering two
+      strategies.  First, if you think you will need space, allocate
+      it early and re-use it often.  Don't resize if you can avoid
+      it.  Second, if you're not sure whether you'll need something,
+      don't allocate the space until it's absolutely necessary!  And
+      then get rid of it as soon as you can.
+    </aside>
   </section>
 
 
@@ -725,6 +1388,14 @@ end</code></pre>
       <li><p>Traverse with simple access patterns</p></li>
       <li><p>Avoids pointer chasing</p></li>
     </ul>
+    <aside class="notes">
+      Once you've allocated the space for your data, you need to
+      figure out the format you'll use for storage.  For performance,
+      you want something that is compact (so you can fit a lot into
+      cache) and that lends itself to simple traversal patterns.  You
+      don't want to have to do lots of pointer de-references to figure
+      out where you're going!
+    </aside>
   </section>
 
 
@@ -738,6 +1409,21 @@ end</code></pre>
     <p>Ideally, traverse with unit stride! Layout affects choice.</p>
 
     <p>Can use more sophisticated multi-dim array layouts...</p>
+    <aside class="notes">
+      One of the most common types of data in scientific computing is
+      multi-dimensional array data.  There are two standard ways to
+      lay this data out: column-major order (as in Fortran), or
+      row-major order (as in C).  For vectorization, we like
+      algorithms that go through the data with unit stride, so we
+      would want column-oriented algorithms for Fortran layouts and
+      row-oriented algorithms for C layouts.
+
+      Note that I say "C is row-major," but I really should say "C has
+      minimal support for multi-dimensional arrays."  Most of the
+      time, I just write my C codes to work with matrices in
+      column-major format by explicitly computing the access function
+      mapping the row and column indices to a single array offset.
+    </aside>
   </section>
 
 
@@ -751,6 +1437,25 @@ end</code></pre>
       <li><p>Accumulate into <span class="math inline">\(b \times b\)</span> block of <span class="math inline">\(C\)</span></p></li>
     </ul>
     <p>Have <span class="math inline">\(O(b^3)\)</span> work for <span class="math inline">\(O(b^2)\)</span> memory references!</p>
+    <aside class="notes">
+      As we discussed earlier, naive matrix-matrix products for big
+      matrices are horribly inefficient, because they access memory in
+      an inefficient way.  The problem is not inherent to the
+      operation, though.  There's a simple idea that lets us go much
+      faster, called blocking or tiling.  The idea is this: instead of
+      thinking about the matrix as an array of scalars, think about it
+      as an array of smaller arrays, each of size b-by-b.  Then we can
+      organize the big matrix-matrix product in terms of
+      multiplication of pairs of smaller b-by-b submatrices.  This
+      involves the same arithmetic as the three nested loop algorithm;
+      we are just arranging that arithmetic differently using
+      associativity.  If those smaller submatrices fit into cache,
+      then we can do a lot of floating point operations per slow
+      memory access.  Our effective working set is now the small
+      matrices, rather than the big matrices.
+      We'll see a lot more of this approach soon when
+      we start our first project (matrix-matrix multiplication).
+    </aside>
   </section>
 
 
@@ -762,8 +1467,19 @@ end</code></pre>
       <li><p>Then want aligned offsets into aligned blocks</p></li>
       <li><p>Have to help compiler recognize aligned pointers!</p></li>
     </ul>
+    <aside class="notes">
+      When we have code that is amenable to vector operations, we
+      really want our storage to represent alignment.  That is, we
+      want the addresses to be multiples of 64 or 256 or the like.
+      Most systems give us a way to ask the system allocator for
+      aligned blocks of memory, and to inform the compiler that we are
+      looking at an aligned pointer.  The syntax varies from compiler
+      to compiler, though.  This is not part of the C standard.
+    </aside>
   </section>
-  <section id="data-alignment-and-cache-contention" class="slide level3">
+
+  
+  <section>
     <h3>Data alignment and cache contention</h3>
     <p>Issue: What if strided access causes conflict misses?</p>
     <ul>
@@ -771,6 +1487,18 @@ end</code></pre>
       <li><p>Example: Parallel arrays of large-power-of-2 size</p></li>
     </ul>
     <p>Not the most common problem, but one to watch for.</p>
+    <aside class="notes">
+      As much as we like to work with multiples of small powers of two
+      for vectorization, we hate to work with multiples of large
+      powers of two when striding through matrices.  The problem is
+      that these addresses all map to the same set of cache lines, and
+      so we can end up with an effective working set size limited by
+      cache associativity.  Note that this limit due to cache
+      associativity is different from the limits we see due to cache
+      capacity.  Repeatedly scanning a matrix row in a 1024-by-1024
+      matrix is going to be slow; repeatedly scanning the same row in
+      a 1025-by-1025 matrix will not.
+    </aside>
   </section>
 
 
@@ -781,7 +1509,18 @@ end</code></pre>
       <li><p>Compiler may pad structures to enforce this</p></li>
       <li><p>Arrange structure fields in decreasing size order</p></li>
     </ul>
+    <aside class="notes">
+      Life is not always about matrices, so let's talk for a moment
+      about C structs.  First, a note about the memory layout of a
+      single struct.  We would like a struct that starts on an aligned
+      boundary to have fields that lie on aligned boundaries.  Some
+      compilers enforce this by adding internal padding to the layout
+      of a struct, if needed, though that leads to some wasted space.
+      For purposes of alignment, it usually makes sense to arrange the
+      internal fields of a struct in decreasing order by size.
+    </aside>
   </section>
+
   <section id="soa-vs-aos" class="slide level3">
     <h3>SoA vs AoS</h3>
     <pre><code>// Struct of Arrays (parallel arrays)
@@ -796,6 +1535,12 @@ typedef struct {
     double y;
 } point_t;
 typedef point_t* soa_points_t;</code></pre>
+    <aside class="notes">
+      Sometimes, one struct is enough.  But often, we are interested
+      in arrays of structured data.  There are two standard ways to
+      lay out such arrays: we can have an array of structs, or we can
+      have a struct whose fields are parallel arrays.
+    </aside>
   </section>
 
 
@@ -807,6 +1552,13 @@ typedef point_t* soa_points_t;</code></pre>
       <li><p>Poor locality to access all of one item</p></li>
       <li><p>Awkward for lots of libraries and programs</p></li>
     </ul>
+    <aside class="notes">
+      The struct whose fields are parallel arrays is usually really
+      friendly to vector operations.  But accesses within a single
+      entry have poor locality.  Also, this data layout may be awkward
+      for libraries that want to work on one element of the structure
+      array at a time.
+    </aside>
   </section>
 
 
@@ -817,12 +1569,25 @@ typedef point_t* soa_points_t;</code></pre>
       <li><p>Naturally supported default</p></li>
       <li><p>Not very SIMD-friendly</p></li>
     </ul>
+    <aside class="notes">
+      Conversely, the array-of-structs is very natural and has nice
+      syntactic support within C.  But it is terrible for vectorization!
+    </aside>
   </section>
 
 
   <section>
     <h3>SoA vs AoS</h3>
     <p>Possible to combine the two...</p>
+    <aside class="notes">
+      So what format should we use: the one that is friendly toward
+      vectorization, or the one that is friendly in terms of the user
+      interface?  Nothing says that we have to restrict ourselves to
+      just one or the other!  It may make sense to use the more
+      programmer-friendly array-of-structs for most of our code, and
+      copy the data into a parallel array format for just the
+      performance-critical sections of the code.
+    </aside>
   </section>
 
 
@@ -836,6 +1601,15 @@ typedef point_t* soa_points_t;</code></pre>
     </ul>
     <p>Performance gains &gt; copy costs?<br/>
       Plays great with tiling!</p>
+    <aside class="notes">
+      Copying back and forth between an array of structs and a
+      parallel array format is one example of a copy optimization.
+      Another example might be copying part of a matrix data into an
+      aligned memory block (for vectorization) and then copying
+      results back out when done.  This makes sense as an optimization
+      whenever the performance gains are enough to dominate the
+      copy costs (and cache pressure).
+    </aside>
   </section>
 
 
@@ -847,6 +1621,15 @@ typedef point_t* soa_points_t;</code></pre>
       <li><p>Uncached memory stores</p></li>
     </ul>
     <p>But usually best left to compiler / HW.</p>
+    <aside class="notes">
+      At this point, some of you may be wondering whether a clever
+      programmer could get some manual control over the cache system
+      rather than always trying to work around the cache!  There are
+      indeed some options for programmer-controlled pre-fetching and
+      uncached memory storage.  But these are very low-level, and we
+      are generally better off leaving this level of fiddling to the
+      compiler and the hardware.
+    </aside>
   </section>
 
 </section>
@@ -855,9 +1638,23 @@ typedef point_t* soa_points_t;</code></pre>
 <section>
   <h3>References</h3>
   <ul>
-    <li><p>My <a href="http://www.cs.cornell.edu/~bindel/class/cs5220-f11/notes/serial-tuning.pdf">serial tuning notes</a>.</p></li>
+    <li><p>My <a href="http://www.cs.cornell.edu/~bindel/class/cs5220-f11/notes/serial-tuning.pdf">serial
+          tuning notes</a>.</p></li>
+    <li><p><a href="https://cvw.cac.cornell.edu/topics">Tutorials from
+          Cornell CAC</p></li>
     <li><p>Ulrich Drepper, <a href="http://people.redhat.com/drepper/cpumemory.pdf"><em>What Every Programmer Should Know About Memory</em></a></p></li>
-    <li><p><a href="http://www.intel.com/Assets/PDF/manual/248966.pdf">Intel Optimization Manual</a></p></li>
+    <li><p><a href="http://www.intel.com/Assets/PDF/manual/248966.pdf">Intel
+          Optimization Manual</a></p></li>
+  </ul>
+  <aside class="notes">
+    There is a lot more to say about serial tuning.  I have some notes
+    from a previous version of this class that might provide some
+    insights, and there are also some nice tutorials from CAC - look
+    under the code optimization section.  If you are still puzzled
+    about memory effects, Drepper's article is pretty good (even if it
+    is now a little dated).  And the Intel optimization manual has
+    lots and lots of details.
+  </aside>
 </section>
 
 
@@ -868,4 +1665,22 @@ typedef point_t* soa_points_t;</code></pre>
     <li><p>Goedecker and Hoisie, <a href="http://epubs.siam.org/doi/book/10.1137/1.9780898718218"><em>Performance Optimization of Numerically Intensive Codes</em></a></p></li>
     <li><p>Agner Fog’s <a href="http://www.agner.org/optimize/">Software Optimization Manuals</a></p></li>
   </ul>
+  <aside class="notes">
+    If you prefer your advice in book form, I recommend Hager and
+    Wellein's text.  There is an older text by Goedecker and Hoisie
+    that is pretty good, too.  And then there is the book-length
+    collection by Agner Fog, though that is closer to the level of the
+    Intel manual than to the two texts that I just mentioned.
+  </aside>
+</section>
+
+
+<section>
+  <h3>Onward!</h3>
+
+  <aside class="notes">
+    Thanks for sticking with me through another deck!  I know there is
+    a lot here.  We will try to make the concepts here more concrete
+    with some exercises this week.  Stay tuned!
+  </aside>
 </section>

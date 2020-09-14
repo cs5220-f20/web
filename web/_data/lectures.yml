@@ -30,6 +30,8 @@
   files:
     - info: Slides
       file: lec/2020-09-10-arch.html
+    - info: Auxiliary notes
+      file: lec/2020-09-10-notes.html
     - info: Meeting notes
       file: lec/2020-09-10-meeting.html
 # =================
