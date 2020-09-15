@@ -3,3 +3,8 @@
   text: "HW 0: Who are you?"
   files:
     - hw0.txt
+-
+  due: 2020-09-22
+  text: "HW 1: Gitting around"
+  files:
+    - hw1.html
