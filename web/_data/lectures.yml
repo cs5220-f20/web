@@ -43,6 +43,8 @@
   files:
     - info: Slides
       file: lec/2020-09-15-opt.html
+    - info: Intro to GCP
+      file: lec/2020-09-15-gcp.html
 -
   date: 2020-09-17
   info: Basic optimizations
