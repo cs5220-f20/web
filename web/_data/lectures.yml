@@ -52,6 +52,11 @@
 -
   date: 2020-09-17
   info: Basic optimizations
+  files:
+    - info: Profiler walkthrough
+      file: lec/2020-09-17-walkthrough.html
+    - info: Meeting notes
+      file: lec/2020-09-17-meeting.html
 # =================
 # Week 4
 #
