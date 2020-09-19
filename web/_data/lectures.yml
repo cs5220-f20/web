@@ -66,6 +66,8 @@
   files:
     - info: Roofline references
       file: lec/2020-09-22-roofline.html
+    - info: Matrix multiply project
+      file: https://github.com/cs5220-f20/matmul-project
 -
   date: 2020-09-24
   info: Parallel machines and models

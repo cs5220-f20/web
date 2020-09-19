@@ -4,4 +4,7 @@
   {% for file in entry.files %}
   [<a href="hw/{{ file }}">{{ file }}</a>]
   {% endfor %}
+  {% for link in entry.links %}
+  [<a href="{{ link.url }}">{{ link.text }}</a>]
+  {% endfor %}
 </p>
