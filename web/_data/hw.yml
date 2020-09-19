@@ -9,8 +9,8 @@
   files:
     - hw1.html
 -
-  due: 2020-10=-6
+  due: 2020-10-06
   text: "Proj 1: Matrix multiply"
   links:
     - url: https://github.com/cs5220-f20/matmul-project
-      name: Github repo
+      text: Github repo
