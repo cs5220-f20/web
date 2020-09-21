@@ -11,6 +11,8 @@
 -
   due: 2020-10-06
   text: "Proj 1: Matrix multiply"
+  files:
+    - proj1.html
   links:
     - url: https://github.com/cs5220-f20/matmul-project
       text: Github repo
