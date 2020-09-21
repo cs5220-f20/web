@@ -30,7 +30,7 @@ in `matmul.c`).
 
 ## The competition
 
-![A performance plot]({{ hw/proj1-timing0.png | relative_url }})
+![A performance plot]({{ "hw/proj1-timing0.png" | relative_url }})
 
 The plotting script shows you the effective single-core flop rates for
 different matrix multiply routines and different matrix sizes.  The
