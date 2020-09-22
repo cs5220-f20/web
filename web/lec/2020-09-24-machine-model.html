@@ -8,15 +8,13 @@ audio: 2020-09-24-machine-model
 <section>
   <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
   <h2>Applications of Parallel Computers</h2>
-  <h3>Code Optimization</h3>
+  <h3>Parallel Machines and Models</h3>
   <p>
     <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
   </p>
   <p>Please click the play button below.</p>
 
   <aside class="notes">
-    Welcome to another episode of CS 5220.  This is the sole slide
-    deck for the week, but there is a lot here.  So let's get to it.
   </aside>
 </section>
 
@@ -34,14 +32,8 @@ audio: 2020-09-24-machine-model
 
 
 <section>
-  <h3>Clusters and clouds</h3>
-  <p>How did we get here? Why this type of structure? And how does the programming model match the hardware?</p>
-</section>
-
-
-<section>
   <h3>Parallel computer hardware</h3>
-  <p>Physical machine has <em>processors</em>, <em>memory</em>, <em>interconnect</em>.</p>
+  <p>Have <em>processors</em>, <em>memory</em>, <em>interconnect</em>.</p>
   <ul>
     <li>Where is memory physically?</li>
     <li>Is it attached to processors?</li>
@@ -53,23 +45,50 @@ audio: 2020-09-24-machine-model
 <section>
   <h3>Parallel programming model</h3>
   <p>Programming <em>model</em> through languages, libraries.</p>
+  <p>Characterized by:</p>
   <ul>
-    <li>Control
-      <ul>
-        <li>How is parallelism created?</li>
-        <li>What ordering is there between operations?</li>
-    </ul></li>
-    <li>Data
-      <ul>
-        <li>What data is private or shared?</li>
-        <li>How is data logically shared or communicated?</li>
-    </ul></li>
-    <li>Synchronization
-      <ul>
-        <li>What operations are used to coordinate?</li>
-        <li>What operations are atomic?</li>
-    </ul></li>
-    <li>Cost: how do we reason about each of above?</li>
+    <li>Control mechanisms</li>
+    <li>Data semantics</li>
+    <li>Synchronization constructs</li>
+    <li>Cost models<.li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Parallel model: control</h3>
+
+  <ul>
+    <li>How is parallelism created?</li>
+    <li>What ordering is there between operations?</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Parallel model: data</h3>
+
+  <ul>
+    <li>What data is private or shared?</li>
+    <li>How is data logically shared or communicated?</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Parallel model: synchronization</h3>
+  <ul>
+    <li>What operations are used to coordinate?</li>
+    <li>What operations are atomic?</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Parallel model: cost</h3>
+
+  <ul>
+    <li>How do we model cost?</li>
   </ul>
 </section>
 
