@@ -20,18 +20,6 @@ audio: 2020-09-24-machine-model
 
 
 <section>
-  <h3>Clusters and clouds</h3>
-  <ul>
-    <li>Vectors in a core</li>
-    <li>Multiple cores in a chip</li>
-    <li>Multiple chips in a box</li>
-    <li>Along with accelerators</li>
-    <li>Multiple boxes per rack, center, etc</li>
-  </ul>
-</section>
-
-
-<section>
   <h3>Parallel computer hardware</h3>
   <p>Have <em>processors</em>, <em>memory</em>, <em>interconnect</em>.</p>
   <ul>
@@ -51,6 +39,29 @@ audio: 2020-09-24-machine-model
     <li>What synchronization constructs?</li>
   </ul>
   <p>For performance, need cost models!</p>
+</section>
+
+
+<section>
+  <h3>Simple example</h3>
+
+  <pre><code>double dot(int n, double* x, double* y)
+{
+    double s = 0;
+    for (int i = 0; i < n; ++i)
+        s += x[i] * y[i];
+    return s;
+}</code></pre>
+</section>
+
+<section>
+  <h3>Simple example</h3>
+  <p>How can we parallelize?</p>
+  <ul>
+    <li>Where do arrays <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> live? One CPU? Partitioned?</li>
+    <li>Who does what work?</li>
+    <li>How do we combine to get a single final result?</li>
+  </ul>
 </section>
 
 
