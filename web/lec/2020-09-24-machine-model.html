@@ -66,26 +66,15 @@ audio: 2020-09-24-machine-model
 
 
 <section>
-  <h3>Simple example</h3>
-  <p>Consider dot product of <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span>.</p>
-  <ul>
-    <li>Where do arrays <span class="math inline">\(x\)</span> and <span class="math inline">\(y\)</span> live? One CPU? Partitioned?</li>
-    <li>Who does what work?</li>
-    <li>How do we combine to get a single final result?</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Shared memory programming model</h3>
+  <h3>Shared memory model</h3>
   <p>Program consists of <em>threads</em> of control.</p>
   <ul>
-    <li><p>Can be created dynamically</p></li>
-    <li><p>Each has private variables (e.g. local)</p></li>
-    <li><p>Each has shared variables (e.g. heap)</p></li>
-    <li><p>Communication through shared variables</p></li>
-    <li><p>Coordinate by synchronizing on variables</p></li>
-    <li><p>Examples: OpenMP, pthreads</p></li>
+    <li>Can be created dynamically</li>
+    <li>Each has private variables (e.g. local)</li>
+    <li>Each has shared variables (e.g. heap)</li>
+    <li>Communication through shared variables</li>
+    <li>Coordinate by synchronizing on variables</li>
+    <li>Examples: OpenMP, pthreads</li>
   </ul>
 </section>
 
