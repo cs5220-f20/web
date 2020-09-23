@@ -281,6 +281,19 @@ audio: 2020-09-24-machine-model
 
 
 <section>
+  <h3>Punchline</h3>
+  <p>Shared memory is expensive!</p>
+  <ul>
+    <li>Uniform access means bus contention</li>
+    <li>Non-uniform access scales better<br/>
+      (but now access costs vary)</li>
+    <li>Cache coherence is tricky</li>
+    <li>May forgo sequential consistency for performance</li>
+  </ul>
+</section>
+
+
+<section>
   <h3>Message-passing programming model</h3>
   <ul>
     <li>Collection of named processes</li>
@@ -355,6 +368,15 @@ audio: 2020-09-24-machine-model
 
 
 <section>
+  <h3>Punchline</h3>
+  <ul>
+    <li>Message passing hides less than shared memory</li>
+    <li>But correctness is still subtle</li>
+  </ul>
+</section>
+
+
+<section>
   <h3>Distributed memory machines</h3>
   <ul>
     <li>Each node has local memory</p>
@@ -363,6 +385,21 @@ audio: 2020-09-24-machine-model
     </ul></li>
     <li>Nodes communicate via network interface</li>
     <li>Example: most modern clusters!</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Back of the envelope</h3>
+
+  <ul>
+    <li>c is 3 billion m/s.</li>
+    <li>One light-ns is about 0.3 m<br/>(about a foot)</li>
+    <li>A big machine is often over 300 feet across</li>
+    <li>May still be dominated by NIC latency (microseconds)</li>
+    <li>Across a big machine will always be order(s)-of-magnitude slower
+      than local memory accesses</li>
+    <li>Another reason locality matters!</li>
   </ul>
 </section>
 
