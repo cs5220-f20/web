@@ -148,7 +148,7 @@ audio: 2020-09-24-machine-model
 
   <ul>
     <li>Idea: Looks like processors take turns, in order</li>
-    <li>Convenient abstraction for thinking through correctness</li>
+    <li>Convenient for thinking through correctness</li>
     <li>Really hard for performance!</li>
     <li>Will talk about <q>memory models</q> later</li>
   </ul>
@@ -229,6 +229,16 @@ audio: 2020-09-24-machine-model
   </ol>
 </section>
 
+
+<section>
+  <h3>Punchline</h3>
+  <p>Shared memory <em>correctness</em> is hard</p>
+  <ul>
+    <li>Too little synchronization: races</li>
+    <li>Too much synchronization: deadlock</li>
+  </ul>
+  <p>And this is before we talk performance!</p>
+</section>
 
 
 <section>
@@ -414,7 +424,7 @@ audio: 2020-09-24-machine-model
   <p>Real world exhibits <em>parallelism</em> and <em>locality</em></p>
   <ul>
     <li>Particles, people, etc function independently</li>
-    <li>Nearby objects interact more strongly than distant ones</li>
+    <li>Nearby interactions dominate distant ones</li>
     <li>Can often simplify dependence on distant objects</li>
   </ul>
 </section>
@@ -424,7 +434,7 @@ audio: 2020-09-24-machine-model
   <h3>Parallelism and locality</h3>
   <p>Can get more parallelism / locality through model</p>
   <ul>
-    <li>Limited range of dependency between adjacent time steps</li>
+    <li>Limited range of dependency between time steps</li>
     <li>Can neglect or approximate far-field effects</li>
   </ul>
 </section>
@@ -442,27 +452,11 @@ audio: 2020-09-24-machine-model
 
 
 <section>
-  <h3>Basic styles of simulation</h3>
+  <h3>Next up</h3>
+
+  <p>Two decks on parallel patterns</p>
   <ul>
-    <li>Discrete event systems (continuous or discrete time)</p>
-      <ul>
-        <li>Game of life, logic-level circuit simulation</li>
-        <li>Network simulation</li>
-    </ul></li>
-    <li>Particle systems</p>
-      <ul>
-        <li>Billiards, electrons, galaxies, ...</li>
-        <li>Ants, cars, ...?</li>
-    </ul></li>
-    <li>Lumped parameter models (ODEs)</p>
-      <ul>
-        <li>Circuits (SPICE), structures, chemical kinetics</li>
-    </ul></li>
-    <li>Distributed parameter models (PDEs / integral equations)</p>
-      <ul>
-        <li>Heat, elasticity, electrostatics, ...</li>
-    </ul></li>
+    <li>Discrete events and particle systems</li>
+    <li>Differential equations (ODEs and PDEs)</li>
   </ul>
-  <p>Often more than one type of simulation appropriate.<br />
-    Sometimes more than one at a time!</p>
 </section>
