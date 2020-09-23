@@ -202,7 +202,6 @@ audio: 2020-09-24-machine-model
         <li><p>Bus becomes bottleneck</p></li>
         <li><p><em>Cache coherence</em> is a pain</p></li>
     </ul></li>
-    <li><p>Example: Six-core chips on cluster</p></li>
   </ul>
 </section>
 
@@ -222,10 +221,10 @@ audio: 2020-09-24-machine-model
   <h3>Distributed shared memory</h3>
   <ul>
     <li><p>Non-Uniform Memory Access (NUMA)</p></li>
-    <li><p>Can <em>logically</em> share memory while <em>physically</em> distributing</p></li>
+    <li><p>Memory <em>logically</em> shared, <em>physically</em> distributed</p></li>
     <li><p>Any processor can access any address</p></li>
     <li><p>Cache coherence is still a pain</p></li>
-    <li><p>Example: SGI Origin (or multiprocessor nodes on cluster)</p></li>
+    <li><p>Most big modern chips are NUMA</p></li>
     <li><p>Many-core accelerators tend to be NUMA as well</p></li>
   </ul>
 </section>
