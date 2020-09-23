@@ -111,7 +111,6 @@ audio: 2020-09-24-machine-model
         <li>Could happen simultaneously!</li>
     </ul></li>
   </ul>
-  <p>Need synchronization via lock or barrier.</p>
 </section>
 
 
@@ -143,9 +142,13 @@ audio: 2020-09-24-machine-model
   <ul>
     <li><p>Only one CPU at a time allowed in critical section</p></li>
     <li><p>Can violate invariants locally</p></li>
-    <li><p>Enforce via a lock or mutex (mutual exclusion variable)</p></li>
+    <li><p>Enforce via a lock or mutex</p></li>
   </ul>
+</section>
 
+
+<section>
+  <h3>Shared memory dot with locks</h3>
   <p>Dot product with mutex:</p>
   <ol type="1">
     <li><p>Create global mutex l</p></li>
