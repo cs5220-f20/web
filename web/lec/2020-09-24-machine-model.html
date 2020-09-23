@@ -270,20 +270,25 @@ audio: 2020-09-24-machine-model
 <section>
   <h3>Message passing dot product: v1</h3>
   <p>Processor 1:</p>
-  <ol type="1">
-    <li><p>Partial sum s1</p></li>
-    <li><p>Send s1 to P2</p></li>
-    <li><p>Receive s2 from P2</p></li>
-    <li><p>s = s1 + s2</p></li>
-  </ol>
-  <p>Processor 2:</p>
-  <ol type="1">
-    <li><p>Partial sum s2</p></li>
-    <li><p>Receive s1 from P1</p></li>
-    <li><p>Send s2 to P1</p></li>
-    <li><p>s = s1 + s2</p></li>
-  </ol>
-
+  <div class="container">
+    <div class="col">
+      <ol type="1">
+        <li><p>Partial sum s1</p></li>
+        <li><p>Send s1 to P2</p></li>
+        <li><p>Receive s2 from P2</p></li>
+        <li><p>s = s1 + s2</p></li>
+      </ol>
+    </div>
+    <div class="col">
+      <p>Processor 2:</p>
+      <ol type="1">
+        <li><p>Partial sum s2</p></li>
+        <li><p>Receive s1 from P1</p></li>
+        <li><p>Send s2 to P1</p></li>
+        <li><p>s = s1 + s2</p></li>
+      </ol>
+    </div>
+  </div>
   <p>Better, but what if more than two processors?</p>
 </section>
 
@@ -332,9 +337,10 @@ audio: 2020-09-24-machine-model
     <li><p>Given <span class="math inline">\(p\)</span> processors, could then ask for</p>
       <ul>
         <li><p>Good <em>speedup</em>: <span class="math inline">\(p^{-1}\)</span> times serial time</p></li>
-        <li><p>Good <em>scaled speedup</em>: <span class="math inline">\(p\)</span> times the work in same time</p></li>
+        <li><p>Good <em>scaled speedup</em>: <span class="math
+        inline">\(p \times\)</span> the work, same time</p></li>
     </ul></li>
-    <li><p>Easiest to get good speedup from cruddy serial code!</p></li>
+    <li><p>Easiest to get speedup from bad serial code!</p></li>
   </ul>
 </section>
 
