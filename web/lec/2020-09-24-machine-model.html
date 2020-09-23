@@ -64,6 +64,7 @@ audio: 2020-09-24-machine-model
 }</code></pre>
 </section>
 
+
 <section>
   <h3>Simple example</h3>
   <p>How can we parallelize?</p>
@@ -76,415 +77,375 @@ audio: 2020-09-24-machine-model
 
 
 <section>
-  <h3>Shared memory model</h3>
-  <p>Program consists of <em>threads</em> of control.</p>
-  <ul>
-    <li>Can be created dynamically</li>
-    <li>Each has private variables (e.g. local)</li>
-    <li>Each has shared variables (e.g. heap)</li>
-    <li>Communication through shared variables</li>
-    <li>Coordinate by synchronizing on variables</li>
-    <li>Examples: OpenMP, pthreads</li>
-  </ul>
-</section>
+
+  <section>
+    <h2>Shared memory model</h2>
+  </section>
+
+  <section>
+    <h3>Shared memory model</h3>
+    <p>Program consists of <em>threads</em> of control.</p>
+    <ul>
+      <li>Can be created dynamically</li>
+      <li>Each has private variables (e.g. local)</li>
+      <li>Each has shared variables (e.g. heap)</li>
+      <li>Communication through shared variables</li>
+      <li>Coordinate by synchronizing on variables</li>
+      <li>Examples: OpenMP, pthreads</li>
+    </ul>
+  </section>
 
 
-<section>
-  <h3>Shared memory dot product</h3>
-  <p>Dot product of two <span class="math inline">\(n\)</span> vectors on <span class="math inline">\(p \ll n\)</span> processors:</p>
-  <ol type="1">
-    <li>Each CPU: partial sum (<span class="math inline">\(n/p\)</span> elements, local)</li>
-    <li>Everyone tallies partial sums</li>
-  </ol>
-  <p>Can we go home now?</p>
-</section>
+  <section>
+    <h3>Shared memory dot product</h3>
+    <p>Dot product of two <span class="math inline">\(n\)</span> vectors on <span class="math inline">\(p \ll n\)</span> processors:</p>
+    <ol type="1">
+      <li>Each CPU: partial sum (<span class="math inline">\(n/p\)</span> elements, local)</li>
+      <li>Everyone tallies partial sums</li>
+    </ol>
+    <p>Can we go home now?</p>
+  </section>
 
 
-<section>
-  <h3>Race condition</h3>
-  <p>A <em>race condition</em>:</p>
-  <ul>
-    <li>Two threads access same variable</li>
-    <li>At least one write.</li>
-    <li>Access are concurrent – no ordering guarantees
-      <ul>
-        <li>Could happen simultaneously!</li>
-    </ul></li>
-  </ul>
-</section>
+  <section>
+    <h3>Race condition</h3>
+    <p>A <em>race condition</em>:</p>
+    <ul>
+      <li>Two threads access same variable</li>
+      <li>At least one write.</li>
+      <li>Access are concurrent – no ordering guarantees
+        <ul>
+          <li>Could happen simultaneously!</li>
+      </ul></li>
+    </ul>
+  </section>
 
 
-<section>
-  <h3>Race to the dot</h3>
+  <section>
+    <h3>Race to the dot</h3>
 
-  <p>Consider <tt>S += partial</tt> on two CPUs</p>
-</section>
-
-
-<section>
-  <h3>Race to the dot</h3>
-
-  <table>
-    <thead>
-      <tr>
-        <th><h4>P1</h4></th>
-        <th><h4>P2</h4></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr><td>load S</td><td></td></tr>
-      <tr><td>add partial</td><td></td></tr>
-      <tr><td></td><td>load S</td></tr>
-      <tr><td>store S</td><td></td></tr>
-      <tr><td></td><td>add partial</td></tr>
-      <tr><td></td><td>store S</td></tr>
-    </tbody>
-  </table>
-</section>
+    <p>Consider <tt>S += partial</tt> on two CPUs</p>
+  </section>
 
 
-<section>
-  <h3>Sequential consistency</h3>
+  <section>
+    <h3>Race to the dot</h3>
 
-  <ul>
-    <li>Idea: Looks like processors take turns, in order</li>
-    <li>Convenient for thinking through correctness</li>
-    <li>Really hard for performance!</li>
-    <li>Will talk about <q>memory models</q> later</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Shared memory dot with locks</h3>
-  <p>Solution: consider S += partial_sum a <em>critical section</em></p>
-  <ul>
-    <li>Only one CPU at a time allowed in critical section</li>
-    <li>Can violate invariants locally</li>
-    <li>Enforce via a lock or mutex</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Shared memory dot with locks</h3>
-  <p>Dot product with mutex:</p>
-  <ol>
-    <li>Create global mutex l</li>
-    <li>Compute partial_sum</li>
-    <li>Lock l</li>
-    <li>S += partial_sum</li>
-    <li>Unlock l</li>
-  </ol>
-</section>
+    <table>
+      <thead>
+        <tr>
+          <th><h4>P1</h4></th>
+          <th><h4>P2</h4></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>load S</td><td></td></tr>
+        <tr><td>add partial</td><td></td></tr>
+        <tr><td></td><td>load S</td></tr>
+        <tr><td>store S</td><td></td></tr>
+        <tr><td></td><td>add partial</td></tr>
+        <tr><td></td><td>store S</td></tr>
+      </tbody>
+    </table>
+  </section>
 
 
-<section>
-  <h3>A problem</h3>
-  <div class="container">
-    <div class="col">
-      <p>Processor 1:</p>
-      <ol type="1">
-        <li>Acquire lock 1</li>
-        <li>Acquire lock 2</li>
-        <li>Do something</li>
-        <li>Release locks</li>
-      </ol>
+  <section>
+    <h3>Sequential consistency</h3>
+
+    <ul>
+      <li>Idea: Looks like processors take turns, in order</li>
+      <li>Convenient for thinking through correctness</li>
+      <li>Really hard for performance!</li>
+      <li>Will talk about <q>memory models</q> later</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Shared memory dot with locks</h3>
+    <p>Solution: consider S += partial_sum a <em>critical section</em></p>
+    <ul>
+      <li>Only one CPU at a time allowed in critical section</li>
+      <li>Can violate invariants locally</li>
+      <li>Enforce via a lock or mutex</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Shared memory dot with locks</h3>
+    <p>Dot product with mutex:</p>
+    <ol>
+      <li>Create global mutex l</li>
+      <li>Compute partial_sum</li>
+      <li>Lock l</li>
+      <li>S += partial_sum</li>
+      <li>Unlock l</li>
+    </ol>
+  </section>
+
+
+  <section>
+    <h3>A problem</h3>
+    <div class="container">
+      <div class="col">
+        <p>Processor 1:</p>
+        <ol type="1">
+          <li>Acquire lock 1</li>
+          <li>Acquire lock 2</li>
+          <li>Do something</li>
+          <li>Release locks</li>
+        </ol>
+      </div>
+      <div class="col">
+        <p>Processor 2:</p>
+        <ol type="1">
+          <li>Acquire lock 2</li>
+          <li>Acquire lock 1</li>
+          <li>Do something</li>
+          <li>Release locks</li>
+        </ol>
+      </div>
     </div>
-    <div class="col">
-      <p>Processor 2:</p>
-      <ol type="1">
-        <li>Acquire lock 2</li>
-        <li>Acquire lock 1</li>
-        <li>Do something</li>
-        <li>Release locks</li>
-      </ol>
+    <p>What if both processors execute step 1 simultaneously?</p>
+  </section>
+
+
+  <section>
+    <h3>Shared memory with barriers</h3>
+    <ul>
+      <li>Lots of sci codes have phases (e.g. time steps)</li>
+      <li>Communication only needed at end of phases</li>
+      <li>Idea: synchronize on end of phase with <em>barrier</em></p>
+        <ul>
+          <li>More restrictive (less efficient?) than small locks</li>
+          <li>But easier to think through! (e.g. less chance of deadlocks)</li>
+      </ul></li>
+      <li>Sometimes called <em>bulk synchronous programming</em></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Dot with barriers</h3>
+    <ol>
+      <li><tt>partial[threadid]</tt> = local partial sum</li>
+      <li>barrier</li>
+      <li>sum = sum(partial)</li>
+    </ol>
+  </section>
+
+
+  <section>
+    <h3>Punchline</h3>
+    <p>Shared memory <em>correctness</em> is hard</p>
+    <ul>
+      <li>Too little synchronization: races</li>
+      <li>Too much synchronization: deadlock</li>
+    </ul>
+    <p>And this is before we talk performance!</p>
+  </section>
+
+</section>
+
+<section>
+
+  <section><h2>Shared memory machines</h2></section>
+
+  <section>
+    <h3>Uniform shared memory</h3>
+    <ul>
+      <li>Processors and memories talk through a bus</li>
+      <li>Symmetric Multiprocessor (SMP)</li>
+      <li>Hard to scale to lots of processors (think <span class="math inline">\(\leq 32\)</span>)</p>
+        <ul>
+          <li>Bus becomes bottleneck</li>
+          <li><em>Cache coherence</em> is a pain</li>
+      </ul></li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Multithreaded processor machine</h3>
+    <ul>
+      <li>Maybe threads &gt; processors!</li>
+      <li>Idea: Switch threads on long latency ops.</li>
+      <li>Called <em>hyperthreading</em> by Intel</li>
+      <li>Cray MTA was an extreme example</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Distributed shared memory</h3>
+    <ul>
+      <li>Non-Uniform Memory Access (NUMA)</li>
+      <li>Memory <em>logically</em> shared, <em>physically</em> distributed</li>
+      <li>Any processor can access any address</li>
+      <li>Close accesses are faster than far accesses</li>
+      <li>Cache coherence is still a pain</li>
+      <li>Most big modern chips are NUMA</li>
+      <li>Many-core accelerators tend to be NUMA as well</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Punchline</h3>
+    <p>Shared memory is expensive!</p>
+    <ul>
+      <li>Uniform access means bus contention</li>
+      <li>Non-uniform access scales better<br/>
+        (but now access costs vary)</li>
+      <li>Cache coherence is tricky</li>
+      <li>May forgo sequential consistency for performance</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Message-passing programming model</h3>
+    <ul>
+      <li>Collection of named processes</li>
+      <li>Data is <em>partitioned</em></li>
+      <li>Communication by send/receive of explicit message</li>
+      <li>Lingua franca: MPI (Message Passing Interface)</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Message passing dot product: v1</h3>
+    <div class="container">
+      <div class="col">
+        <p>Processor 1:</p>
+        <ol type="1">
+          <li>Partial sum s1</li>
+          <li>Send s1 to P2</li>
+          <li>Receive s2 from P2</li>
+          <li>s = s1 + s2</li>
+        </ol>
+      </div>
+      <div class="col">
+        <p>Processor 2:</p>
+        <ol type="1">
+          <li>Partial sum s2</li>
+          <li>Send s2 to P1</li>
+          <li>Receive s1 from P1</li>
+          <li>s = s1 + s2</li>
+        </ol>
+      </div>
     </div>
-  </div>
-  <p>What if both processors execute step 1 simultaneously?</p>
-</section>
+    <p>What could go wrong? Think of phones vs letters...</p>
+  </section>
 
 
-<section>
-  <h3>Shared memory with barriers</h3>
-  <ul>
-    <li>Lots of sci codes have phases (e.g. time steps)</li>
-    <li>Communication only needed at end of phases</li>
-    <li>Idea: synchronize on end of phase with <em>barrier</em></p>
-      <ul>
-        <li>More restrictive (less efficient?) than small locks</li>
-        <li>But easier to think through! (e.g. less chance of deadlocks)</li>
-    </ul></li>
-    <li>Sometimes called <em>bulk synchronous programming</em></li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Dot with barriers</h3>
-  <ol>
-    <li><tt>partial[threadid]</tt> = local partial sum</li>
-    <li>barrier</li>
-    <li>sum = sum(partial)</li>
-  </ol>
-</section>
-
-
-<section>
-  <h3>Punchline</h3>
-  <p>Shared memory <em>correctness</em> is hard</p>
-  <ul>
-    <li>Too little synchronization: races</li>
-    <li>Too much synchronization: deadlock</li>
-  </ul>
-  <p>And this is before we talk performance!</p>
-</section>
-
-
-<section>
-  <h3>Shared memory machine model</h3>
-  <ul>
-    <li>Processors and memories talk through a bus</li>
-    <li>Symmetric Multiprocessor (SMP)</li>
-    <li>Hard to scale to lots of processors (think <span class="math inline">\(\leq 32\)</span>)</p>
-      <ul>
-        <li>Bus becomes bottleneck</li>
-        <li><em>Cache coherence</em> is a pain</li>
-    </ul></li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Multithreaded processor machine</h3>
-  <ul>
-    <li>Maybe threads &gt; processors!</li>
-    <li>Idea: Switch threads on long latency ops.</li>
-    <li>Called <em>hyperthreading</em> by Intel</li>
-    <li>Cray MTA was an extreme example</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Distributed shared memory</h3>
-  <ul>
-    <li>Non-Uniform Memory Access (NUMA)</li>
-    <li>Memory <em>logically</em> shared, <em>physically</em> distributed</li>
-    <li>Any processor can access any address</li>
-    <li>Close accesses are faster than far accesses</li>
-    <li>Cache coherence is still a pain</li>
-    <li>Most big modern chips are NUMA</li>
-    <li>Many-core accelerators tend to be NUMA as well</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Punchline</h3>
-  <p>Shared memory is expensive!</p>
-  <ul>
-    <li>Uniform access means bus contention</li>
-    <li>Non-uniform access scales better<br/>
-      (but now access costs vary)</li>
-    <li>Cache coherence is tricky</li>
-    <li>May forgo sequential consistency for performance</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Message-passing programming model</h3>
-  <ul>
-    <li>Collection of named processes</li>
-    <li>Data is <em>partitioned</em></li>
-    <li>Communication by send/receive of explicit message</li>
-    <li>Lingua franca: MPI (Message Passing Interface)</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Message passing dot product: v1</h3>
-  <div class="container">
-    <div class="col">
-      <p>Processor 1:</p>
-      <ol type="1">
-        <li>Partial sum s1</li>
-        <li>Send s1 to P2</li>
-        <li>Receive s2 from P2</li>
-        <li>s = s1 + s2</li>
-      </ol>
+  <section>
+    <h3>Message passing dot product: v1</h3>
+    <div class="container">
+      <div class="col">
+        <p>Processor 1:</p>
+        <ol type="1">
+          <li>Partial sum s1</li>
+          <li>Send s1 to P2</li>
+          <li>Receive s2 from P2</li>
+          <li>s = s1 + s2</li>
+        </ol>
+      </div>
+      <div class="col">
+        <p>Processor 2:</p>
+        <ol type="1">
+          <li>Partial sum s2</li>
+          <li>Receive s1 from P1</li>
+          <li>Send s2 to P1</li>
+          <li>s = s1 + s2</li>
+        </ol>
+      </div>
     </div>
-    <div class="col">
-      <p>Processor 2:</p>
-      <ol type="1">
-        <li>Partial sum s2</li>
-        <li>Send s2 to P1</li>
-        <li>Receive s1 from P1</li>
-        <li>s = s1 + s2</li>
-      </ol>
-    </div>
-  </div>
-  <p>What could go wrong? Think of phones vs letters...</p>
+    <p>Better, but what if more than two processors?</p>
+  </section>
+
+
+  <section>
+    <h3>MPI: the de facto standard</h3>
+    <ul>
+      <li>Pro: <em>Portability</em></li>
+      <li>Con: least-common-denominator for mid 80s</li>
+    </ul>
+    <p>The “assembly language” (or C?) of parallelism...<br />
+      but, alas, assembly language can be high performance.</p>
+  </section>
+
+
+  <section>
+    <h3>Punchline</h3>
+    <ul>
+      <li>Message passing hides less than shared memory</li>
+      <li>But correctness is still subtle</li>
+    </ul>
+  </section>
+
 </section>
 
 
 <section>
-  <h3>Message passing dot product: v1</h3>
-  <div class="container">
-    <div class="col">
-      <p>Processor 1:</p>
-      <ol type="1">
-        <li>Partial sum s1</li>
-        <li>Send s1 to P2</li>
-        <li>Receive s2 from P2</li>
-        <li>s = s1 + s2</li>
-      </ol>
-    </div>
-    <div class="col">
-      <p>Processor 2:</p>
-      <ol type="1">
-        <li>Partial sum s2</li>
-        <li>Receive s1 from P1</li>
-        <li>Send s2 to P1</li>
-        <li>s = s1 + s2</li>
-      </ol>
-    </div>
-  </div>
-  <p>Better, but what if more than two processors?</p>
+  <section><2>Distributed memory machines</h2></section>
+
+  <section>
+    <h3>Distributed memory machines</h3>
+    <ul>
+      <li>Each node has local memory</p>
+        <ul>
+          <li>... and no direct access to memory on other nodes</li>
+      </ul></li>
+      <li>Nodes communicate via network interface</li>
+      <li>Example: most modern clusters!</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Back of the envelope</h3>
+
+    <ul>
+      <li>c is 3 billion m/s.</li>
+      <li>One light-ns is about 0.3 m<br/>(about a foot)</li>
+      <li>A big machine is often over 300 feet across</li>
+      <li>May still be dominated by NIC latency (microseconds)</li>
+      <li>Across a big machine will always be order(s)-of-magnitude slower
+        than local memory accesses</li>
+      <li>Another reason locality matters!</li>
+    </ul>
+  </section>
+
 </section>
 
 
 <section>
-  <h3>MPI: the de facto standard</h3>
-  <ul>
-    <li>Pro: <em>Portability</em></li>
-    <li>Con: least-common-denominator for mid 80s</li>
-  </ul>
-  <p>The “assembly language” (or C?) of parallelism...<br />
-    but, alas, assembly language can be high performance.</p>
-</section>
+
+  <section><h2>Paths to Parallel Performance</h2></section>
+
+    <h3>Parallelism and locality</h3>
+    <p>Can get more parallelism / locality through model</p>
+    <ul>
+      <li>Limited range of dependency between time steps</li>
+      <li>Can neglect or approximate far-field effects</li>
+    </ul>
+  </section>
 
 
-<section>
-  <h3>Punchline</h3>
-  <ul>
-    <li>Message passing hides less than shared memory</li>
-    <li>But correctness is still subtle</li>
-  </ul>
-</section>
+  <section>
+    <h3>Parallelism and locality</h3>
+    <p>Often get parallism at multiple levels</p>
+    <ul>
+      <li>Hierarchical circuit simulation</li>
+      <li>Interacting models for climate</li>
+      <li>Parallelizing individual experiments in MC or optimization</li>
+    </ul>
+  </section>
 
-
-<section>
-  <h3>Distributed memory machines</h3>
-  <ul>
-    <li>Each node has local memory</p>
-      <ul>
-        <li>... and no direct access to memory on other nodes</li>
-    </ul></li>
-    <li>Nodes communicate via network interface</li>
-    <li>Example: most modern clusters!</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Back of the envelope</h3>
-
-  <ul>
-    <li>c is 3 billion m/s.</li>
-    <li>One light-ns is about 0.3 m<br/>(about a foot)</li>
-    <li>A big machine is often over 300 feet across</li>
-    <li>May still be dominated by NIC latency (microseconds)</li>
-    <li>Across a big machine will always be order(s)-of-magnitude slower
-      than local memory accesses</li>
-    <li>Another reason locality matters!</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>The story so far</h3>
-
-  <p>Good parallel performance starts with good single-core performance.</p>
-  <ul>
-    <li>Want instruction-level parallelism and cache hits</li>
-    <li>Design data structures, algorithms around this</li>
-  </ul>
-</section>
-
-<section>
-  <h3>The story so far</h3>
-
-  <p>Parallelism requires communication and synchronization.</p>
-  <ul>
-    <li>Several models with varying subtleties</li>
-    <li>Correctness is hard!</li>
-    <li>Performance is hard, too!</li>
-  </ul>
-</section>
-
-<section>
-  <h3>The story so far</h3>
-
-  <p>Parallel performance is limited by:</p>
-  <ul>
-    <li>Single-core performance</li>
-    <li>Communication and synchronization costs</li>
-    <li>Non-parallel work (Amdahl)</li>
-  </ul>
-  <p>Plan now: talk about how to overcome these limits for some types
-    of scientific applications</p>
-</section>
-
-
-<section>
-  <h3>Reminder: what do we want?</h3>
-  <ul>
-    <li>High-level: solve big problems fast</li>
-    <li>Start with good <em>serial</em> performance</li>
-    <li>Given <span class="math inline">\(p\)</span> processors, could then ask for
-      <ul>
-        <li>Good <em>speedup</em>: <span class="math inline">\(p^{-1}\)</span> times serial time</li>
-        <li>Good <em>scaled speedup</em>: <span class="math
-        inline">\(p \times\)</span> the work, same time</li>
-    </ul></li>
-    <li>Easiest to get speedup from bad serial code!</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Parallelism and locality</h3>
-
-  <p>Real world exhibits <em>parallelism</em> and <em>locality</em></p>
-  <ul>
-    <li>Particles, people, etc function independently</li>
-    <li>Nearby interactions dominate distant ones</li>
-    <li>Can often simplify dependence on distant objects</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Parallelism and locality</h3>
-  <p>Can get more parallelism / locality through model</p>
-  <ul>
-    <li>Limited range of dependency between time steps</li>
-    <li>Can neglect or approximate far-field effects</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Parallelism and locality</h3>
-  <p>Often get parallism at multiple levels</p>
-  <ul>
-    <li>Hierarchical circuit simulation</li>
-    <li>Interacting models for climate</li>
-    <li>Parallelizing individual experiments in MC or optimization</li>
-  </ul>
 </section>
 
 
