@@ -157,12 +157,12 @@ audio: 2020-09-24-machine-model
 <section>
   <h3>Shared memory dot with locks</h3>
   <p>Dot product with mutex:</p>
-  <ol type="1">
-    <li><p>Create global mutex l</p></li>
-    <li><p>Compute partial_sum</p></li>
-    <li><p>Lock l</p></li>
-    <li><p>S += partial_sum</p></li>
-    <li><p>Unlock l</p></li>
+  <ol>
+    <li>Create global mutex l</li>
+    <li>Compute partial_sum</li>
+    <li>Lock l</li>
+    <li>S += partial_sum</li>
+    <li>Unlock l</li>
   </ol>
 </section>
 
@@ -179,6 +179,16 @@ audio: 2020-09-24-machine-model
     </ul></li>
     <li><p>Sometimes called <em>bulk synchronous programming</em></p></li>
   </ul>
+</section>
+
+
+<section>
+  <h3>Dot with barriers</h3>
+  <ol>
+    <li><tt>partial[threadid]</tt> = local partial sum</li>
+    <li>barrier</li>
+    <li>sum = sum(partial)</li>
+  </ol>
 </section>
 
 
