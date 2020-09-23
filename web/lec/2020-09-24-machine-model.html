@@ -168,6 +168,32 @@ audio: 2020-09-24-machine-model
 
 
 <section>
+  <h3>A problem</h3>
+  <div class="container">
+    <div class="col">
+      <p>Processor 1:</p>
+      <ol type="1">
+        <li>Acquire lock 1</li>
+        <li>Acquire lock 2</li>
+        <li>Do something</li>
+        <li>Release locks</li>
+      </ol>
+    </div>
+    <div class="col">
+      <p>Processor 2:</p>
+      <ol type="1">
+        <li>Acquire lock 2<li>
+        <li>Acquire lock 1</li>
+        <li>Do something</li>
+        <li>Release locks</li>
+      </ol>
+    </div>
+  </div>
+  <p>What if both processors execute step 1 simultaneously?</p>
+</section>
+
+
+<section>
   <h3>Shared memory with barriers</h3>
   <ul>
     <li><p>Lots of sci codes have phases (e.g. time steps)</p></li>
@@ -190,6 +216,7 @@ audio: 2020-09-24-machine-model
     <li>sum = sum(partial)</li>
   </ol>
 </section>
+
 
 
 <section>
