@@ -25,6 +25,12 @@ audio: 2020-09-24-machine-model
   <p>Please click the play button below.</p>
 
   <aside class="notes">
+    Welcome to another edition of 5220.  For the last few slide dekcs,
+    we've been talking about single core performance, and maybe you
+    thought "when do we get to the parallel case"?  Well, we start
+    today.  This is an overview lecture to set the stage; we'll get
+    into much more detail on the topics presented today in later
+    slide decks.
   </aside>
 </section>
 
@@ -37,6 +43,22 @@ audio: 2020-09-24-machine-model
     <li>Is it attached to processors?</li>
     <li>What is the network connectivity?</li>
   </ul>
+
+  <aside class="notes">
+    So far, our discussions of parallel machines have mostly focused
+    on hardware.  We've talked about peak flop rates and power usage,
+    and of course we've mentioned what types of processors these
+    machines use.  But after our discussion of memory, maybe it won't
+    surprise you to learn that the positioning of memory and the way
+    we communicate with memory -- and with other processors -- plays
+    just as big a role in performance.  In general, parallel
+    architecture is about dealing with these three components: the
+    individual processors, the memory, and the networks used to
+    connect everything.  I'll sometimes say "network fabric" or
+    "interconnect" when referring to the network; these terms
+    basically all mean the same thing.  The network is often the thing
+    that most distinguishes a supercomputer from a small cluster.
+  </aside>
 </section>
 
 
@@ -49,6 +71,27 @@ audio: 2020-09-24-machine-model
     <li>What synchronization constructs?</li>
   </ul>
   <p>For performance, need cost models!</p>
+
+  <aside class="notes">
+    This class is pretty low-level, but it's still worth
+    distinguishing between the hardware and the programming model --
+    that is, the abstractions we use for writing our parallel codes.
+    The model tells us how we initiate and control parallel jobs,
+    share data between processors, and synchronize the efforts of
+    different processors.  The parallel programming models we'll
+    discuss are pretty close to the way that we think about certain
+    types of hardware, but they aren't identical.  We can implement
+    shared memory programming abstractions even if we only have
+    hardware support for passing messages around, and we can implement
+    message passing on top of shared memory hardware.  Indeed, these
+    can be really useful things to do!  So it is worthwhile keeping
+    the programming abstraction distinct from the hardware in our
+    minds.  Of course, if we want to think about performance as well
+    as correctness of our parallel codes, we need to have some
+    understanding of the hardware, too.  At the very least, we need to
+    know enough to build cost models that will help us predict
+    performance and guide us toward good implementations.
+  </aside>
 </section>
 
 
@@ -62,6 +105,40 @@ audio: 2020-09-24-machine-model
         s += x[i] * y[i];
     return s;
 }</code></pre>
+  <aside class="notes">
+    Examples always help to make things concrete. For this lecture,
+    our running example will be dot products. From our centroid
+    example, we know this naïve implementation of the dot product
+    might not be optimal on a single core; but this doesn't really
+    matter for our discussion today.  What matters is that it is
+    pretty obvious how to split the dot product into independent
+    pieces of work that we could assign to different processors.
+  </aside>
+</section>
+
+
+<section>
+  <h3>Simple example</h3>
+
+  <pre><code>double pdot(int n, double* x, double* y)
+{
+    double s = 0;
+    for (int p = 0; p < NUM_PROC; ++p) { // Loop to parallelize
+      int i = p*n/NUM_PROC;
+      int inext = (p+1)*n/NUM_PROC;
+      double partial = dot(inext-i, x+i, y+i);
+      s += partial;
+    }
+    return s;
+}</code></pre>
+  <aside class="notes">
+    Well, let's be a little more explicit about how we might partition
+    the work.  The idea is that we are going to split the big dot product
+    into smaller dot products, each about size n/p.  Then we take the
+    partial dot products, and accumulate them into the total sum.
+    I've summarized the logic in the pdot code above, while leaving
+    vague how we would actually parallelize the main loop.
+  </aside>
 </section>
 
 
@@ -73,14 +150,34 @@ audio: 2020-09-24-machine-model
     <li>Who does what work?</li>
     <li>How do we combine to get a single final result?</li>
   </ul>
+  <aside class="notes">
+    Actually, there is a lot that goes into thinking about parallel
+    implementation for even this simple example.  We've referred to
+    the arrays x and y, but in a parallel setting, there is a question
+    of where they live.  Are they on the memory of a particular
+    processor?  Does that concept even make sense?  Then, of course,
+    there's the issue of who does what work.  We suggested one way for
+    splitting up the sum, but there are other ways to do the split-up
+    as well.  Finally, once each processor has done its work, we need
+    to combine the partial sums, which means some type of
+    communication.
+
+    OK.  Let's turn now to a couple of different ways we might do this.
+  </aside>
 </section>
 
 
 <section>
 
+
   <section>
     <h2>Shared memory model</h2>
+
+    <aside class="notes">
+      The first programming model we'll discuss is shared memory.
+    </aside>
   </section>
+
 
   <section>
     <h3>Shared memory model</h3>
@@ -93,6 +190,19 @@ audio: 2020-09-24-machine-model
       <li>Coordinate by synchronizing on variables</li>
       <li>Examples: OpenMP, pthreads</li>
     </ul>
+
+    <aside class="notes">
+      In shared memory programming systems, like OpenMP or pthreads,
+      there are independent "threads" of execution that communicate
+      through a common memory space.  A thread has its own program
+      counter and call stack, so typically would have some private
+      (stack) variables as well as accessing shared space.  Threads
+      may correspond to physical processors, but they don't strictly
+      need to.  In some systems, threads can be dynamically added or
+      removed; in others, there is a fixed pool of threads.  The
+      tricky part of shared memory programming is synchronizing the
+      access to the shared space.
+    </aside>
   </section>
 
 
