@@ -93,8 +93,8 @@ audio: 2020-09-24-machine-model
   <h3>Shared memory dot product</h3>
   <p>Dot product of two <span class="math inline">\(n\)</span> vectors on <span class="math inline">\(p \ll n\)</span> processors:</p>
   <ol type="1">
-    <li><p>Each CPU: partial sum (<span class="math inline">\(n/p\)</span> elements, local)</p></li>
-    <li><p>Everyone tallies partial sums</p></li>
+    <li>Each CPU: partial sum (<span class="math inline">\(n/p\)</span> elements, local)</li>
+    <li>Everyone tallies partial sums</li>
   </ol>
   <p>Can we go home now?</p>
 </section>
@@ -144,12 +144,24 @@ audio: 2020-09-24-machine-model
 
 
 <section>
+  <h3>Sequential consistency</h3>
+
+  <ul>
+    <li>Idea: Looks like processors take turns, in order</li>
+    <li>Convenient abstraction for thinking through correctness</li>
+    <li>Really hard for performance!</li>
+    <li>Will talk about <q>memory models</q> later</li>
+  </ul>
+</section>
+
+
+<section>
   <h3>Shared memory dot with locks</h3>
   <p>Solution: consider S += partial_sum a <em>critical section</em></p>
   <ul>
-    <li><p>Only one CPU at a time allowed in critical section</p></li>
-    <li><p>Can violate invariants locally</p></li>
-    <li><p>Enforce via a lock or mutex</p></li>
+    <li>Only one CPU at a time allowed in critical section</li>
+    <li>Can violate invariants locally</li>
+    <li>Enforce via a lock or mutex</li>
   </ul>
 </section>
 
@@ -182,7 +194,7 @@ audio: 2020-09-24-machine-model
     <div class="col">
       <p>Processor 2:</p>
       <ol type="1">
-        <li>Acquire lock 2<li>
+        <li>Acquire lock 2</li>
         <li>Acquire lock 1</li>
         <li>Do something</li>
         <li>Release locks</li>
@@ -196,14 +208,14 @@ audio: 2020-09-24-machine-model
 <section>
   <h3>Shared memory with barriers</h3>
   <ul>
-    <li><p>Lots of sci codes have phases (e.g. time steps)</p></li>
-    <li><p>Communication only needed at end of phases</p></li>
-    <li><p>Idea: synchronize on end of phase with <em>barrier</em></p>
+    <li>Lots of sci codes have phases (e.g. time steps)</li>
+    <li>Communication only needed at end of phases</li>
+    <li>Idea: synchronize on end of phase with <em>barrier</em></p>
       <ul>
-        <li><p>More restrictive (less efficient?) than small locks</p></li>
-        <li><p>But easier to think through! (e.g. less chance of deadlocks)</p></li>
+        <li>More restrictive (less efficient?) than small locks</li>
+        <li>But easier to think through! (e.g. less chance of deadlocks)</li>
     </ul></li>
-    <li><p>Sometimes called <em>bulk synchronous programming</em></p></li>
+    <li>Sometimes called <em>bulk synchronous programming</em></li>
   </ul>
 </section>
 
@@ -222,12 +234,12 @@ audio: 2020-09-24-machine-model
 <section>
   <h3>Shared memory machine model</h3>
   <ul>
-    <li><p>Processors and memories talk through a bus</p></li>
-    <li><p>Symmetric Multiprocessor (SMP)</p></li>
-    <li><p>Hard to scale to lots of processors (think <span class="math inline">\(\leq 32\)</span>)</p>
+    <li>Processors and memories talk through a bus</li>
+    <li>Symmetric Multiprocessor (SMP)</li>
+    <li>Hard to scale to lots of processors (think <span class="math inline">\(\leq 32\)</span>)</p>
       <ul>
-        <li><p>Bus becomes bottleneck</p></li>
-        <li><p><em>Cache coherence</em> is a pain</p></li>
+        <li>Bus becomes bottleneck</li>
+        <li><em>Cache coherence</em> is a pain</li>
     </ul></li>
   </ul>
 </section>
@@ -236,10 +248,10 @@ audio: 2020-09-24-machine-model
 <section>
   <h3>Multithreaded processor machine</h3>
   <ul>
-    <li><p>Maybe threads &gt; processors!</p></li>
-    <li><p>Idea: Switch threads on long latency ops.</p></li>
-    <li><p>Called <em>hyperthreading</em> by Intel</p></li>
-    <li><p>Cray MTA was an extreme example</p></li>
+    <li>Maybe threads &gt; processors!</li>
+    <li>Idea: Switch threads on long latency ops.</li>
+    <li>Called <em>hyperthreading</em> by Intel</li>
+    <li>Cray MTA was an extreme example</li>
   </ul>
 </section>
 
@@ -247,12 +259,13 @@ audio: 2020-09-24-machine-model
 <section>
   <h3>Distributed shared memory</h3>
   <ul>
-    <li><p>Non-Uniform Memory Access (NUMA)</p></li>
-    <li><p>Memory <em>logically</em> shared, <em>physically</em> distributed</p></li>
-    <li><p>Any processor can access any address</p></li>
-    <li><p>Cache coherence is still a pain</p></li>
-    <li><p>Most big modern chips are NUMA</p></li>
-    <li><p>Many-core accelerators tend to be NUMA as well</p></li>
+    <li>Non-Uniform Memory Access (NUMA)</li>
+    <li>Memory <em>logically</em> shared, <em>physically</em> distributed</li>
+    <li>Any processor can access any address</li>
+    <li>Closer accesses are still fast</li>
+    <li>Cache coherence is still a pain</li>
+    <li>Most big modern chips are NUMA</li>
+    <li>Many-core accelerators tend to be NUMA as well</li>
   </ul>
 </section>
 
@@ -260,10 +273,10 @@ audio: 2020-09-24-machine-model
 <section>
   <h3>Message-passing programming model</h3>
   <ul>
-    <li><p>Collection of named processes</p></li>
-    <li><p>Data is <em>partitioned</em></p></li>
-    <li><p>Communication by send/receive of explicit message</p></li>
-    <li><p>Lingua franca: MPI (Message Passing Interface)</p></li>
+    <li>Collection of named processes</li>
+    <li>Data is <em>partitioned</em></li>
+    <li>Communication by send/receive of explicit message</li>
+    <li>Lingua franca: MPI (Message Passing Interface)</li>
   </ul>
 </section>
 
@@ -274,19 +287,19 @@ audio: 2020-09-24-machine-model
     <div class="col">
       <p>Processor 1:</p>
       <ol type="1">
-        <li><p>Partial sum s1</p></li>
-        <li><p>Send s1 to P2</p></li>
-        <li><p>Receive s2 from P2</p></li>
-        <li><p>s = s1 + s2</p></li>
+        <li>Partial sum s1</li>
+        <li>Send s1 to P2</li>
+        <li>Receive s2 from P2</li>
+        <li>s = s1 + s2</li>
       </ol>
     </div>
     <div class="col">
       <p>Processor 2:</p>
       <ol type="1">
-        <li><p>Partial sum s2</p></li>
-        <li><p>Send s2 to P1</p></li>
-        <li><p>Receive s1 from P1</p></li>
-        <li><p>s = s1 + s2</p></li>
+        <li>Partial sum s2</li>
+        <li>Send s2 to P1</li>
+        <li>Receive s1 from P1</li>
+        <li>s = s1 + s2</li>
       </ol>
     </div>
   </div>
@@ -300,19 +313,19 @@ audio: 2020-09-24-machine-model
     <div class="col">
       <p>Processor 1:</p>
       <ol type="1">
-        <li><p>Partial sum s1</p></li>
-        <li><p>Send s1 to P2</p></li>
-        <li><p>Receive s2 from P2</p></li>
-        <li><p>s = s1 + s2</p></li>
+        <li>Partial sum s1</li>
+        <li>Send s1 to P2</li>
+        <li>Receive s2 from P2</li>
+        <li>s = s1 + s2</li>
       </ol>
     </div>
     <div class="col">
       <p>Processor 2:</p>
       <ol type="1">
-        <li><p>Partial sum s2</p></li>
-        <li><p>Receive s1 from P1</p></li>
-        <li><p>Send s2 to P1</p></li>
-        <li><p>s = s1 + s2</p></li>
+        <li>Partial sum s2</li>
+        <li>Receive s1 from P1</li>
+        <li>Send s2 to P1</li>
+        <li>s = s1 + s2</li>
       </ol>
     </div>
   </div>
@@ -323,8 +336,8 @@ audio: 2020-09-24-machine-model
 <section>
   <h3>MPI: the de facto standard</h3>
   <ul>
-    <li><p>Pro: <em>Portability</em></p></li>
-    <li><p>Con: least-common-denominator for mid 80s</p></li>
+    <li>Pro: <em>Portability</em></li>
+    <li>Con: least-common-denominator for mid 80s</li>
   </ul>
   <p>The “assembly language” (or C?) of parallelism...<br />
     but, alas, assembly language can be high performance.</p>
@@ -334,12 +347,12 @@ audio: 2020-09-24-machine-model
 <section>
   <h3>Distributed memory machines</h3>
   <ul>
-    <li><p>Each node has local memory</p>
+    <li>Each node has local memory</p>
       <ul>
         <li>... and no direct access to memory on other nodes</li>
     </ul></li>
-    <li><p>Nodes communicate via network interface</p></li>
-    <li><p>Example: most modern clusters!</p></li>
+    <li>Nodes communicate via network interface</li>
+    <li>Example: most modern clusters!</li>
   </ul>
 </section>
 
@@ -412,8 +425,8 @@ audio: 2020-09-24-machine-model
   <h3>Parallelism and locality</h3>
   <p>Can get more parallelism / locality through model</p>
   <ul>
-    <li><p>Limited range of dependency between adjacent time steps</p></li>
-    <li><p>Can neglect or approximate far-field effects</p></li>
+    <li>Limited range of dependency between adjacent time steps</li>
+    <li>Can neglect or approximate far-field effects</li>
   </ul>
 </section>
 
@@ -422,9 +435,9 @@ audio: 2020-09-24-machine-model
   <h3>Parallelism and locality</h3>
   <p>Often get parallism at multiple levels</p>
   <ul>
-    <li><p>Hierarchical circuit simulation</p></li>
-    <li><p>Interacting models for climate</p></li>
-    <li><p>Parallelizing individual experiments in MC or optimization</p></li>
+    <li>Hierarchical circuit simulation</li>
+    <li>Interacting models for climate</li>
+    <li>Parallelizing individual experiments in MC or optimization</li>
   </ul>
 </section>
 
@@ -432,21 +445,21 @@ audio: 2020-09-24-machine-model
 <section>
   <h3>Basic styles of simulation</h3>
   <ul>
-    <li><p>Discrete event systems (continuous or discrete time)</p>
+    <li>Discrete event systems (continuous or discrete time)</p>
       <ul>
-        <li><p>Game of life, logic-level circuit simulation</p></li>
-        <li><p>Network simulation</p></li>
+        <li>Game of life, logic-level circuit simulation</li>
+        <li>Network simulation</li>
     </ul></li>
-    <li><p>Particle systems</p>
+    <li>Particle systems</p>
       <ul>
-        <li><p>Billiards, electrons, galaxies, ...</p></li>
-        <li><p>Ants, cars, ...?</p></li>
+        <li>Billiards, electrons, galaxies, ...</li>
+        <li>Ants, cars, ...?</li>
     </ul></li>
-    <li><p>Lumped parameter models (ODEs)</p>
+    <li>Lumped parameter models (ODEs)</p>
       <ul>
         <li>Circuits (SPICE), structures, chemical kinetics</li>
     </ul></li>
-    <li><p>Distributed parameter models (PDEs / integral equations)</p>
+    <li>Distributed parameter models (PDEs / integral equations)</p>
       <ul>
         <li>Heat, elasticity, electrostatics, ...</li>
     </ul></li>
