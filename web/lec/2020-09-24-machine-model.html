@@ -262,7 +262,7 @@ audio: 2020-09-24-machine-model
     <li>Non-Uniform Memory Access (NUMA)</li>
     <li>Memory <em>logically</em> shared, <em>physically</em> distributed</li>
     <li>Any processor can access any address</li>
-    <li>Closer accesses are still fast</li>
+    <li>Close accesses are faster than far accesses</li>
     <li>Cache coherence is still a pain</li>
     <li>Most big modern chips are NUMA</li>
     <li>Many-core accelerators tend to be NUMA as well</li>
@@ -362,9 +362,8 @@ audio: 2020-09-24-machine-model
 
   <p>Good parallel performance starts with good single-core performance.</p>
   <ul>
-    <li>Performance depends on architecture and memory system</li>
-    <li>Need to design data structures and algorithms to use these
-      features</li>
+    <li>Want instruction-level parallelism and cache hits</li>
+    <li>Design data structures, algorithms around this</li>
   </ul>
 </section>
 
