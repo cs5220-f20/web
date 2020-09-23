@@ -118,30 +118,23 @@ audio: 2020-09-24-machine-model
 <section>
   <h3>Race to the dot</h3>
   <p>Consider S += partial_sum on 2 CPU:</p>
-  <div class="container">
-    <div class="col">
-      <h4>P1</h4>
-<pre>
-reg = load(s)
-reg += partial
 
-store(s, reg)
-
-
-</pre>
-    </div>
-    <div class="col">
-      <h4>P2</h4>
-<pre>
-
-
-reg = load(s)
-
-reg += partial
-store(s, reg)
-</pre>
-    </div>
-  </div>
+  <table>
+    <thead>
+      <tr>
+        <th><h4>P1</h4></th>
+        <th><h4>P2</h4></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>load S</td><td></td></tr>
+      <tr><td>add partial</td><td></td></tr>
+      <tr><td></td><td>load S</td></tr>
+      <tr><td>store S</td><td></td></tr>
+      <tr><td></td><td>add partial</td></tr>
+      <tr><td></td><td>store S</td></tr>
+    </tbody>
+  </table>
 
   <!--
   <ul>
@@ -164,7 +157,7 @@ store(s, reg)
     <li><p>Can violate invariants locally</p></li>
     <li><p>Enforce via a lock or mutex (mutual exclusion variable)</p></li>
   </ul>
-  
+
   <p>Dot product with mutex:</p>
   <ol type="1">
     <li><p>Create global mutex l</p></li>
@@ -257,7 +250,7 @@ store(s, reg)
     <li><p>Receive s1 from P1</p></li>
     <li><p>s = s1 + s2</p></li>
   </ol>
-  
+
   <p>What could go wrong? Think of phones vs letters...</p>
 </section>
 
@@ -278,7 +271,7 @@ store(s, reg)
     <li><p>Send s2 to P1</p></li>
     <li><p>s = s1 + s2</p></li>
   </ol>
-  
+
   <p>Better, but what if more than two processors?</p>
 </section>
 
