@@ -319,51 +319,85 @@ audio: 2020-09-24-machine-model
 
 <section>
   <h3>The story so far</h3>
+
+  <p>Good parallel performance starts with good single-core performance.</p>
   <ul>
-    <li><p>Even <em>serial</em> performance is a complicated function of the underlying architecture and memory system. We need to understand these effects in order to design data structures and algorithms that are fast on modern machines. Good serial performance is the basis for good parallel performance.</p></li>
-    <li><p><em>Parallel</em> performance is additionally complicated by communication and synchronization overheads, and by how much parallel work is available. If a small fraction of the work is completely serial, Amdahl’s law bounds the speedup, independent of the number of processors.</p></li>
-    <li><p>We have discussed serial architecture and some of the basics of parallel machine models and programming models.</p></li>
-    <li><p>Now we want to describe how to think about the shape of parallel algorithms for some scientific applications.</p></li>
+    <li>Performance depends on architecture and memory system</li>
+    <li>Need to design data structures and algorithms to use these
+      features</li>
   </ul>
+</section>
+
+<section>
+  <h3>The story so far</h3>
+
+  <p>Parallelism requires communication and synchronization.</p>
+  <ul>
+    <li>Several models with varying subtleties</li>
+    <li>Correctness is hard!</li>
+    <li>Performance is hard, too!</li>
+  </ul>
+</section>
+
+<section>
+  <h3>The story so far</h3>
+
+  <p>Parallel performance is limited by:</p>
+  <ul>
+    <li>Single-core performance</li>
+    <li>Communication and synchronization costs</li>
+    <li>Non-parallel work (Amdahl)</li>
+  </ul>
+  <p>Plan now: talk about how to overcome these limits for some types
+    of scientific applications</p>
 </section>
 
 
 <section>
   <h3>Reminder: what do we want?</h3>
   <ul>
-    <li><p>High-level: solve big problems fast</p></li>
-    <li><p>Start with good <em>serial</em> performance</p></li>
-    <li><p>Given <span class="math inline">\(p\)</span> processors, could then ask for</p>
+    <li>High-level: solve big problems fast</li>
+    <li>Start with good <em>serial</em> performance</li>
+    <li>Given <span class="math inline">\(p\)</span> processors, could then ask for
       <ul>
-        <li><p>Good <em>speedup</em>: <span class="math inline">\(p^{-1}\)</span> times serial time</p></li>
-        <li><p>Good <em>scaled speedup</em>: <span class="math
-        inline">\(p \times\)</span> the work, same time</p></li>
+        <li>Good <em>speedup</em>: <span class="math inline">\(p^{-1}\)</span> times serial time</li>
+        <li>Good <em>scaled speedup</em>: <span class="math
+        inline">\(p \times\)</span> the work, same time</li>
     </ul></li>
-    <li><p>Easiest to get speedup from bad serial code!</p></li>
+    <li>Easiest to get speedup from bad serial code!</li>
   </ul>
 </section>
 
 
 <section>
   <h3>Parallelism and locality</h3>
+
+  <p>Real world exhibits <em>parallelism</em> and <em>locality</em></p>
   <ul>
-    <li><p>Real world exhibits <em>parallelism</em> and <em>locality</em></p>
-      <ul>
-        <li><p>Particles, people, etc function independently</p></li>
-        <li><p>Nearby objects interact more strongly than distant ones</p></li>
-        <li><p>Can often simplify dependence on distant objects</p></li>
-    </ul></li>
-    <li><p>Can get more parallelism / locality through model</p>
-      <ul>
-        <li><p>Limited range of dependency between adjacent time steps</p></li>
-        <li><p>Can neglect or approximate far-field effects</p></li>
-    </ul></li>
-    <li><p>Often get parallism at multiple levels</p>
-      <ul>
-        <li><p>Hierarchical circuit simulation</p></li>
-        <li><p>Interacting models for climate</p></li>
-        <li><p>Parallelizing individual experiments in MC or optimization</p></li>
-    </ul></li>
+    <li>Particles, people, etc function independently</li>
+    <li>Nearby objects interact more strongly than distant ones</li>
+    <li>Can often simplify dependence on distant objects</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Parallelism and locality</h3>
+  <p>Can get more parallelism / locality through model</p>
+  <ul>
+    <li><p>Limited range of dependency between adjacent time steps</p></li>
+    <li><p>Can neglect or approximate far-field effects</p></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Parallelism and locality</h3>
+  <p>Often get parallism at multiple levels</p>
+  <ul>
+    <li><p>Hierarchical circuit simulation</p></li>
+    <li><p>Interacting models for climate</p></li>
+    <li><p>Parallelizing individual experiments in MC or optimization</p></li>
   </ul>
 </section>
 
