@@ -310,7 +310,7 @@ audio: 2020-09-24-machine-model
 <section>
   <section><h2>Message passing model</h2></section>
 
-  
+
   <section>
     <h3>Message-passing programming model</h3>
     <ul>
@@ -432,6 +432,36 @@ audio: 2020-09-24-machine-model
 <section>
 
   <section><h2>Paths to Parallel Performance</h2></section>
+
+
+  <section>
+    <h3>Reminder: what do we want?</h3>
+    <ul>
+      <li>High-level: solve big problems fast</li>
+      <li>Start with good <em>serial</em> performance</li>
+      <li>Given <span class="math inline">\(p\)</span> processors, could then ask for
+        <ul>
+          <li>Good <em>speedup</em>: <span class="math inline">\(p^{-1}\)</span> times serial time</li>
+          <li>Good <em>scaled speedup</em>: <span class="math inline">\(p \times\)</span> the work, same time</li>
+      </ul></li>
+      <li>Easiest to get speedup from bad serial code!</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>The story so far</h3>
+
+    <p>Parallel performance is limited by:</p>
+    <ul>
+      <li>Single-core performance</li>
+      <li>Communication and synchronization costs</li>
+      <li>Non-parallel work (Amdahl)</li>
+    </ul>
+    <p>Plan now: talk about how to overcome these limits for some types
+      of scientific applications</p>
+  </section>
+
 
   <section>
     <h3>Parallelism and locality</h3>
