@@ -5,6 +5,16 @@ audio: 2020-09-24-machine-model
 ---
 
 
+<style>
+.container{
+    display: flex;
+}
+.col{
+    flex: 1;
+}
+</style>
+
+
 <section>
   <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
   <h2>Applications of Parallel Computers</h2>
@@ -94,8 +104,9 @@ audio: 2020-09-24-machine-model
   <h3>Race condition</h3>
   <p>A <em>race condition</em>:</p>
   <ul>
-    <li><p>Two threads access same variable, at least one write.</p></li>
-    <li><p>Access are concurrent – no ordering guarantees</p>
+    <li>Two threads access same variable</li>
+    <li>At least one write.</li>
+    <li>Access are concurrent – no ordering guarantees
       <ul>
         <li>Could happen simultaneously!</li>
     </ul></li>
@@ -107,6 +118,32 @@ audio: 2020-09-24-machine-model
 <section>
   <h3>Race to the dot</h3>
   <p>Consider S += partial_sum on 2 CPU:</p>
+  <div class="container">
+    <div class="col">
+      <h4>P1</h4>
+<pre>
+reg = load(s)
+reg += partial
+
+store(s, reg)
+
+
+</pre>
+    </div>
+    <div class="col">
+      <h4>P2</h4>
+<pre>
+
+
+reg = load(s)
+
+reg += partial
+store(s, reg)
+</pre>
+    </div>
+  </div>
+
+  <!--
   <ul>
     <li><p>P1: Load S</p></li>
     <li><p>P1: Add partial_sum</p></li>
@@ -115,6 +152,7 @@ audio: 2020-09-24-machine-model
     <li><p>P2: Add partial_sum</p></li>
     <li><p>P2: Store new S</p></li>
   </ul>
+-->
 </section>
 
 
