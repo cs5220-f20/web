@@ -25,7 +25,7 @@ audio: 2020-09-24-machine-model
   <p>Please click the play button below.</p>
 
   <aside class="notes">
-    Welcome to another edition of 5220.  For the last few slide dekcs,
+    Welcome to another edition of 5220.  For the last few slide decks,
     we've been talking about single core performance, and maybe you
     thought "when do we get to the parallel case"?  Well, we start
     today.  This is an overview lecture to set the stage; we'll get
@@ -513,7 +513,7 @@ audio: 2020-09-24-machine-model
       need a way to keep them consistent (or coherent) with the main
       memory in the face of memory writes that other processors might
       commit.  A bus is a shared broadcast medium; only one core or
-      memory can send on the bus at a time, but anyone can here what
+      memory can send on the bus at a time, but anyone can hear what
       is being sent.  On the down side, the more processors and
       memories are on the bus, the harder it is to share that
       resource.  On the up side, because everyone can see the bus, it
@@ -832,22 +832,22 @@ audio: 2020-09-24-machine-model
         than local memory accesses</li>
       <li>Another reason locality matters!</li>
     </ul>
+    <aside class="notes">
+      Sending a message across the network can be a lot more expensive
+      than retrieving data from memory, even when there is a cache miss.
+      The problem is that one light nanosecond - or the distance that
+      light travels in one nanosecond - is about a foot.  And big
+      supercomputers often have a space footprint the size of a football
+      field.  That means that even without the overheads for routing
+      data through a network, simple speed-of-light delays might give us
+      a delay of something like 600 ns to send data across the machine
+      and back.  That's significantly worse than fetching data from
+      DRAM!  On top of that, we might spend on the order of microseconds
+      to get data through the NIC and onto the network.  And we can do a lot
+      of flops in a couple microseconds!
+    </aside>
   </section>
 
-  <aside class="notes">
-    Sending a message across the network can be a lot more expensive
-    than retrieving data from memory, even when there is a cache miss.
-    The problem is that one light nanosecond - or the distance that
-    light travels in one nanosecond - is about a foot.  And big
-    supercomputers often have a space footprint the size of a football
-    field.  That means that even without the overheads for routing
-    data through a network, simple speed-of-light delays might give us
-    a delay of something like 600 ns to send data across the machine
-    and back.  That's significantly worse than fetching data from
-    DRAM!  On top of that, we might spend on the order of microseconds
-    to get data through the NIC and onto the network.  And we can do a lot
-    of flops in a couple microseconds!
-  </aside>
 </section>
 
 
