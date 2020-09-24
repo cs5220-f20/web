@@ -214,6 +214,13 @@ audio: 2020-09-24-machine-model
       <li>Everyone tallies partial sums</li>
     </ol>
     <p>Can we go home now?</p>
+
+    <aside class="notes">
+      In words, one shared memory or thread-based approach to dot
+      products involves each CPU taking a partial dot product, and
+      then adding that partial sum into a shared accumulator.
+      Of course, it can't be that easy...
+    </aside>
   </section>
 
 
@@ -228,6 +235,16 @@ audio: 2020-09-24-machine-model
           <li>Could happen simultaneously!</li>
       </ul></li>
     </ul>
+
+    <aside class="notes">
+      The problem here is that each thread is reading and writing to
+      the same shared sum variable, but so far we haven't said
+      anything about synchronization.  That's dangerous because it
+      sets us up for what is called a race condition.  This is when
+      two threads are accessing the same variable, with at least one
+      write, concurrent access, and no ordering guarantees.  Race
+      conditions lead to unpredictable variations in results.
+    </aside>
   </section>
 
 
@@ -235,6 +252,11 @@ audio: 2020-09-24-machine-model
     <h3>Race to the dot</h3>
 
     <p>Consider <tt>S += partial</tt> on two CPUs</p>
+
+    <aside class="notes">
+      Let's consider what could go wrong with two processors trying to
+      simultaneously update the shared sum without synchronization.
+    </aside>
   </section>
 
 
@@ -257,6 +279,19 @@ audio: 2020-09-24-machine-model
         <tr><td></td><td>store S</td></tr>
       </tbody>
     </table>
+
+    <aside class="notes">
+      Let's consider what happens at a pseudo-assembly language
+      update.  An update operation consists of three parts: first, we
+      load the current sum into a register; then we update with the
+      partial sum; and then we store back.  If both processors read
+      before either one writes back the update, then part of the sum
+      will be lost.  The thing that's really awful about this problem
+      is that it won't always happen!  Whether we get the full sum, or
+      one part, or the other depends on how the reads and writes
+      interleave with teach other, which is pretty unpredictable and
+      will vary from run to run.
+    </aside>
   </section>
 
 
@@ -269,6 +304,21 @@ audio: 2020-09-24-machine-model
       <li>Really hard for performance!</li>
       <li>Will talk about <q>memory models</q> later</li>
     </ul>
+
+    <aside class="notes">
+      You might think the explanation of the race condition in the
+      previous slide is unintuitive.  But even then, it's worse than
+      you think.  The explanation that we gave implicitly involves the
+      idea of sequential consistency: that is, the state of memory is
+      consistent with some serial execution of interleaving of
+      instructions from the different threads.  In reality, though,
+      it's really hard to have sequential consistency and still get
+      good performance on modern machines.  Some computer architects
+      still try, but for the most part we have to live with weaker
+      models of consistency, where even stranger things can happen
+      than what we described.  We'll talk about these alternate models
+      of memory later in the class.
+    </aside>
   </section>
 
 
@@ -280,6 +330,17 @@ audio: 2020-09-24-machine-model
       <li>Can violate invariants locally</li>
       <li>Enforce via a lock or mutex</li>
     </ul>
+    <aside class="notes">
+      How do we avoid this type of race condition?  The problem we saw
+      really had to do with the fact that load, add, and store from
+      one thread could interleave with the same operations from
+      another thread.  We can avoid that by requiring that each thread
+      get a lock, also called a mutual exclusion variable (or mutex),
+      before applying the update.  This establishes what is called a
+      critical section - critical sections are parts of the program
+      that only one thread can enter at a time.  We will talk about
+      locks and critical sections in more detail later.
+    </aside>
   </section>
 
 
@@ -293,6 +354,20 @@ audio: 2020-09-24-machine-model
       <li>S += partial_sum</li>
       <li>Unlock l</li>
     </ol>
+
+    <aside class="notes">
+      OK, let's sketch how this works.  We start by creating a lock or
+      mutex variable.  Only one thread can "hold" or "acquire" the
+      lock at a time.  So for the dot product, we compute our partial
+      sum, acquire the lock, update the global sum, and release the
+      lock.  This means each update is applied in sequence, without
+      interleaving.  Of course, we don't know in what order the
+      partial sums will be accumulated, and that matters in floating
+      point, though only at the level of roundoff.  So this code,
+      though correct, doesn't provide bitwise reproducibility of
+      results.  As I might have already said, parallel execution is
+      subtle stuff!
+    </aside>
   </section>
 
 
@@ -319,6 +394,23 @@ audio: 2020-09-24-machine-model
       </div>
     </div>
     <p>What if both processors execute step 1 simultaneously?</p>
+
+    <aside class="notes">
+      In the dot product example, we only need one lock, which we use
+      to protect accesses to the global sum.  But what happens if we
+      need more than one lock because we want to compute more than one
+      thing?  Let's consider the example above.  If both threads are
+      able to execute the first step simultaneously, then we run into
+      trouble at the second step.  The first thread holds lock 1 and
+      wants lock 2; and the second thread holds lock 2 and wants lock 1.
+      Nobody can make progress!  This situation is called deadlock.
+      We'll talk about this more later; it turns out that there are
+      ways that we can ensure that we avoid deadlock, which those of
+      you who took an OS class probably studied already (and maybe
+      forgot!).  But let's now briefly mention a synchronization approach
+      that will definitely not deadlock, and is really useful for lots
+      of scientific codes.
+    </aside>
   </section>
 
 
@@ -327,13 +419,29 @@ audio: 2020-09-24-machine-model
     <ul>
       <li>Lots of sci codes have phases (e.g. time steps)</li>
       <li>Communication only needed at end of phases</li>
-      <li>Idea: synchronize on end of phase with <em>barrier</em></p>
+      <li>Idea: synchronize on end of phase with <em>barrier</em>
         <ul>
           <li>More restrictive (less efficient?) than small locks</li>
           <li>But easier to think through! (e.g. less chance of deadlocks)</li>
-      </ul></li>
+        </ul>
+      </li>
       <li>Sometimes called <em>bulk synchronous programming</em></li>
     </ul>
+
+    <aside class="notes">
+      In many scientific codes, and really in many codes in general,
+      the computation has natural phases.  Within each phase, we can
+      do independent work; for correctness, we just need to ensure
+      that one phase is completely done before the next can start.  A
+      barrier is a synchronization construct that does exactly this:
+      every computation on every thread before the barrier has to
+      finish before we start computations after the barrier.  This is
+      not as flexible as fine-grain locking, but it's also less
+      difficult to reason about correctness of code written with
+      barriers.  This style of programming, where we have phases
+      separated by barriers, is sometimes called bulk synchronous
+      programming (or BSP for short).      
+    </aside>
   </section>
 
 
@@ -344,6 +452,14 @@ audio: 2020-09-24-machine-model
       <li>barrier</li>
       <li>sum = sum(partial)</li>
     </ol>
+
+    <aside class="notes">
+      What does the dot product look like with barriers?  A typical
+      organization might involve each thread writing a partial sum
+      into an array, then a barrier, and then each thread summing the
+      array to get a sum (in a private variable).  If we wanted the sum to go
+      into a global space, we might have a designated thread copy the
+      result out.
   </section>
 
 
@@ -355,25 +471,53 @@ audio: 2020-09-24-machine-model
       <li>Too much synchronization: deadlock</li>
     </ul>
     <p>And this is before we talk performance!</p>
+
+    <aside class="notes">
+      So far, we've talked mostly about correctness in the shared
+      memory model.  And it's not that simple!  We have to
+      synchronize to avoid data races, but too much synchronization
+      (done without care) might lead to deadlock.  And none of this
+      has even touched on performance yet!  But to say anything about
+      performance, we need to say a bit more about hardware.
   </section>
 
 </section>
 
 <section>
 
-  <section><h2>Shared memory machines</h2></section>
+  <section>
+    <h2>Shared memory machines</h2>
+    <aside class="notes">
+      So let's talk now about shared memory hardware.
+    </aside>
+  </section>
 
   <section>
     <h3>Uniform shared memory</h3>
     <ul>
       <li>Processors and memories talk through a bus</li>
       <li>Symmetric Multiprocessor (SMP)</li>
-      <li>Hard to scale to lots of processors (think <span class="math inline">\(\leq 32\)</span>)</p>
+      <li>Hard to scale to lots of processors (think <span class="math inline">\(\leq 32\)</span>)
         <ul>
           <li>Bus becomes bottleneck</li>
-          <li><em>Cache coherence</em> is a pain</li>
+          <li><em>Cache coherence</em> via snooping</li>
       </ul></li>
     </ul>
+
+    <aside class="notes">
+      One of the most straightforward approaches to shared memory is
+      to attach processors and main memory to a common bus.  The
+      caches live with the processors and not with the memory, so we
+      need a way to keep them consistent (or coherent) with the main
+      memory in the face of memory writes that other processors might
+      commit.  A bus is a shared broadcast medium; only one core or
+      memory can send on the bus at a time, but anyone can here what
+      is being sent.  On the down side, the more processors and
+      memories are on the bus, the harder it is to share that
+      resource.  On the up side, because everyone can see the bus, it
+      is possible to keep the caches consistent by "snooping" on
+      memory traffic sent across the bus.
+    </aside>
   </section>
 
 
@@ -385,6 +529,25 @@ audio: 2020-09-24-machine-model
       <li>Called <em>hyperthreading</em> by Intel</li>
       <li>Cray MTA was an extreme example</li>
     </ul>
+
+    <aside class="notes">
+      The shared memory interface also sometimes makes sense when
+      threads don't exactly correspond to processors.  Usually, that
+      means having more threads than processors.  When a thread has to
+      wait for the results of a memory read, disk write, or other
+      long-latency task, it can yield the processor for use by other
+      threads.  Sometimes this is a purely software setup, and
+      sometimes it involves hardware support.  On modern Intel chips,
+      this is called hyper-threading, and we mentioned it briefly in
+      our discussion of single-core architecture.  But there are some
+      architectures that have gone way more extreme than what Intel
+      did.  The Cray MTA machine took a really long time to access
+      memory (though that time was pretty uniform), and tried to hide
+      that latency with a *lot* of threads.  Needless to say, it was
+      not easy to program.  I had an amusing semester in graduate
+      school listening to one of my officemates swear at that
+      machine.  Good times!  And better him than me.
+    </aside>
   </section>
 
 
@@ -399,6 +562,26 @@ audio: 2020-09-24-machine-model
       <li>Most big modern chips are NUMA</li>
       <li>Many-core accelerators tend to be NUMA as well</li>
     </ul>
+
+    <aside class="notes">
+      When we have a lot of processors, we are generally forced to
+      move away from sending all data across a single bus.  In this
+      case, there is a more complex network that connects the
+      processors and memories.  Often, memories are physically located
+      together with processors, so each processor has "local" memory
+      and "remote" memory.  These memories may all be accessed through
+      the same logical address space, but it takes different amounts
+      of time to read or write data depending on whether the read is
+      to local or remote memory addresses.  This is called non-uniform
+      memory access, or NUMA.
+
+      NUMA systems scale to large numbers of cores much better than
+      uniform access (or "symmetric") multiprocessors.  Most modern
+      big chips are NUMA, as are most many-core accelerators.
+      Unfortunately, it is harder to keep the caches in a NUMA chip
+      consistent with each other than it is in an SMP (though there
+      are mechanisms for this).
+    </aside>
   </section>
 
 
@@ -412,13 +595,38 @@ audio: 2020-09-24-machine-model
       <li>Cache coherence is tricky</li>
       <li>May forgo sequential consistency for performance</li>
     </ul>
+
+    <aside class="notes">
+      So: shared memory hardware presents some challenges.  If we want
+      uniform memory access, we need a beefy bus to connect the
+      processors and memories together, and contention for that bus
+      limits our performance.  Giving up on uniform access means that
+      we can scale to more processors, but now the costs of accessing
+      memories vary - though maybe we are OK with this, as there is
+      already variation in access times due to the effect of the cache
+      system.  Keeping the caches coherent with each other and with
+      main memory is a challenge, particularly in the non-uniform
+      case.  There are clever solutions, but for the sake of
+      performance, we often don't seek to make those solutions
+      perfectly maintain sequential consistency.
+
+      Don't worry if you didn't catch all that.  We'll go into it in
+      more detail when we talk about shared memory programming in
+      OpenMP in a couple weeks.
+    </aside>
   </section>
 
 </section>
 
 
 <section>
-  <section><h2>Message passing model</h2></section>
+  <section>
+    <h2>Message passing model</h2>
+    <aside class="notes">
+      The major alternative to shared memory programming is
+      programming via message passing.
+    </aside>
+  </section>
 
 
   <section>
@@ -429,6 +637,17 @@ audio: 2020-09-24-machine-model
       <li>Communication by send/receive of explicit message</li>
       <li>Lingua franca: MPI (Message Passing Interface)</li>
     </ul>
+
+    <aside class="notes">
+      In the message-passing model of parallel programming, we have a
+      collection of named processes, each with private memory spaces.
+      The data for the program is partitioned across these private
+      memories; there is no global shared space.  Communication
+      happens by explicitly sending and receiving messages between
+      processors.  The standard approach to message-passing
+      parallelism in scientific computing is the Message Passing
+      Interface, or MPI.
+    </aside>
   </section>
 
 
@@ -455,6 +674,31 @@ audio: 2020-09-24-machine-model
       </div>
     </div>
     <p>What could go wrong? Think of phones vs letters...</p>
+
+    <aside class="notes">
+      So let's talk about how parallel dot product might work with two
+      processors in a message-passing model.  Each processor holds a
+      part of x and a part of y in its memory.  The processor dots its
+      piece, then sends the partial sum to the other processor.  Then
+      the other processor receives the outside partial sum, adds it to
+      the partial sum that it computed, and that gives the overall dot
+      product.
+
+      Alas, you knew it couldn't be quite that easy.  The problem is
+      that sending a message *may* be less like a letter, and more
+      like placing a telephone call.  You can't hang up the phone
+      while you are dialing and waiting to deliver the message!  In a
+      world where there are no busy signals or answering machines, if
+      I call you at the same time that you call me, maybe we both
+      spend forever waiting for the other side to pick up.  So this
+      code is prone to deadlock.
+
+      As it turns out, the system has buffers in it, and whether
+      sending a message is phone-call-like or letter-like depends on
+      the state of those buffers.  So the same code may work most of
+      the time, but periodically deadlock because of the issue we
+      sketched above.  This is pretty maddening to debug.
+    </aside>
   </section>
 
 
@@ -481,6 +725,20 @@ audio: 2020-09-24-machine-model
       </div>
     </div>
     <p>Better, but what if more than two processors?</p>
+
+    <aside class="notes">
+      There's a way around the potential deadlock issue in the
+      previous example.  If the first processor sends before
+      receiving, and the second processor receives before sending,
+      then we no longer have the possibility of deadlock.  P1 sends
+      and  P2 receives; then P2 sends and P1 receives.  The order is
+      nailed down.
+
+      Of course, this business of swapping the sends and receives is
+      fine for two processors communicating with each other in a
+      fairly simple exchange.  What if there are more processors, and
+      the communication between them is more complex?
+    </aside>
   </section>
 
 
@@ -492,6 +750,14 @@ audio: 2020-09-24-machine-model
     </ul>
     <p>The “assembly language” (or C?) of parallelism...<br />
       but, alas, assembly language can be high performance.</p>
+
+    <aside class="notes">
+      There are other message-passing programming environments out
+      there, but the lingua franca in scientific computing is MPI: the
+      Message-Passing Interface.  It can be pretty low-level, but
+      there are a number of implementations that provide pretty good
+      performance.
+    </aside>
   </section>
 
 
@@ -501,24 +767,54 @@ audio: 2020-09-24-machine-model
       <li>Message passing hides less than shared memory</li>
       <li>But correctness is still subtle</li>
     </ul>
+    
+    <aside class="notes">
+      Shared memory programming sometimes seems like magic pixie dust:
+      we take a serial code and sprinkle in some parallel constructs,
+      and we get out immediate speedup.  Unfortunately, there are a
+      lot of subtleties in both the performance and correctness of
+      shared memory code.  Codes written in a message-passing style
+      are often more verbose, and they have their own subtleties when
+      it comes to correctness.  But it is sometimes easier to reason
+      about performance, because the communication events are
+      explicit, and not hidden behind an innocuous looking read from a
+      variable that happens to be stored in a remote shared memory.
+    </aside>
   </section>
 
 </section>
 
 
 <section>
-  <section><h2>Distributed memory machines</h2></section>
+  <section>
+    <h2>Distributed memory machines</h2>
+
+    <aside class="notes">
+      All right.  We've talked about message-passing programming.  Now
+      let's talk about distributed memory machines.
+    </aside>
+  </section>
 
   <section>
     <h3>Distributed memory machines</h3>
     <ul>
-      <li>Each node has local memory</p>
+      <li>Each node has local memory
         <ul>
           <li>... and no direct access to memory on other nodes</li>
       </ul></li>
       <li>Nodes communicate via network interface</li>
       <li>Example: most modern clusters!</li>
     </ul>
+
+    <aside class="notes">
+      In distributed memory machines, the hardware doesn't provide
+      direct support for memory on other nodes.  Instead, nodes
+      communicate with each other by sending messages across a network
+      via a network interface card (or NIC).  Most modern clusters are
+      distributed memory between nodes, but have a shared memory
+      architecture within a given node.  We can mix-and-match these
+      architectural ideas.
+    </aside>
   </section>
 
 
@@ -536,12 +832,37 @@ audio: 2020-09-24-machine-model
     </ul>
   </section>
 
+  <aside class="notes">
+    Sending a message across the network can be a lot more expensive
+    than retrieving data from memory, even when there is a cache miss.
+    The problem is that one light nanosecond - or the distance that
+    light travels in one nanosecond - is about a foot.  And big
+    supercomputers often have a space footprint the size of a football
+    field.  That means that even without the overheads for routing
+    data through a network, simple speed-of-light delays might give us
+    a delay of something like 600 ns to send data across the machine
+    and back.  That's significantly worse than fetching data from
+    DRAM!  On top of that, we might spend on the order of microseconds
+    to get data through the NIC and onto the network.  And we can do a lot
+    of flops in a couple microseconds!
+  </aside>
 </section>
 
 
 <section>
 
-  <section><h2>Paths to Parallel Performance</h2></section>
+  <section>
+    <h2>Paths to Parallel Performance</h2>
+
+    <aside class="notes">
+      All right.  We've talked about shared memory programming, shared
+      memory hardware, message passing, and distributed memory.
+      Correctness is hard in every case we've considered; performance
+      is harder.  We don't want to learn all the minutiae in order to
+      write fast code with these programming models and hardware
+      platforms.  So how can we do this?
+    </aside>
+  </section>
 
 
   <section>
@@ -556,6 +877,16 @@ audio: 2020-09-24-machine-model
       </ul></li>
       <li>Easiest to get speedup from bad serial code!</li>
     </ul>
+
+    <aside class="notes">
+      First, let's be clear what we want.  We want good scaling
+      in either the strong sense - where the problem stays the same
+      as the processor counts vary; or in the weak sense - where the
+      work per processor stays the same as the processor counts vary.
+      But good scaling is a hollow victory if we start with poor
+      single-core performance, so ideally we will start with a
+      well-tuned serial code and then parallelize.
+    </aside>
   </section>
 
 
@@ -570,6 +901,21 @@ audio: 2020-09-24-machine-model
     </ul>
     <p>Plan now: talk about how to overcome these limits for some types
       of scientific applications</p>
+
+    <aside class="notes">
+      What limits the performance of parallel codes?  As we just said,
+      one factor is single-core performance.  But it also matters how
+      much time we spend on communication and synchronization;
+      and how much parallelism is in our workload.  If much of the
+      workload is serial, we are not going to get great parallel speedups no
+      matter how many processors we might use!
+
+      The key to getting lots of parallelism and minimizing
+      communication costs is to exploit parallelism and locality in
+      the problem.  How this works varies from problem to problem, but
+      there are some common patterns that appear across many
+      scientific codes.
+    </aside>
   </section>
 
 
@@ -580,6 +926,24 @@ audio: 2020-09-24-machine-model
       <li>Limited range of dependency between time steps</li>
       <li>Can neglect or approximate far-field effects</li>
     </ul>
+
+    <aside class="notes">
+      Why do independent parallel work and local communication arise
+      naturally in so many simulations?  It's really because a lot of
+      interactions in the physical world are local.  For example, just
+      as there is a speed of light or sound in physics, there is a
+      rate at which information can travel across a computational mess
+      in an explicit time stepper - and that rate is usually connected
+      to the rates in the physics problem.  Also, when we look at
+      computations in which far-away things have influence, the
+      influence of those far-away things can often be approximated in
+      a pretty simple way.  When we model gravity in the solar system,
+      we treat the planets as point masses; and if we are going to
+      compute the influence of distant star systems, we will probably
+      just treat them as a single point mass!  This is a pretty big
+      simplification over modeling the gravitational attraction of the
+      matter as it is truly spread over space.
+    </aside>
   </section>
 
 
@@ -591,6 +955,22 @@ audio: 2020-09-24-machine-model
       <li>Interacting models for climate</li>
       <li>Parallelizing individual experiments in MC or optimization</li>
     </ul>
+
+    <aside class="notes">
+      Moreover, there is often a natural partitioning or hierarchy in
+      how we treat models, and this structure helps us when it comes
+      time to find parallelism.  We might be able to use parallel
+      resources to simulate parts of a circuit or different components
+      of a climate model, and then combine those parts later on
+      without too much communication.
+
+      Yes, talking about this will mean that I talk about the physics
+      and modeling in simulations.  So this means that all of you who
+      like numerics and physics but don't know architecture get to
+      enjoy the change of pace, and those of you who knew about
+      computer architecture but know little of physics modeling will
+      get to learn something new!
+    </aside>
   </section>
 
 </section>
@@ -604,4 +984,14 @@ audio: 2020-09-24-machine-model
     <li>Discrete events and particle systems</li>
     <li>Differential equations (ODEs and PDEs)</li>
   </ul>
+
+  <aside class="notes">
+    So the plan for next week is to explore locality and parallelism
+    in different types of simulations.  We will probably treat
+    discrete event simulations and particle systems on Tuesday, and
+    ordinary and partial differential equation models on Thursday.
+    But in this new world order, I can combine slide decks when it
+    makes sense, so you might also get everything in a giant deck on
+    Tuesday.  We will see.  Either way, until next time!
+  </aside>
 </section>
