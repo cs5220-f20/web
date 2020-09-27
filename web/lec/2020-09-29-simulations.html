@@ -143,14 +143,19 @@ audio: 2020-09-29-simulations
     <h3>Asynchronous Game of Life</h3>
     <p>How do we manage events?</p>
     <ul>
-      <li>Could be <em>speculative</em> — assume no communication across boundary for many steps, back up if needed</li>
-      <li>Or <em>conservative</em> — wait whenever communication possible
+      <li><em>Speculative</em> — assume no communication across boundary for many steps, back up if needed</li>
+      <li><em>Conservative</em> — wait when communication possible
         <ul>
           <li>possible <span class="math inline">\(\not \equiv\)</span> guaranteed!</li>
           <li>Deadlock: everyone waits for a send</li>
           <li>Can get around this with NULL messages</li>
       </ul></li>
     </ul>
+  </section>
+
+
+  <section>
+    <h3>Asynchronous Game of Life</h3>
     <p>How do we manage load balance?</p>
     <ul>
       <li>No need to simulate quiescent parts of the game!</li>
