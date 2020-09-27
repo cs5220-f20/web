@@ -67,6 +67,8 @@ audio: 2020-09-29-simulations
 
 <section>
 
+  <section><h2>Discrete event systems</h2>
+
 
   <section>
     <h3>Discrete event systems</h3>
@@ -81,8 +83,14 @@ audio: 2020-09-29-simulations
 
   <section>
     <h3>Discrete events</h3>
-    <p>Basic setup: - Finite set of variables, updated via transition function - <em>Synchronous</em> case: finite state machine - <em>Asynchronous</em> case: event-driven simulation - Synchronous example: Game of Life</p>
-    <p>Nice starting point — no discretization concerns!</p>
+
+    <ul>
+      <li>Finite set of variables, updated via transition function</li>
+      <li><em>Synchronous</em> case: finite state machine</li>
+      <li><em>Asynchronous</em> case: event-driven simulation</li>
+      <li>Synchronous example: Game of Life</li>
+      <li>Nice starting point — no discretization concerns!</li>
+    </ul>
   </section>
 
 
@@ -117,7 +125,7 @@ audio: 2020-09-29-simulations
       <li>Only communicate events!
         <ul>
           <li>This is <em>asynchronous</em></li>
-          <li>Harder with message passing — when do you receive?</li>
+          <li>Harder with message passing — when to receive?</li>
       </ul></li>
     </ul>
   </section>
@@ -131,7 +139,7 @@ audio: 2020-09-29-simulations
       <li>Or <em>conservative</em> — wait whenever communication possible
         <ul>
           <li>possible <span class="math inline">\(\not \equiv\)</span> guaranteed!</li>
-          <li>Deadlock: everyone waits for everyone else to send data</li>
+          <li>Deadlock: everyone waits for a send</li>
           <li>Can get around this with NULL messages</li>
       </ul></li>
     </ul>
@@ -149,12 +157,15 @@ audio: 2020-09-29-simulations
 <section>
 
 
+  <section><h2>Particle systems</h2></section>
+
+
   <section>
     <h3>Particle systems</h3>
 
     <ul>
       <li>Billiards, electrons, galaxies, ...</li>
-      <li>Ants, cars, ...?</li>
+      <li>Ants, cars, agents, ...?</li>
     </ul>
   </section>
 
@@ -190,11 +201,10 @@ audio: 2020-09-29-simulations
   <section>
     <h3>A simple serial simulation</h3>
     <p>In <span class="smallcaps">Matlab</span>, we can write</p>
-    <pre><code>  npts = 100;
-        t = linspace(0, tfinal, npts);
-        [tout, xyv] = ode113(@fnbody, ...
-        t, [x; v], [], m, g);
-        xout = xyv(:,1:length(x))&#39;;</code></pre>
+    <pre><code>npts = 100;
+t = linspace(0, tfinal, npts);
+[tout, xyv] = ode113(@fnbody, t, [x; v], [], m, g);
+xout = xyv(:,1:length(x))&#39;;</code></pre>
     <p>... but I can’t call ode113 in C in parallel (or can I?)</p>
   </section>
 
@@ -202,19 +212,19 @@ audio: 2020-09-29-simulations
   <section>
     <h3>A simple serial simulation</h3>
     <p>Maybe a fixed step leapfrog will do?</p>
-    <pre><code>  npts = 100;
-        steps_per_pt = 10;
-        dt = tfinal/(steps_per_pt*(npts-1));
-        xout = zeros(2*n, npts);
-        xout(:,1) = x;
-        for i = 1:npts-1
-        for ii = 1:steps_per_pt
-        x = x + v*dt;
-        a = fnbody(x, m, g);
-        v = v + a*dt;
-        end
-        xout(:,i+1) = x;
-        end</code></pre>
+    <pre><code>npts = 100;
+steps_per_pt = 10;
+dt = tfinal/(steps_per_pt*(npts-1));
+xout = zeros(2*n, npts);
+xout(:,1) = x;
+for i = 1:npts-1
+  for ii = 1:steps_per_pt
+    x = x + v*dt;
+    a = fnbody(x, m, g);
+    v = v + a*dt;
+  end
+  xout(:,i+1) = x;
+end</code></pre>
   </section>
 
 
@@ -229,7 +239,7 @@ audio: 2020-09-29-simulations
   <section>
     <h3>Pondering particles</h3>
     <ul>
-      <li>Where do particles “live” (esp. in distributed memory)?
+      <li>Where do particles <q>live</q> (distributed mem)?
         <ul>
           <li>Decompose in space? By particle number?</li>
           <li>What about clumping?</li>
@@ -253,7 +263,7 @@ audio: 2020-09-29-simulations
       <li>Is it that easy?
         <ul>
           <li>Maybe some trajectories need short time steps?</li>
-          <li>Even with MC, load balance may not be entirely trivial.</li>
+          <li>Even with MC, load balance may not be trivial!</li>
       </ul></li>
     </ul>
   </section>
@@ -306,25 +316,30 @@ audio: 2020-09-29-simulations
 
 
   <section>
-    <h3>Passing particles for far-field forces</h3>
+    <h3>Passing particles (far-field forces)</h3>
     <pre><code>copy local particles to current buf
-        for phase = 1:p
-        send current buf to rank+1 (mod p)
-        recv next buf from rank-1 (mod p)
-        interact local particles with current buf
-        swap current buf with next buf
-        end</code></pre>
+for phase = 1:p
+  send current buf to rank+1 (mod p)
+  recv next buf from rank-1 (mod p)
+  interact local particles with current buf
+  swap current buf with next buf
+end</code></pre>
   </section>
 
 
   <section>
-    <h3>Passing particles for far-field forces</h3>
+    <h3>Passing particles (far-field forces)</h3>
     <p>Suppose <span class="math inline">\(n = N/p\)</span> particles in buffer. At each phase <span class="math display">\[\begin{aligned}
         t_{\mathrm{comm}} &amp; \approx \alpha + \beta n \\
         t_{\mathrm{comp}} &amp; \approx \gamma n^2
         \end{aligned}\]</span> So we can mask communication with computation if <span class="math display">\[n \geq
         \frac{1}{2\gamma} \left( \beta + \sqrt{\beta^2 + 4 \alpha \gamma} \right)
         &gt; \frac{\beta}{\gamma}\]</span></p>
+  </section>
+
+
+  <section>
+    <h3>Passing particles (far-field forces)</h3>
     <p>More efficient serial code<br />
       <span class="math inline">\(\implies\)</span> larger <span class="math inline">\(n\)</span> needed to mask communication!<br />
       <span class="math inline">\(\implies\)</span> worse speed-up as <span class="math inline">\(p\)</span> gets larger (fixed <span class="math inline">\(N\)</span>)<br />
@@ -338,13 +353,15 @@ audio: 2020-09-29-simulations
     <p>Consider <span class="math inline">\(r^{-2}\)</span> electrostatic potential interaction</p>
     <ul>
       <li>Enough charges looks like a continuum!</li>
-      <li>Poisson equation maps charge distribution to potential</li>
-      <li>Use fast Poisson solvers for regular grids (FFT, multigrid)</li>
-      <li>Approximation depends on mesh and particle density</li>
+      <li>Poisson maps charge distribution to potential</li>
+      <li>Fast Poisson for regular grids (FFT, multigrid)</li>
+      <li>Approx depends on mesh and particle density</li>
       <li>Can clean up leading part of approximation error</li>
     </ul>
   </section>
-  <section id="far-field-forces-particle-mesh-methods-1" class="slide level3">
+
+
+  <section>
     <h3>Far-field forces: particle-mesh methods</h3>
     <ul>
       <li>Map particles to mesh points (multiple strategies)</li>
@@ -362,8 +379,8 @@ audio: 2020-09-29-simulations
         <ul>
           <li>Andromeda looks like a point mass from here?</li>
       </ul></li>
-      <li>Build a tree, approximating descendants at each node</li>
-      <li>Several variants: Barnes-Hut, FMM, Anderson’s method</li>
+      <li>Build a tree, approx descendants at each node</li>
+      <li>Variants: Barnes-Hut, FMM, Anderson’s method</li>
       <li>More on this later in the semester</li>
     </ul>
   </section>
@@ -377,6 +394,13 @@ audio: 2020-09-29-simulations
           <li>Could be electrons, cars, whatever...</li>
       </ul></li>
       <li>Step through discretized time</li>
+    </ul>
+  </section>
+
+
+  <section>
+    <h3>Summary of particle example</h3>
+    <ul>
       <li>Local interactions
         <ul>
           <li>Relatively cheap</li>
@@ -396,6 +420,9 @@ audio: 2020-09-29-simulations
 
 
 <section>
+
+
+  <section><h2>Lumped parameter simulations</h2></section>
 
 
   <section>
@@ -528,6 +555,9 @@ audio: 2020-09-29-simulations
 
 
 <section>
+
+
+  <section><h2>Distributed parameter simulations</h2></section>
 
 
   <section>
