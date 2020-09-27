@@ -89,7 +89,8 @@ end</code></pre>
 <section>
   <h3>Plotting particles</h3>
   <figure>
-    <img data-src="figs/sph-plot.png" alt="image" style="width:90.0%" /><figcaption>image</figcaption>
+    <img data-src="figs/sph-plot.png" alt="image" style="width:90.0%"
+    /><figcaption>Smooth Particle Hydrodynamics (SPH) simulation</figcaption>
   </figure>
 </section>
 
@@ -129,6 +130,10 @@ end</code></pre>
 
 <section>
   <h3>Local forces</h3>
+  <img src="{{ "lec/figs/local-forces-dd1.svg" | relative_url }}"
+       alt="Domain decomposition for local forces"
+       style="background-color:white"
+       width="40%"/>  
   <ul>
     <li>Simplest all-pairs check is <span class="math inline">\(O(n^2)\)</span> (expensive)</li>
     <li>Or only check close pairs (via binning, quadtrees?)</li>
