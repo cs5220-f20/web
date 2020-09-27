@@ -133,7 +133,7 @@ end</code></pre>
   <img src="{{ "lec/figs/local-forces-dd1.svg" | relative_url }}"
        alt="Domain decomposition for local forces"
        style="background-color:white"
-       width="30%"/>  
+       width="25%"/>  
   <ul>
     <li>Simplest all-pairs check is <span class="math inline">\(O(n^2)\)</span> (expensive)</li>
     <li>Or only check close pairs (via binning, quadtrees?)</li>
@@ -145,10 +145,10 @@ end</code></pre>
 
 <section>
   <h3>Local forces: Communication</h3>
-  <img src="{{ "lec/figs/local-forces-dd1.svg" | relative_url }}"
+  <img src="{{ "lec/figs/local-forces-dd2.svg" | relative_url }}"
        alt="Domain decomposition for local forces"
        style="background-color:white"
-       width="30%"/>  
+       width="25%"/>  
   <p>Minimize communication:</p>
   <ul>
     <li>Send particles that might affect a neighbor “soon”</li>
