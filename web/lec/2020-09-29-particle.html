@@ -128,170 +128,148 @@ end</code></pre>
 
 
 <section>
-
-
-  <section><h2>Local forces</h2></section>
-
-
-  <section>
-    <h3>Local forces</h3>
-    <ul>
-      <li>Simplest all-pairs check is <span class="math inline">\(O(n^2)\)</span> (expensive)</li>
-      <li>Or only check close pairs (via binning, quadtrees?)</li>
-      <li>Communication required for pairs checked</li>
-      <li>Usual model: domain decomposition</li>
-    </ul>
-  </section>
-
-
-  <section>
-    <h3>Local forces: Communication</h3>
-    <p>Minimize communication:</p>
-    <ul>
-      <li>Send particles that might affect a neighbor “soon”</li>
-      <li>Trade extra computation against communication</li>
-      <li>Want low surface area-to-volume ratios on domains</li>
-    </ul>
-  </section>
-
-
-  <section>
-    <h3>Local forces: Load balance</h3>
-    <ul>
-      <li>Are particles evenly distributed?</li>
-      <li>Do particles remain evenly distributed?</li>
-      <li>Can divide space unevenly (e.g. quadtree/octtree)</li>
-    </ul>
-  </section>
-
-
+  <h3>Local forces</h3>
+  <ul>
+    <li>Simplest all-pairs check is <span class="math inline">\(O(n^2)\)</span> (expensive)</li>
+    <li>Or only check close pairs (via binning, quadtrees?)</li>
+    <li>Communication required for pairs checked</li>
+    <li>Usual model: domain decomposition</li>
+  </ul>
 </section>
 
 
 <section>
-
-  <section><h2>Far-field forces</h2></section>
-
-
-  <section>
-    <h3>Far-field forces</h3>
-    <ul>
-      <li>Every particle affects every other particle</li>
-      <li>All-to-all communication required
-        <ul>
-          <li>Overlap communication with computation</li>
-          <li>Poor memory scaling if everyone keeps everything!</li>
-      </ul></li>
-      <li>Idea: pass particles in a round-robin manner</li>
-    </ul>
-  </section>
-
-
-  <section>
-    <h3>Passing particles (far-field forces)</h3>
-    <pre><code>copy local particles to current buf
-for phase = 1:p
-  send current buf to rank+1 (mod p)
-  recv next buf from rank-1 (mod p)
-  interact local particles with current buf
-  swap current buf with next buf
-end</code></pre>
-  </section>
-
-
-  <section>
-    <h3>Passing particles (far-field forces)</h3>
-    <p>Suppose <span class="math inline">\(n = N/p\)</span> particles in buffer. At each phase <span class="math display">\[\begin{aligned}
-        t_{\mathrm{comm}} &amp; \approx \alpha + \beta n \\
-        t_{\mathrm{comp}} &amp; \approx \gamma n^2
-        \end{aligned}\]</span> So we can mask communication with computation if <span class="math display">\[n \geq
-        \frac{1}{2\gamma} \left( \beta + \sqrt{\beta^2 + 4 \alpha \gamma} \right)
-        &gt; \frac{\beta}{\gamma}\]</span></p>
-  </section>
-
-
-  <section>
-    <h3>Passing particles (far-field forces)</h3>
-    <p>More efficient serial code<br />
-      <span class="math inline">\(\implies\)</span> larger <span class="math inline">\(n\)</span> needed to mask communication!<br />
-      <span class="math inline">\(\implies\)</span> worse speed-up as <span class="math inline">\(p\)</span> gets larger (fixed <span class="math inline">\(N\)</span>)<br />
-      but scaled speed-up (<span class="math inline">\(n\)</span> fixed) remains unchanged.</p>
-    <p>This analysis neglects overhead term in LogP.</p>
-  </section>
-
-
-  <section>
-    <h3>Far-field forces: particle-mesh methods</h3>
-    <p>Consider <span class="math inline">\(r^{-2}\)</span> electrostatic potential interaction</p>
-    <ul>
-      <li>Enough charges looks like a continuum!</li>
-      <li>Poisson maps charge distribution to potential</li>
-      <li>Fast Poisson for regular grids (FFT, multigrid)</li>
-      <li>Approx depends on mesh and particle density</li>
-      <li>Can clean up leading part of approximation error</li>
-    </ul>
-  </section>
-
-
-  <section>
-    <h3>Far-field forces: particle-mesh</h3>
-    <ul>
-      <li>Map particles to mesh points (multiple strategies)</li>
-      <li>Solve potential PDE on mesh</li>
-      <li>Interpolate potential to particles</li>
-      <li>Add correction term – acts like local force</li>
-    </ul>
-  </section>
-
-
-  <section>
-    <h3>Far-field forces: tree methods</h3>
-    <ul>
-      <li>Distance simplifies things
-        <ul>
-          <li>Andromeda looks like a point mass from here?</li>
-      </ul></li>
-      <li>Build a tree, approx descendants at each node</li>
-      <li>Variants: Barnes-Hut, FMM, Anderson’s method</li>
-      <li>More on this later in the semester</li>
-    </ul>
-  </section>
-
+  <h3>Local forces: Communication</h3>
+  <p>Minimize communication:</p>
+  <ul>
+    <li>Send particles that might affect a neighbor “soon”</li>
+    <li>Trade extra computation against communication</li>
+    <li>Want low surface area-to-volume ratios on domains</li>
+  </ul>
 </section>
+
 
 <section>
-
-
-  <section><h2>Summary</h2></section>
-
-
-  <section>
-    <h3>Summary of particle example</h3>
-    <ul>
-      <li>Model: Continuous motion of particles
-        <ul>
-          <li>Could be electrons, cars, whatever...</li>
-      </ul></li>
-      <li>Step through discretized time</li>
-    </ul>
-  </section>
-
-
-  <section>
-    <h3>Summary of particle example</h3>
-    <ul>
-      <li>Local interactions
-        <ul>
-          <li>Relatively cheap</li>
-          <li>Load balance a pain</li>
-      </ul></li>
-      <li>All-pairs interactions
-        <ul>
-          <li>Obvious algorithm is expensive (<span class="math inline">\(O(n^2)\)</span>)</li>
-          <li>Particle-mesh and tree-based algorithms help</li>
-      </ul></li>
-    </ul>
-    <p>An important special case of lumped/ODE models.</p>
-  </section>
-
+  <h3>Local forces: Load balance</h3>
+  <ul>
+    <li>Are particles evenly distributed?</li>
+    <li>Do particles remain evenly distributed?</li>
+    <li>Can divide space unevenly (e.g. quadtree/octtree)</li>
+  </ul>
 </section>
+
+
+<section>
+  <h3>Far-field forces</h3>
+  <ul>
+    <li>Every particle affects every other particle</li>
+    <li>All-to-all communication required
+      <ul>
+        <li>Overlap communication with computation</li>
+        <li>Poor memory scaling if everyone keeps everything!</li>
+    </ul></li>
+    <li>Idea: pass particles in a round-robin manner</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Passing particles (far-field forces)</h3>
+  <pre><code>copy local particles to current buf
+      for phase = 1:p
+      send current buf to rank+1 (mod p)
+      recv next buf from rank-1 (mod p)
+      interact local particles with current buf
+      swap current buf with next buf
+      end</code></pre>
+</section>
+
+
+<section>
+  <h3>Passing particles (far-field forces)</h3>
+  <p>Suppose <span class="math inline">\(n = N/p\)</span> particles in buffer. At each phase <span class="math display">\[\begin{aligned}
+      t_{\mathrm{comm}} &amp; \approx \alpha + \beta n \\
+      t_{\mathrm{comp}} &amp; \approx \gamma n^2
+      \end{aligned}\]</span> So we can mask communication with computation if <span class="math display">\[n \geq
+      \frac{1}{2\gamma} \left( \beta + \sqrt{\beta^2 + 4 \alpha \gamma} \right)
+      &gt; \frac{\beta}{\gamma}\]</span></p>
+</section>
+
+
+<section>
+  <h3>Passing particles (far-field forces)</h3>
+  <p>More efficient serial code<br />
+    <span class="math inline">\(\implies\)</span> larger <span class="math inline">\(n\)</span> needed to mask communication!<br />
+    <span class="math inline">\(\implies\)</span> worse speed-up as <span class="math inline">\(p\)</span> gets larger (fixed <span class="math inline">\(N\)</span>)<br />
+    but scaled speed-up (<span class="math inline">\(n\)</span> fixed) remains unchanged.</p>
+  <p>This analysis neglects overhead term in LogP.</p>
+</section>
+
+
+<section>
+  <h3>Far-field forces: particle-mesh methods</h3>
+  <p>Consider <span class="math inline">\(r^{-2}\)</span> electrostatic potential interaction</p>
+  <ul>
+    <li>Enough charges looks like a continuum!</li>
+    <li>Poisson maps charge distribution to potential</li>
+    <li>Fast Poisson for regular grids (FFT, multigrid)</li>
+    <li>Approx depends on mesh and particle density</li>
+    <li>Can clean up leading part of approximation error</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Far-field forces: particle-mesh</h3>
+  <ul>
+    <li>Map particles to mesh points (multiple strategies)</li>
+    <li>Solve potential PDE on mesh</li>
+    <li>Interpolate potential to particles</li>
+    <li>Add correction term – acts like local force</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Far-field forces: tree methods</h3>
+  <ul>
+    <li>Distance simplifies things
+      <ul>
+        <li>Andromeda looks like a point mass from here?</li>
+    </ul></li>
+    <li>Build a tree, approx descendants at each node</li>
+    <li>Variants: Barnes-Hut, FMM, Anderson’s method</li>
+    <li>More on this later in the semester</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Summary of particle example</h3>
+  <ul>
+    <li>Model: Continuous motion of particles
+      <ul>
+        <li>Could be electrons, cars, whatever...</li>
+    </ul></li>
+    <li>Step through discretized time</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Summary of particle example</h3>
+  <ul>
+    <li>Local interactions
+      <ul>
+        <li>Relatively cheap</li>
+        <li>Load balance a pain</li>
+    </ul></li>
+    <li>All-pairs interactions
+      <ul>
+        <li>Obvious algorithm is expensive (<span class="math inline">\(O(n^2)\)</span>)</li>
+        <li>Particle-mesh and tree-based algorithms help</li>
+    </ul></li>
+  </ul>
+  <p>An important special case of lumped/ODE models.</p>
+</section>
+
