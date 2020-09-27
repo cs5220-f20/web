@@ -596,8 +596,7 @@ end</code></pre>
 
 
   <section>
-    <h3>Distributed parameter problems</h3>
-    <p>Mostly PDEs:</p>
+    <h3>Types of PDEs</h3>
     <table>
       <thead>
         <tr class="header">
@@ -628,6 +627,12 @@ end</code></pre>
         </tr>
       </tbody>
     </table>
+  </section>
+
+
+  <section>
+    <h3>Types of PDEs</h3>
+    
     <p>Different types involve different communication:</p>
     <ul>
       <li>Global dependence <span class="math inline">\(\implies\)</span> lots of communication<br />
@@ -659,8 +664,26 @@ end</code></pre>
 
   <section>
     <h3>Spatial discretization</h3>
-    <p>Heat equation with <span class="math inline">\(u(0) = u(1) = 0\)</span> <span class="math display">\[\frac{\partial u}{\partial t} = C \frac{\partial^2 u}{\partial x^2}\]</span></p>
-    <p>Spatial semi-discretization: <span class="math display">\[\frac{\partial^2 u}{\partial x^2} \approx \frac{u(x-h)-2u(x)+u(x+h)}{h^2}\]</span> Yields a system of ODEs <span class="math display">\[\frac{du}{dt} = C h^{-2} (-T) u =
+    <p>Heat equation with <span class="math inline">\(u(0) = u(1) =
+    0\)</span> <span class="math display">\[\frac{\partial u}{\partial
+        t} = C \frac{\partial^2 u}{\partial x^2}\]</span></p>
+  </section>
+
+
+  <section>
+    <h3>Spatial discretization</h3>
+    <p>Spatial semi-discretization: <span class="math
+                                                 display">\[\frac{\partial^2
+        u}{\partial x^2} \approx
+        \frac{u(x-h)-2u(x)+u(x+h)}{h^2}\]</span>
+    </p>
+  </section>
+
+  
+  <section>
+    <h3>Spatial discretization</h3>
+    <p>
+      Yields a system of ODEs <span class="math display">\[\frac{du}{dt} = C h^{-2} (-T) u =
         -C h^{-2}
         \begin{bmatrix}
         2 &amp; -1      &amp;   &amp;    &amp;        &amp; \\
@@ -675,7 +698,12 @@ end</code></pre>
 
   <section>
     <h3>Explicit time stepping</h3>
-    <p>Approximate PDE by ODE system (“method of lines”): <span class="math display">\[\frac{du}{dt} = C h^{-2} T u\]</span> Now need a time-stepping scheme for the ODE:</p>
+    <p>Approximate PDE by ODE system (“method of lines”): <span class="math display">\[\frac{du}{dt} = C h^{-2} T u\]</span> Now need a time-stepping scheme for the ODE.</p>
+  </section>
+
+
+  <section>
+    <h3>Explicit time stepping</h3>
     <ul>
       <li>Simplest scheme is Euler: <span class="math display">\[u(t+\delta) \approx u(t) + u&#39;(t) \delta
           = \left( I - C \frac{\delta}{h^2} T \right) u(t)\]</span></li>
@@ -694,32 +722,32 @@ end</code></pre>
 
   <section>
     <h3>Explicit time stepping in parallel</h3>
-    <pre><code>for t = 1 to N
-        communicate boundary data (&quot;ghost cell&quot;)
-        take time steps locally
-        end</code></pre>
+    <pre>for t = 1 to N
+  communicate boundary data (&quot;ghost cell&quot;)
+  take time steps locally
+end</pre>
   </section>
 
 
   <section>
     <h3>Overlapping communication with computation</h3>
-    <pre><code>for t = 1 to N
-        start boundary data sendrecv
-        compute new interior values
-        finish sendrecv
-        compute new boundary values
-        end</code></pre>
+    <pre>for t = 1 to N
+  start boundary data sendrecv
+  compute new interior values
+  finish sendrecv
+  compute new boundary values
+end</pre>
   </section>
 
 
   <section>
     <h3>Batching time steps</h3>
-    <pre><code>for t = 1 to N by B
-        start boundary data sendrecv (B values)
-        compute new interior values
-        finish sendrecv (B values)
-        compute new boundary values
-        end</code></pre>
+    <pre>for t = 1 to N by B
+  start boundary data sendrecv (B values)
+  compute new interior values
+  finish sendrecv (B values)
+  compute new boundary values
+end</pre>
   </section>
 
 
@@ -734,7 +762,7 @@ end</code></pre>
     <h3>Implicit time stepping</h3>
     <ul>
       <li>Backward Euler uses backward difference for <span class="math inline">\(d/dt\)</span> <span class="math display">\[u(t+\delta) \approx u(t) + u&#39;(t + \delta t) \delta\]</span></li>
-      <li>Taking a time step <span class="math inline">\(\equiv\)</span> sparse matvec with <span class="math inline">\(\left( I + C \frac{\delta}{h^2} T \right)^{-1}\)</span></li>
+      <li>Time step <span class="math inline">\(\equiv\)</span> apply <span class="math inline">\(\left( I + C \frac{\delta}{h^2} T \right)^{-1}\)</span></li>
       <li>No time step restriction for stability (good!)</li>
       <li>But each step involves linear solve (not so good!)
         <ul>
@@ -753,6 +781,11 @@ end</code></pre>
       <li>Stable step determined by fastest time scale</li>
       <li>Works fine for <em>hyperbolic</em> PDEs</li>
     </ul>
+  </section>
+
+
+  <section>
+    <h3>Explicit and implicit</h3>
     <p>Implicit:</p>
     <ul>
       <li>No need to resolve fastest time scales</li>
@@ -780,7 +813,13 @@ end</code></pre>
 
   <section>
     <h3>Poisson problem discretization</h3>
-    <p><span class="math inline">\(u_{i,j} = h^{-2} \left( 4u_{i,j}-u_{i-1,j}-u_{i+1,j}-u_{i,j-1}-u_{i,j+1} \right)\)</span></p>
+    <p><span class="math inline">\(u_{i,j} = h^{-2} \left(
+    4u_{i,j}-u_{i-1,j}-u_{i+1,j}-u_{i,j-1}-u_{i,j+1}
+        \right)\)</span></p>
+  </section>
+
+  
+  <section>
     <p><span class="math display">\[L =
         \left[
         \begin{array}{ccc|ccc|ccc}
@@ -863,6 +902,92 @@ end</code></pre>
 
 
   <section>
+    <h3>Poisson solvers in 2D/3D</h3>
+    <p><span class="math inline">\(N = n^d =\)</span> total
+      unknowns</p>
+    <p>Ref: Demmel, <em>Applied Numerical Linear Algebra</em>, SIAM, 1997.</p>
+    <p>Remember: best MFlop/s <span class="math inline">\(\neq\)</span> fastest solution!</p>
+  </section>
+    
+
+  <section>
+    <h3>Poisson solvers in 2D/3D</h3>
+    <table>
+      <thead>
+        <tr class="header">
+          <th style="text-align: left;">Method</th>
+          <th style="text-align: left;">Time</th>
+          <th style="text-align: left;">Space</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="odd">
+          <td style="text-align: left;">Dense LU</td>
+          <td style="text-align: left;"><span class="math inline">\(N^3\)</span></td>
+          <td style="text-align: left;"><span class="math inline">\(N^2\)</span></td>
+        </tr>
+        <tr class="even">
+          <td style="text-align: left;">Band LU</td>
+          <td style="text-align: left;"><span class="math inline">\(N^2\)</span> (<span class="math inline">\(N^{7/3}\)</span>)</td>
+          <td style="text-align: left;"><span class="math inline">\(N^{3/2}\)</span> (<span class="math inline">\(N^{5/3}\)</span>)</td>
+        </tr>
+        <tr class="odd">
+          <td style="text-align: left;">Jacobi</td>
+          <td style="text-align: left;"><span class="math inline">\(N^2\)</span></td>
+          <td style="text-align: left;"><span class="math inline">\(N\)</span></td>
+        </tr>
+        <tr class="even">
+          <td style="text-align: left;">Explicit inv</td>
+          <td style="text-align: left;"><span class="math inline">\(N^2\)</span></td>
+          <td style="text-align: left;"><span class="math inline">\(N^2\)</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+  
+
+  <section>
+    <h3>Poisson solvers in 2D/3D</h3>
+    <table>
+      <thead>
+        <tr class="header">
+          <th style="text-align: left;">Method</th>
+          <th style="text-align: left;">Time</th>
+          <th style="text-align: left;">Space</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="odd">
+          <td style="text-align: left;">CG</td>
+          <td style="text-align: left;"><span class="math inline">\(N^{3/2}\)</span></td>
+          <td style="text-align: left;"><span class="math inline">\(N\)</span></td>
+        </tr>
+        <tr class="even">
+          <td style="text-align: left;">Red-black SOR</td>
+          <td style="text-align: left;"><span class="math inline">\(N^{3/2}\)</span></td>
+          <td style="text-align: left;"><span class="math inline">\(N\)</span></td>
+        </tr>
+        <tr class="odd">
+          <td style="text-align: left;">Sparse LU</td>
+          <td style="text-align: left;"><span class="math inline">\(N^{3/2}\)</span></td>
+          <td style="text-align: left;"><span class="math inline">\(N \log N\)</span> (<span class="math inline">\(N^{4/3}\)</span>)</td>
+        </tr>
+        <tr class="even">
+          <td style="text-align: left;">FFT</td>
+          <td style="text-align: left;"><span class="math inline">\(N \log N\)</span></td>
+          <td style="text-align: left;"><span class="math inline">\(N\)</span></td>
+        </tr>
+        <tr class="odd">
+          <td style="text-align: left;">Multigrid</td>
+          <td style="text-align: left;"><span class="math inline">\(N\)</span></td>
+          <td style="text-align: left;"><span class="math inline">\(N\)</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+  
+
+  <section>
     <h3>General implicit picture</h3>
     <ul>
       <li>Implicit solves or steady state <span class="math inline">\(\implies\)</span> solving systems</li>
@@ -891,19 +1016,29 @@ end</code></pre>
               <li>Direct solvers are hard!</li>
               <li>Sparse solvers turn into matvec again</li>
           </ul></li>
-      </ul></li>
-      <li>Differential operators turn into local mesh stencils
-        <ul>
-          <li>Matrix connectivity looks like mesh connectivity</li>
-          <li>Can partition into subdomains that communicate only through boundary data</li>
-          <li>More on graph partitioning later</li>
-      </ul></li>
-      <li>Not all nearest neighbor ops are equally efficient!
-        <ul>
-          <li>Depends on mesh structure</li>
-          <li>Also depends on flops/point</li>
-      </ul></li>
+        </ul>
+  </section>
+
+
+  <section>
+    <h3>PDE solver summary</h3>
+    <p>Differential operators turn into local mesh stencils</p>
+    <ul>
+      <li>Matrix connectivity looks like mesh connectivity</li>
+      <li>Can partition into subdomains that communicate only through boundary data</li>
+      <li>More on graph partitioning later</li>
     </ul>
+  </section>
+
+  
+  <section>
+    <h3>PDE solver summary</h3>
+    <li>Not all nearest neighbor ops are equally efficient!
+      <ul>
+        <li>Depends on mesh structure</li>
+        <li>Also depends on flops/point</li>
+    </ul></li>
+  </ul>
   </section>
 
 
