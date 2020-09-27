@@ -463,7 +463,7 @@ end</code></pre>
 
     <ul>
       <li>Typically ordinary differential equations (ODEs)</li>
-      <li> With constraints: differential-algebraic equations
+      <li>Constraints: differential-algebraic equations
         (DAEs)</li>
     </ul>
     <p>Often (not always) <em>sparse</em>.</p>
@@ -494,10 +494,9 @@ end</code></pre>
 
 
   <section>
-    <h3>Types of analysis</h3>
-    <p>Consider <span class="math inline">\(x&#39; = f(x)\)</span> (special case: <span class="math inline">\(f(x) = Ax + b\)</span>). Might want:</p>
-    <h4>Static analysis</h4>
-    <p>(<span class="math inline">\(f(x_*) = 0\)</span>)</p>
+    <h3>Types of analysis: Static</h3>
+    <p>Consider <span class="math inline">\(x&#39; = f(x)\)</span> (special case: <span class="math inline">\(f(x) = Ax + b\)</span>).</p>
+    <p>Might want: <span class="math inline">\(f(x_*) = 0\)</span></p>
     <ul>
       <li>Boils down to <span class="math inline">\(Ax = b\)</span> (e.g. for Newton-like steps)</li>
       <li>Can solve directly or iteratively</li>
@@ -507,11 +506,9 @@ end</code></pre>
 
 
   <section>
-    <h3>Types of analysis</h3>
-    <p>Consider <span class="math inline">\(x&#39; = f(x)\)</span> (special case: <span class="math inline">\(f(x) = Ax + b\)</span>). Might want:</p>
-
-    <h4>Dynamic analysis</h4>
-    <p>(compute <span class="math inline">\(x(t)\)</span> for many <span class="math inline">\(t\)</span>)</p>
+    <h3>Types of analysis: Dynamic</h3>
+    <p>Consider <span class="math inline">\(x&#39; = f(x)\)</span> (special case: <span class="math inline">\(f(x) = Ax + b\)</span>).</p>
+    <p>Might want: <span class="math inline">\(x(t)\)</span> for many <span class="math inline">\(t\)</span></p>
     <ul>
       <li>Involves time stepping (explicit or implicit)</li>
       <li>Implicit methods involve linear/nonlinear solves</li>
@@ -521,10 +518,9 @@ end</code></pre>
 
 
   <section>
-    <h3>Types of analysis</h3>
-    <p>Consider <span class="math inline">\(x&#39; = f(x)\)</span> (special case: <span class="math inline">\(f(x) = Ax + b\)</span>). Might want:</p>
-    <h4>Modal analysis</h4>
-    <p>(compute eigenvalues of <span class="math inline">\(A\)</span> or <span class="math inline">\(f&#39;(x_*)\)</span>)</p>
+    <h3>Types of analysis: Modal</h3>
+    <p>Consider <span class="math inline">\(x&#39; = f(x)\)</span> (special case: <span class="math inline">\(f(x) = Ax + b\)</span>).</p>
+    <p>Might want: eigenvalues of <span class="math inline">\(A\)</span> or <span class="math inline">\(f&#39;(x_*)\)</span></p>
   </section>
 
 
