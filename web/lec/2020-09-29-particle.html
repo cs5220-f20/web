@@ -133,7 +133,7 @@ end</code></pre>
   <img src="{{ "lec/figs/local-forces-dd1.svg" | relative_url }}"
        alt="Domain decomposition for local forces"
        style="background-color:white"
-       width="25%"/>  
+       width="25%"/>
   <ul>
     <li>Simplest all-pairs check is <span class="math inline">\(O(n^2)\)</span> (expensive)</li>
     <li>Or only check close pairs (via binning, quadtrees?)</li>
@@ -148,7 +148,7 @@ end</code></pre>
   <img src="{{ "lec/figs/local-forces-dd2.svg" | relative_url }}"
        alt="Domain decomposition for local forces"
        style="background-color:white"
-       width="25%"/>  
+       width="25%"/>
   <p>Minimize communication:</p>
   <ul>
     <li>Send particles that might affect a neighbor “soon”</li>
@@ -163,7 +163,7 @@ end</code></pre>
   <img src="{{ "lec/figs/local-forces-dd3.svg" | relative_url }}"
        alt="Domain decomposition for local forces"
        style="background-color:white"
-       width="25%"/>  
+       width="25%"/>
   <ul>
     <li>Are particles evenly distributed?</li>
     <li>Do particles remain evenly distributed?</li>
@@ -188,6 +188,10 @@ end</code></pre>
 
 <section>
   <h3>Passing particles (far-field forces)</h3>
+  <img src="{{ "lec/figs/far-field-rr1.svg" | relative_url }}"
+       alt="Domain decomposition for local forces"
+       style="background-color:white"
+       width="25%"/>
   <pre>copy local particles to current buf
 for phase = 1:p
   send current buf to rank+1 (mod p)
