@@ -1,0 +1,104 @@
+---
+title: Discrete event simulations
+layout: slides
+audio: 2020-09-29-discrete
+---
+
+<section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <h3>Discrete Event Simulations</h3>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
+  </p>
+  <p>Please click the play button below.</p>
+
+  <aside class="notes">
+  </aside>
+</section>
+
+
+<section>
+  <h3>Discrete event systems</h3>
+  
+  <p>May be discrete or continuous time</p>
+  <ul>
+    <li>Game of life, logic-level circuit simulation</li>
+    <li>Network simulation</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Discrete events</h3>
+  
+  <ul>
+    <li>Finite set of variables, updated via transition function</li>
+    <li><em>Synchronous</em> case: finite state machine</li>
+    <li><em>Asynchronous</em> case: event-driven simulation</li>
+    <li>Synchronous example: Game of Life</li>
+    <li>Nice starting point — no discretization concerns!</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Game of Life</h3>
+  <p>Game of Life (John Conway):</p>
+  <ol type="1">
+    <li>Live cell dies with &lt; 2 live neighbors</li>
+    <li>Live cell dies with &gt; 3 live neighbors</li>
+    <li>Live cell lives with 2–3 live neighbors</li>
+    <li>Dead cell becomes live with exactly 3 live neighbors</li>
+  </ol>
+</section>
+
+
+<section>
+  <h3>Game of Life</h3>
+  <p>Easy to parallelize by <em>domain decomposition</em>.</p>
+  <ul>
+    <li>Update work involves <em>volume</em> of subdomains</li>
+    <li>Communication per step on <em>surface</em> (cyan)</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Game of Life: Pioneers and Settlers</h3>
+  <p>What if pattern is “dilute”?</p>
+  <ul>
+    <li>Few or no live cells at surface at each step</li>
+    <li>Think of live cell at a surface as an “event”</li>
+    <li>Only communicate events!
+      <ul>
+        <li>This is <em>asynchronous</em></li>
+        <li>Harder with message passing — when to receive?</li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Asynchronous Game of Life</h3>
+  <p>How do we manage events?</p>
+  <ul>
+    <li><em>Speculative</em> — assume no communication across boundary for many steps, back up if needed</li>
+    <li><em>Conservative</em> — wait when communication possible
+      <ul>
+        <li>possible <span class="math inline">\(\not \equiv\)</span> guaranteed!</li>
+        <li>Deadlock: everyone waits for a send</li>
+        <li>Can get around this with NULL messages</li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Asynchronous Game of Life</h3>
+  <p>How do we manage load balance?</p>
+  <ul>
+    <li>No need to simulate quiescent parts of the game!</li>
+    <li>Maybe dynamically assign smaller blocks to processors?</li>
+  </ul>
+</section>

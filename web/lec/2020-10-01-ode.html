@@ -1,0 +1,166 @@
+---
+title: Lumped parameter models
+layout: slides
+audio: 2020-10-01-ode
+---
+
+<section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <h3>Lumped parameter models</h3>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
+  </p>
+  <p>Please click the play button below.</p>
+
+  <aside class="notes">
+  </aside>
+</section>
+
+
+<section>
+  <h3>Lumped parameter simulations</h3>
+  <p>Examples include:</p>
+  <ul>
+    <li>SPICE-level circuit simulation
+      <ul>
+        <li>nodal voltages vs. voltage distributions</li>
+    </ul></li>
+    <li>Structural simulation
+      <ul>
+        <li>beam end displacements vs. continuum field</li>
+    </ul></li>
+    <li>Chemical concentrations in stirred tank reactor
+      <ul>
+        <li>concentrations in tank vs. spatially varying concentrations</li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Lumped parameter simulations</h3>
+  
+  <ul>
+    <li>Typically ordinary differential equations (ODEs)</li>
+    <li>Constraints: differential-algebraic equations
+      (DAEs)</li>
+  </ul>
+  <p>Often (not always) <em>sparse</em>.</p>
+</section>
+
+
+<section>
+  <h3>Sparsity</h3>
+  <p>Consider ODEs <span class="math inline">\(x&#39; = f(x)\)</span> (special case: <span class="math inline">\(f(x) = Ax\)</span>)</p>
+  <ul>
+    <li>Dependency graph: edge <span class="math inline">\((i,j)\)</span> if <span class="math inline">\(f_j\)</span> depends on <span class="math inline">\(x_i\)</span></li>
+    <li>Sparsity means each <span class="math inline">\(f_j\)</span> depends on only a few <span class="math inline">\(x_i\)</span></li>
+    <li>Often arises from physical or logical locality</li>
+    <li>Corresponds to <span class="math inline">\(A\)</span> being sparse (mostly zeros)</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Sparsity and partitioning</h3>
+  <p>Want to partition sparse graphs so that</p>
+  <ul>
+    <li>Subgraphs are same size (load balance)</li>
+    <li>Cut size is minimal (minimize communication)</li>
+  </ul>
+  <p>We’ll talk more about this later.</p>
+</section>
+
+
+<section>
+  <h3>Types of analysis: Static</h3>
+  <p>Consider <span class="math inline">\(x&#39; = f(x)\)</span> (special case: <span class="math inline">\(f(x) = Ax + b\)</span>).</p>
+  <p>Might want: <span class="math inline">\(f(x_*) = 0\)</span></p>
+  <ul>
+    <li>Boils down to <span class="math inline">\(Ax = b\)</span> (e.g. for Newton-like steps)</li>
+    <li>Can solve directly or iteratively</li>
+    <li>Sparsity matters a lot!</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Types of analysis: Dynamic</h3>
+  <p>Consider <span class="math inline">\(x&#39; = f(x)\)</span> (special case: <span class="math inline">\(f(x) = Ax + b\)</span>).</p>
+  <p>Might want: <span class="math inline">\(x(t)\)</span> for many <span class="math inline">\(t\)</span></p>
+  <ul>
+    <li>Involves time stepping (explicit or implicit)</li>
+    <li>Implicit methods involve linear/nonlinear solves</li>
+    <li>Need to understand stiffness and stability issues</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Types of analysis: Modal</h3>
+  <p>Consider <span class="math inline">\(x&#39; = f(x)\)</span> (special case: <span class="math inline">\(f(x) = Ax + b\)</span>).</p>
+  <p>Might want: eigenvalues of <span class="math inline">\(A\)</span> or <span class="math inline">\(f&#39;(x_*)\)</span></p>
+</section>
+
+
+
+<section>
+  <h3>Explicit time stepping</h3>
+  <ul>
+    <li>Example: forward Euler</li>
+    <li>Next step depends only on earlier steps</li>
+    <li>Simple algorithms</li>
+    <li>May have stability/stiffness issues</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Implicit time stepping</h3>
+  <ul>
+    <li>Example: backward Euler</li>
+    <li>Next step depends on itself and on earlier steps</li>
+    <li>Algorithms involve solves — complication, communication!</li>
+    <li>Larger time steps, each step costs more</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>A common kernel</h3>
+  <p>In all cases,lots of time in sparse matvec:</p>
+  <ul>
+    <li>Iterative linear solvers: repeated sparse matvec</li>
+    <li>Iterative eigensolvers: repeated sparse matvec</li>
+    <li>Explicit time marching: matvecs at each step</li>
+    <li>Implicit time marching: iterative solves (involving matvecs)</li>
+  </ul>
+  <p>We need to figure out how to make matvec fast!</p>
+</section>
+
+
+<section>
+  <h3>An aside on sparse matrix storage</h3>
+  <ul>
+    <li>Sparse matrix <span class="math inline">\(\implies\)</span> mostly zero entries
+      <ul>
+        <li>Can also have “data sparseness” — representation with less than <span class="math inline">\(O(n^2)\)</span> storage, even if most entries nonzero</li>
+    </ul></li>
+    <li>Could be implicit (e.g. directional differencing)</li>
+    <li>Sometimes explicit representation is useful</li>
+    <li>Easy to get lots of indirect indexing!</li>
+    <li>Compressed sparse storage schemes help</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Example: Compressed sparse row</h3>
+  <p>This can be even more compact:</p>
+  <ul>
+    <li>Could organize by blocks (block CSR)</li>
+    <li>Could compress column index data (16-bit vs 64-bit)</li>
+    <li>Various other optimizations — see OSKI</li>
+  </ul>
+</section>
