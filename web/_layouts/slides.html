@@ -1,6 +1,7 @@
 ---
 title: CS 5220
 audio: audio
+theme: black
 ---
 
 <!doctype html>
@@ -13,7 +14,7 @@ audio: audio
 
     <link rel="stylesheet" href="{{ "reveal.js/dist/reset.css" | relative_url }}">
     <link rel="stylesheet" href="{{ "reveal.js/dist/reveal.css" | relative_url}}">
-    <link rel="stylesheet" href="{{ "reveal.js/dist/theme/black.css" | relative_url }}" id="theme">
+    <link rel="stylesheet" href="{{ "reveal.js/dist/theme/{{ page.theme }}.css" | relative_url }}" id="theme">
 
     <!-- Theme used for syntax highlighted code -->
     <link rel="stylesheet" href="{{ "reveal.js/plugin/highlight/monokai.css" | relative_url }}" id="highlight-theme">
