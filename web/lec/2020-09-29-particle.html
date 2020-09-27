@@ -175,13 +175,13 @@ end</code></pre>
 
 <section>
   <h3>Passing particles (far-field forces)</h3>
-  <pre><code>copy local particles to current buf
-      for phase = 1:p
-      send current buf to rank+1 (mod p)
-      recv next buf from rank-1 (mod p)
-      interact local particles with current buf
-      swap current buf with next buf
-      end</code></pre>
+  <pre>copy local particles to current buf
+for phase = 1:p
+  send current buf to rank+1 (mod p)
+  recv next buf from rank-1 (mod p)
+  interact local particles with current buf
+  swap current buf with next buf
+end</pre>
 </section>
 
 
