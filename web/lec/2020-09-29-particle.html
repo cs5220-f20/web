@@ -53,16 +53,28 @@ audio: 2020-09-29-particle
   </ul>
 
   <aside class="notes">
-    When we are dealing with physical particles, we generally have
-    them moving around according to Newton's force balance law.  The
-    interesting thing is where the forces come from!  Sometimes they
-    are external, things like gravity or currents that come from
-    outside the scope of the things we are trying to simulate.
-    Sometimes, they involve interactions between particles that are
-    very close to each other.  And sometimes they involve far-field
-    forces like gravitational attraction or electrostatic attraction
-    or repulsion - though, as we have mentioned before, these types of
-    far-field forces sometimes admit convenient approximations.
+    <p>
+      When we are dealing with physical particles, we generally have
+      them moving around according to Newton's force balance law.  The
+      interesting thing is where the forces come from!  Sometimes they
+      are external, things like gravity or currents that come from
+      outside the scope of the things we are trying to simulate.
+      Sometimes, they involve interactions between particles that are
+      very close to each other.  And sometimes they involve far-field
+      forces like gravitational attraction or electrostatic attraction
+      or repulsion - though, as we have mentioned before, these types of
+      far-field forces sometimes admit convenient approximations.
+    </p>
+    <p>
+      By the way: the "far field vs near field" distinction is
+      ubiquitous in physics.  In some areas, like mechanics, it has
+      special names - St. Venant's principle, for example, in solid
+      mechanics.  Mathematicians refer to the property as elliptic
+      regularity, usually in the context of talking about PDEs.  But
+      even if you only care about discrete systems like social
+      networks, the same effect can occur - just with less
+      directly-physical notions of what "near" and "far" mean.
+    </p>
   </aside>
 </section>
 
@@ -204,6 +216,22 @@ end</code></pre>
         <li>Even with MC, load balance may not be trivial!</li>
     </ul></li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      All right, let's turn now to the topic of dealing with forces.
+      By far the easiest class of forces to deal with are external
+      forces.  Think here the Earth's gravitational field in a
+      physical context, or the lure of students (or faculty!) to free food
+      if we are modeling crowd dynamics.  If external forces are the
+      only thing we have to worry about, we have pleasing (or
+      embarrassing) parallelism: each
+      trajectory can be computed independently of the others.  Of
+      course, it can't be that easy, because there is usually some
+      inhomogeneity in how much each simulation costs, and that
+      affects things like load balance.  But still, this is much
+      easier to deal with than cases where the particles actually interact.
+  </aside>  
 </section>
 
 
@@ -219,6 +247,27 @@ end</code></pre>
     <li>Communication required for pairs checked</li>
     <li>Usual model: domain decomposition</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      Things get more interesting when particles interact locally.
+      The naive thing to do here would be to check every pair of
+      particles for interaction, which is O(n^2) where n is the number
+      of particles.  But we can go much faster if we instead partition
+      space into bins, and only have to check for interactions between
+      particles in neighboring bins.
+    </p>
+    <p>
+      Often, we would assign big regions of space (maybe broken into
+      smaller bins internally) to each processor; this is a spatial
+      decomposition of the problem.  We could also choose to partition
+      the problem by assigning a fixed subset of the particles to each
+      processor, or by assigning a subset of the particle-particle
+      interactions to each processor.  The fastest particle
+      simulations out there often end up using a combination of these
+      approaches.
+    </p>
+  </aside>
 </section>
 
 
@@ -234,6 +283,29 @@ end</code></pre>
     <li>Trade extra computation against communication</li>
     <li>Want low surface area-to-volume ratios on domains</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      If we use a spatial decomposition, we have to communicate the
+      position of any particles that are near the boundaries of the
+      domains owned by each processor.  As with the Game of Life
+      example, we like decomposing into big blocks because they have
+      a low surface-area-to-volume ratio, with communication
+      proportional to surface area and computation proportional to
+      volume.
+    </p>
+    <p>
+      We could communicate just
+      those particles that are within an interaction radius of the
+      boundary, but we'd have to send new updates at every time step.
+      often we might communicate particles that are
+      within a larger radius of the boundary.  That way, we only have to
+      communicate once every few steps.  Each message might
+      involve more particles, but often that's a small price to pay
+      for reducing the number of messages (and the associated
+      latencies).
+    </p>
+  </aside>
 </section>
 
 
@@ -248,6 +320,24 @@ end</code></pre>
     <li>Do particles remain evenly distributed?</li>
     <li>Can divide space unevenly (e.g. quadtree/octtree)</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      Decomposing space into big blocks seems great when we think that
+      particles might be spread out evenly.  But what if they are not
+      evenly distributed?  And what if the distribution changes over
+      time?  In our hypothetical simulation of students and faculty
+      swarming to the refreshments table before a colloquium, we are
+      likely to see a concentration around the refreshments table
+      after a short time, regardless of the initial distribution.
+    </p>
+    <p>
+      One way to deal with uneven distributions of particles is to
+      consider uneven partitions of space.  There are classic spatial
+      data structures that do this, such as quadtrees (in 2D) and
+      octtrees (in 3D).  We'll talk more about these later in the course.
+    </p>
+  </aside>
 </section>
 
 
@@ -262,6 +352,23 @@ end</code></pre>
     </ul></li>
     <li>Idea: pass particles in a round-robin manner</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      Far-field forces are more complicated, because everything
+      affects everything else.  If we don't know about simplifying
+      approximations for the far-field, this looks like an all-to-all
+      communication pattern, and that's expensive.  Of course, we
+      could have every processor keep track of every particle, and
+      split up the interactions processor-by-processor; but it's not
+      good for memory scalability if everyone has to store
+      everything.
+    </p>
+    <p>
+      So here's an idea: what if we run our computation like we would
+      run a potluck lunch, and pass the dishes (or particles)?
+    </p>
+  </aside>
 </section>
 
 
@@ -278,6 +385,23 @@ for phase = 1:p
   interact local particles with current buf
   swap current buf with next buf
 end</pre>
+
+  <aside class="notes">
+    <p>
+      Here's that idea in pictures and pseudocode.  We start off with
+      each processor holding a set of particles that it owns.  The
+      processor copies those particles into a buffer that holds the
+      particles with which we want to compute interactions.  When we
+      are done with one batch of particles, we send the current set
+      that we're interacting with on to the next processor, and
+      receive a new set of particles from the previous processor (in a
+      ring ordering).  If we have some memory to spare, we can do
+      these data transfers at the same time that we are computing,
+      hiding the communication costs (at least partly).  This strategy
+      of overlapping communication and computation is a good approach
+      across a lot of different types of parallel patterns.
+    </p>
+  </aside>
 </section>
 
 
@@ -289,6 +413,20 @@ end</pre>
       \end{aligned}\]</span> So we can mask communication with computation if <span class="math display">\[n \geq
       \frac{1}{2\gamma} \left( \beta + \sqrt{\beta^2 + 4 \alpha \gamma} \right)
       &gt; \frac{\beta}{\gamma}\]</span></p>
+
+  <aside class="notes">
+    Let's do a little back-of-the-envelope modeling here.  Suppose we
+    are doing our round-robin protocol.  We have n rounds in total,
+    each with a message cost involving a latency alpha and inverse
+    bandwidth beta; and a local computation cost of time gamma for
+    each of the n^2 interactions we need to accumulate.  To find where
+    the computation costs exceed communication costs, we can solve a
+    little quadratic equation.  An unsurprising lower bound comes from
+    dropping the latency term to find that we need at least beta over
+    gamma particles-per-processor in order to avoid being
+    communication bound.  But, of course, things get worse when there
+    is a nontrivial amount of latency, as there often is.
+  </aside>
 </section>
 
 
@@ -298,7 +436,21 @@ end</pre>
     <span class="math inline">\(\implies\)</span> larger <span class="math inline">\(n\)</span> needed to mask communication!<br />
     <span class="math inline">\(\implies\)</span> worse speed-up as <span class="math inline">\(p\)</span> gets larger (fixed <span class="math inline">\(N\)</span>)<br />
     but scaled speed-up (<span class="math inline">\(n\)</span> fixed) remains unchanged.</p>
-  <p>This analysis neglects overhead term in LogP.</p>
+
+  <aside class="notes">
+    <p>
+      One of the takeaways from our back-of-the-envelope analysis is
+      that the better we are at optimizing the local computation
+      (decreasing gamma), the more particles per processor we need to
+      mask communication costs!  And things look even worse for strong
+      scaling experiments, since the number of particles per processor
+      decreases as we increase the number of processors.  Depending how
+      we set it up, things might look better for a strong scaling
+      experiment - this depends whether we try to keep the same total
+      work per processor (where work scales like N^2) or the same total
+      particles per processor.
+    </p>
+  </aside>
 </section>
 
 
@@ -312,11 +464,28 @@ end</pre>
     <li>Approx depends on mesh and particle density</li>
     <li>Can clean up leading part of approximation error</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      OK, now let's talk about what happens when we have long-range
+      forces where we can get some type of simplification in the far
+      field.  This happens, for example, for electrostatic and
+      gravitational forces.  When we have enough charges in a region,
+      it starts to look less like a discrete set of charges and more
+      like a continuous distribution.  This is great, because the
+      electrostatic potential from a continuous distribution of
+      charges can be computed by solving a Poisson equation, one of
+      the standard classes of partial differential equations that we
+      know how to solve fairly quickly, using methods like fast
+      Fourier transforms or multigrid solvers that we will talk about
+      later in the semester.
+    </p>
+  </aside>
 </section>
 
 
 <section>
-  <h3>Far-field forces: particle-mesh</h3>
+  <h3>Long-range forces: particle-mesh</h3>
   <img src="{{ "lec/figs/particle-in-cell.svg" | relative_url }}"
        alt="Domain decomposition for local forces"
        style="background-color:white"
@@ -327,6 +496,22 @@ end</pre>
     <li>Interpolate potential to particles</li>
     <li>Add correction term – acts like local force</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      The basic strategy of particle-mesh methods, then, is to
+      approximate the distribution of particles by "virtual" particles
+      sitting on a mesh, and then to compute interactions for that
+      distribution of virtual particles via a fast Poisson solve.
+      Of course, this is an approximation, and how good it is depends
+      some on the mesh size and the particle density.  Usually, we
+      would improve the approximation with a local correction for
+      interactions between particles that are close to each other.
+      We know how to handle that local correction efficiently using
+      the types of techniques we talked about earlier in the deck
+      for dealing with short-range forces.
+    </p>
+  </aside>
 </section>
 
 
@@ -345,6 +530,29 @@ end</pre>
     <li>Variants: Barnes-Hut, FMM, Anderson’s method</li>
     <li>More on this later in the semester</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      Particle-mesh methods work pretty well when there are a lot of
+      particles and they are fairly evenly distributed in space.  But
+      those aren't always valid assumptions.  An alternative that
+      works even with less even particle distributions is the idea of
+      a so-called tree code.  In tree codes, we organize our
+      approximation in boxes of increasing size, and keep a "summary"
+      approximation of the potential from things inside the box on
+      things that are sufficiently far away from the box (relative to
+      the box size).  For example, in the solar system, we might need
+      to keep track of the sun and all the different planets and their
+      interactions; but if we care about the pull of the Andromeda
+      galaxy at all, we will probably approximate it as a single giant
+      mass at a point very far away.
+    </p>
+    <p>
+      There are a variety of these tree-code approximation schemes out
+      there, and we'll try to talk about some of them in more detail
+      later in the semester.
+    </p>
+  </aside>
 </section>
 
 
@@ -357,6 +565,19 @@ end</pre>
     </ul></li>
     <li>Step through discretized time</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      OK, what have we talked about in this deck?  We've been talking
+      about continuous motions of "particles" for a very loose meaning
+      of particles - they could be electrons, cars, or people, and the
+      pattern still holds.  We have a set of differential equations
+      that govern the motion of these particles, and use some
+      time-stepping method to approximate the solutions of these
+      differential equations (where we'll talk more about
+      time-stepping in the Thursday deck).
+    </p>
+  </aside>
 </section>
 
 
@@ -375,5 +596,30 @@ end</pre>
     </ul></li>
   </ul>
   <p>An important special case of lumped/ODE models.</p>
+
+  <aside class="notes">
+    <p>
+      The key to making particle simulations go fast is the
+      organization of data and computations in order to quickly
+      compute the forces acting on the particles.  External forces are
+      the easy part; the harder part is computing particle-particle
+      interactions.  We can be pretty efficient about short-range
+      interactions by using appropriate spatial data structures in
+      order to only compute interactions that matter, but the
+      all-to-all computation involved in long-range forces is more
+      expensive.  The obvious algorithms are O(n^2), but there are
+      alternative methods that give a very good approximation that
+      cost less; these include particle-mesh and tree-based
+      algorithms.
+    </p>
+    <p>
+      Particle systems are a special case of an ODE-based model.  The
+      structure of the force interactions (which often varies over
+      time) is interesting enough for us to treat these as a thing on
+      their own.  But there are some concerns in common with other
+      ODE-based simulations, as we will see when we pick up with our
+      discussion in the slides for Thursday.
+    </p>
+  </aside>
 </section>
 
