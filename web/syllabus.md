@@ -6,8 +6,8 @@ layout:     main
 ## Logistical information
 
 CS 5220, Fall 2020: Applications of Parallel Computers  
-Lecture time: TR 8:00-9:15  
-Lecture location: Online
+Meeting time: TR 8:00-9:15 (Zoom)  
+Backup meeting: TR 1:25-2:40 (Gather.town)
 
 Prof: [David Bindel](http://www.cs.cornell.edu/~bindel)  
 E-mail: <bindel@cornell.edu>  

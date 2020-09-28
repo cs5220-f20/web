@@ -86,9 +86,21 @@
 -
   date: 2020-09-29
   info: Parallelism and locality in simulations
+  files:
+    - info: Intro slides
+      file: lec/2020-09-29-simulations.html
+    - info: Discrete event systems
+      file: lec/2020-09-29-discrete.html
+    - info: Particle systems
+      file: lec/2020-09-29-particle.html
 -
   date: 2020-10-01
   info: Parallelism and locality in simulations
+  files:
+    - info: Lumped parameter models (in progress)
+      file: lec/2020-10-01-ode.html
+    - info: Distributed parameter models (in progress)
+      file: lec/2020-10-01-pde.html
 # =================
 # Week 4
 #
