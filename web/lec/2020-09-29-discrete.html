@@ -14,6 +14,9 @@ audio: 2020-09-29-discrete
   <p>Please click the play button below.</p>
 
   <aside class="notes">
+    Welcome to the first of our real mini-lectures on locality and
+    simulation in physics.  In this deck, we'll talk about discrete
+    event simulations.
   </aside>
 </section>
 
@@ -26,6 +29,27 @@ audio: 2020-09-29-discrete
     <li>Game of life, logic-level circuit simulation</li>
     <li>Network simulation</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      By discrete event simulations, I mean simulations where events
+      that do something interesting to the system happen at discrete
+      times.  Between events, either nothing happens, or the system
+      behaves in a way that's so simple that we can "jump over" the time
+      between events.
+    </p>
+    <p>
+      Finite state machines count as discrete event
+      systems in my book.  So do some physical systems.  Air hockey
+      comes to mind: we only really need any serious computation when
+      there's a collision, and otherwise everything tends to move
+      forward in a straight line at constant speed.  Failure cascades
+      can sometimes be modeled in an event-by-event way (or infection
+      cascades, if we want to go there).  And there are lots
+      of engineered systems that can be reasoned with this way, too,
+      from logical circuits to computer networks.
+    </p>
+  </aside>
 </section>
 
 
@@ -39,6 +63,34 @@ audio: 2020-09-29-discrete
     <li>Synchronous example: Game of Life</li>
     <li>Nice starting point — no discretization concerns!</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      More specifically, I am thinking of a finite set of variables,
+      updated by a transition function.  Note that the variables don't
+      have to be drawn from finite sets!  They could be real numbers,
+      modulo the fact that we have to approximate the reals by
+      floating point numbers when we compute.
+    </p>
+    <p>
+      Transitions may happen synchronously, meaning that they are
+      associated with some clock.  For example, it might be that we
+      transition whenever the clock ticks, or whenever there is some
+      external stimulus.  Then there's the possibility that we might
+      update the system - in part or in whole - asynchronously, based
+      on when some internal event takes place.  These aren't
+      hard-and-fast classifications, though, and even synchronous
+      systems may sometimes be simulated asynchronously.  A good
+      example is the Game of Life, which we'll talk about for a little
+      while now.
+    </p>
+    <p>
+      One of the nice things about the Game of Life, and many discrete
+      event systems, is that discrete things can be treated exactly on
+      a computer.  In contrast, the other systems we will discuss all
+      involve some type of discretization error that we might have to
+      think about.
+    </p>
 </section>
 
 
@@ -49,6 +101,33 @@ audio: 2020-09-29-discrete
        alt="Picture of game of life rules"
        style="background-color:white"
        width="80%"/>
+
+  <aside class="notes">
+    <p>
+      Conway's "Game of Life" is a nice example.  This is a cellular
+      automata that shows some remarkable emergent behavior.  The rules
+      are simple.  Every cell starts off in one of two states "alive" or
+      "dead."  Time proceeds in steps, or generations.  A live cell with too
+      few neighbors (none or one), or two many neighbors (more than
+      three) will not be alive at the next step.  A live cell with two or
+      three neighbors will remain live at the next step.  And a dead
+      cell with exactly three live neighbors will become live at the
+      next step.
+    </p>
+    <p>
+      There is clearly a lot of locality in this game.  Every cell
+      only interacts with its nearest neighbors at each step.  There
+      is also a lot of parallelism available; we can compute the
+      update for one cell independent of the update for any other.
+      That's all relevant for today.
+    </p>
+    <p>
+      It's also worth thinking about how we'd represent the board in
+      the Game of Life.  Each cell really only needs one bit!  There
+      is a lot of opportunity for vectorization here, if we're clever.
+      We may talk about this in meeting.
+    </p>
+  </aside>
 </section>
 
 
@@ -61,6 +140,16 @@ audio: 2020-09-29-discrete
     <li>Live cell lives with 2–3 live neighbors</li>
     <li>Dead cell becomes live with exactly 3 live neighbors</li>
   </ol>
+
+  <aside class="notes">
+    <p>
+      All right, here are the rules in written form.  Each cell has
+      eight neighbors.  The cell is live if it was live at the
+      previous generation and had two or three neighbors; or if it was
+      dead at the previous generation and had exactly three live
+      neighbors.  Otherwise, the cell is dead.
+    </p>
+  </aside>
 </section>
 
 
@@ -70,17 +159,26 @@ audio: 2020-09-29-discrete
   <img src="{{ "lec/figs/game-of-life-dd.svg" | relative_url }}"
        alt="Picture of game of life rules"
        style="background-color:white"
-       width="40%"/>
-</section>
-
-
-<section>
-  <h3>Game of Life</h3>
-  <p>Easy to parallelize by <em>domain decomposition</em>.</p>
+       width="30%"/>
   <ul>
     <li>Update work involves <em>volume</em> of subdomains</li>
     <li>Communication per step on <em>surface</em> (cyan)</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      A natural way to think about updating the board in the game of
+      life is to sweep through the cells, updating to compute the values
+      at the next generation.  And a natural way of partitioning this
+      update is to cut the domain into big, equal areas.  Note that to
+      compute a new generation, each processor only needs to know
+      about its own cells and the cells at the "surface" of the
+      boundary with the domains owned by neighboring processors.  So
+      the amount of communication needed is proportional to surface
+      area, and the amount of computation is proportional to the
+      volume of the domain.
+    </p>
+  </aside>
 </section>
 
 
@@ -92,6 +190,17 @@ audio: 2020-09-29-discrete
             3.0,
             https://commons.wikimedia.org/w/index.php?curid=101736)"
        width="40%"/>
+
+  <aside class="notes">
+    <p>
+      Of course, some of the most interesting scenarios in the Game of
+      Life involve giant swaths of space that are mostly dead.  A
+      simulation of the so-called "glider gun" might well involve some
+      processors updating fields of dead cells over and over again.
+      This seems just silly.  The rules don't allow new life unless
+      sufficient new life has already sprung up nearby.  How could we
+      think about doing this more efficiently?
+  </aside>
 </section>
 
 
@@ -107,6 +216,16 @@ audio: 2020-09-29-discrete
         <li>Harder with message passing — when to receive?</li>
     </ul></li>
   </ul>
+
+  <aside class="notes">
+    A simple idea is to change how we think about the updates in the
+    game.  Instead of updating at every generation, or communicating
+    across the surface interfaces at every generation, what if we only
+    communicated when there were live cells?  This cuts down on the
+    amount of communication we might have to do for dilute patterns,
+    though it doesn't necessarily make synchronization between
+    processors so easy.
+  </aside>
 </section>
 
 
@@ -122,6 +241,27 @@ audio: 2020-09-29-discrete
         <li>Can get around this with NULL messages</li>
     </ul></li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      OK, so we suppose that we only communicate when a border cell
+      becomes live.  How do we manage this?  One possibility is to
+      keep computing in each processor's domain under the assumption
+      that nothing interesting is happening at the border.  If it turns
+      out that something interesting did happen, we rewind time to
+      when it happened, and go from there.  This is <em>speculative
+        execution</em>
+    </p>
+    <p>
+      Another option is to be conservative.  Whenever something might
+      have happened at a boundary, we wait to hear whether it actually
+      did.  Of course, if everyone is waiting for everyone else, we
+      get into a deadlock.  So we'd usually need a dummy message
+      (sometimes called a NULL message) to tell neighboring processors
+      that nothing interesting happened at an interface, and they
+      should go ahead.  Of course, the latency of such a null message
+      might still slow us down, even if the message itself were very short!
+    </p>
 </section>
 
 
@@ -132,4 +272,16 @@ audio: 2020-09-29-discrete
     <li>No need to simulate quiescent parts of the game!</li>
     <li>Maybe dynamically assign smaller blocks to processors?</li>
   </ul>
+
+  <aside class="notes">
+    If we are very clever about not updating dead cells until there
+    are live cells nearby, we might find that our simulation suffers
+    from <em>load imbalance</em>: the processors managing the parts of
+    the domain where there are live cells are responsible for doing
+    all the updating work, and everyone else does nothing!  One could
+    try breaking things into smaller blocks, and dynamically assigning
+    those blocks to processors in order to even things out - but that
+    might mean more communication, and it certainly means more
+    complexity.  Life, as it turns out, may not be so simple to manage!
+  </aside>
 </section>

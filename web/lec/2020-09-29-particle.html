@@ -14,6 +14,10 @@ audio: 2020-09-29-particle
   <p>Please click the play button below.</p>
 
   <aside class="notes">
+    Welcome to our discussion of a second class of physical
+    simulations in our lightning introduction to locality and
+    parallelism in simulations.  In this deck, we are talking about
+    particle systems.
   </aside>
 </section>
 
@@ -25,6 +29,14 @@ audio: 2020-09-29-particle
     <li>Billiards, electrons, galaxies, ...</li>
     <li>Ants, cars, agents, ...?</li>
   </ul>
+
+  <aside class="notes">
+    When I say particles, I mean all types of discrete interacting
+    entities.  That might include simple physical things, from billiard balls
+    to electrons to galaxies; or it might include ants in a colony,
+    cars on a highway, or agents in the Matrix (or in an agent-based
+    simulation, if you're not a Keanu Reeves fan).
+  </aside>
 </section>
 
 
@@ -39,6 +51,19 @@ audio: 2020-09-29-particle
         <li>Simple approximations often apply (Saint-Venant)</li>
     </ul></li>
   </ul>
+
+  <aside class="notes">
+    When we are dealing with physical particles, we generally have
+    them moving around according to Newton's force balance law.  The
+    interesting thing is where the forces come from!  Sometimes they
+    are external, things like gravity or currents that come from
+    outside the scope of the things we are trying to simulate.
+    Sometimes, they involve interactions between particles that are
+    very close to each other.  And sometimes they involve far-field
+    forces like gravitational attraction or electrostatic attraction
+    or repulsion - though, as we have mentioned before, these types of
+    far-field forces sometimes admit convenient approximations.
+  </aside>
 </section>
 
 
@@ -53,6 +78,14 @@ audio: 2020-09-29-particle
     <li>Short-range repulsive force (<span class="math inline">\(r^{-6}\)</span>)</li>
     <li>Go from attraction to repulsion at radius <span class="math inline">\(a\)</span></li>
   </ul>
+
+  <aside class="notes">
+    So here's the type of thing we might consider.  Suppose that our
+    particles have a short-range repulsive force and a long-range
+    attractive force.  They can't get away from each other, and can't
+    get too close.  What happens?  Interesting things!  Depends a lot
+    on how much energy there is in the initial state of the system.
+  </aside>
 </section>
 
 
@@ -63,8 +96,17 @@ audio: 2020-09-29-particle
 t = linspace(0, tfinal, npts);
 [tout, xyv] = ode113(@fnbody, t, [x; v], [], m, g);
 xout = xyv(:,1:length(x))&#39;;</code></pre>
-    <p>... but I can’t call ode113 in C in parallel (or can I?)</p>
-  </section>
+  <p>... but I can’t call ode113 in C in parallel (or can I?)</p>
+
+  <aside class="notes">
+    At the end of the day, the particles are governed by a collection
+    of ordinary differential equations.  So maybe one could consider
+    using a standard ODE solver, like one of the ones in MATLAB, to
+    solve the system.  This is not such a stupid idea, really.  But it
+    turns out that we might want to think again, both for parallelism
+    and to get the properties that we want out of our ODE solver.
+  </aside>
+</section>
 
 
 <section>
@@ -83,6 +125,19 @@ for i = 1:npts-1
   end
   xout(:,i+1) = x;
 end</code></pre>
+
+  <aside class="notes">
+    The standard ODE solvers are pretty accurate for medium lengths of
+    time, but they do have some error due to approximating an ODE by
+    something that involves discrete time steps.  Unfortunately,
+    varying the step size to maintain exact accuracy often doesn't get
+    us quite what we want.  It is OK if we mess up some details, as
+    long as others are well preserved.  In physics, for example, we
+    usually want conservation of energy and momentum, and some simple
+    integrators with fixed step sizes - like the leap frog scheme
+    shown above - may do that even better than the MATLAB ODE solver.
+    Fixed step leapfrog is easier to code, too!
+  </aside>
 </section>
 
 
@@ -92,6 +147,13 @@ end</code></pre>
     <img data-src="figs/sph-plot.png" alt="image" style="width:90.0%"
     /><figcaption>Smooth Particle Hydrodynamics (SPH) simulation</figcaption>
   </figure>
+
+  <aside class="notes">
+    You'll get to play with this integrator soon enough for yourself.
+    The plan is that the next project will involve a smoothed particle
+    hydrodynamics or SPH simulation, and we'll use leapfrog for the
+    time integration.
+  </aside>
 </section>
 
 
@@ -110,6 +172,23 @@ end</code></pre>
     <li>How are potential singularities handled?</li>
     <li>What integrator is used? What step control?</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      We'll say more about time steppers on Thursday.  But the more
+      interesting thing to talk about at the moment is how we manage the
+      data for the particles and the computation of the forces between
+      them at any given step.  We also have to worry about things like
+      what happens at boundaries - do we bounce off walls, or does
+      something else happen?  And sometimes we have to worry about the
+      potential that our model has singular behaviors, like infinite
+      attraction between particles that are zero distance apart.  Of
+      course, that type of interaction usually means that we have
+      neglected some important part of the physics, but that's cold
+      comfort when we're trying to sort out why there are NaNs
+      suddenly appearing in our simulations!
+    </p>
+  </aside>
 </section>
 
 
