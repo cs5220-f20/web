@@ -15,6 +15,15 @@ audio: 2020-09-29-simulations
   <p>Please click the play button below.</p>
 
   <aside class="notes">
+    Welcome again to the audio track version of CS 5220.  This week
+    you get five decks - but some of them are short.  We're shifting
+    gears a bit, taking the ideas of parallelism and locality
+    that we now know are critical to high-performance code and
+    connecting them with concepts of locality from physics and
+    numerics.  This will probably be refreshing to some of you and
+    disconcerting to others.  Don't worry, we'll repeat ourselves;
+    there is enough time in the semester to get this, even if it
+    doesn't sink in the first time.
   </aside>
 </section>
 
@@ -28,6 +37,26 @@ audio: 2020-09-29-simulations
     <li>Near-field interactions stronger than far-field</li>
     <li>Can often simplify dependence on distant objects</li>
   </ul>
+
+  <aside class="notes">
+    The basic premise this week is that we can organize our simulation
+    algorithms for high performance by recognizing that they, like the
+    physical world, exhibit parallelism and locality.  That is: our
+    models often involve things that are independent except through a
+    few careful modes of interaction.  That's not just physical
+    objects like air hockey pucks or elementary particles, but also
+    people, vehicles, etc.  There's a natural decomposition to lots of
+    the world.  Moreover, when we think about how things in the world
+    interact, we find that the short-range interactions are often a
+    lot stronger and more complicated than far-range interactions.
+    Even when there is significant interaction at a long range, it's
+    often simplified.  If we're modeling the motion of the earth
+    through space, we might need to keep track of gravitational
+    interactions with all the other planets in our solar system.  But
+    to the extent that we need to keep track of nearby solar systems
+    at all, we can probably just treat them as single point masses in
+    space.  Distance blurs things uout.
+  </aside>
 </section>
 
 
@@ -39,6 +68,19 @@ audio: 2020-09-29-simulations
     <li>Limited dependency between adjacent time steps</li>
     <li>Can neglect or approximate far-field effects</li>
   </ul>
+
+  <aside class="notes">
+    The parallelism and locality in the physical world enters into our
+    models in interesting ways.  For example, in the physical world,
+    waves of sound travel at fast but finite speeds; hence, when we
+    simulate the dynamics of sound waves, we see that there is a
+    "speed of sound" effect that limits how far information can travel
+    in our computation within a single time step.  In other models,
+    like simulations of gravitational attraction, we might make each
+    object interact with everything at every time step, but the
+    interactions with things far away are weaker and simpler with
+    things that are close.
+  </aside>
 </section>
 
 
@@ -51,6 +93,20 @@ audio: 2020-09-29-simulations
     <li>Interacting models for climate</li>
     <li>Parallelizing individual experiments in MC or optimization</li>
   </ul>
+
+  <aside class="notes">
+    It's also true that we tend to build models that organize the
+    world into hierarchical building blocks, and that hierarchy often
+    mimics meaningful differences in how components interact with each
+    other.  Certainly this is true for engineered system: we can
+    separate the simulation of a circuit into coupled simulations of
+    the basic building blocks because that is how we design the thing!
+    We can also sometimes think of different components of a natural
+    system that operate at different time scales.  And then there are
+    a variety of numerical methods that involve running lots of
+    independent simulations, and one can consider parallelizing across
+    simulations and trying to find parallelism within the simulations.
+  </aside>
 </section>
 
 
@@ -64,5 +120,31 @@ audio: 2020-09-29-simulations
   </ul>
   <p>Often more than one type of simulation appropriate.<br />
     Sometimes more than one at a time!</p>
+
+  <aside class="notes">
+    <p>
+      The rest of the lecture-lets this week dig into four classes of
+      simulations in a little more detail, with an eye to different ways
+      of thinking about locality and parallelism in each.
+    </p>
+    <p>
+      We'll start
+      with discrete event systems, with Conway's "Game of Life" as a
+      convenient example.  Then we'll talk about particle systems, where
+      "particles" is a
+      general term that refers not only to discrete particles in
+      physics, but also to discrete entities like people in a simulation
+      of a crowd.  It also can refer to "chunks" of matter in a
+      simulation of something that we usually consider as a continuum -
+      we'll see such a method, sometimes called smoothed particle
+      hydrodynamics, in the next project.  Then we'll talk about lumped
+      parameter systems and distributed parameter systems - or, if you
+      prefer, ODE and PDE models.
+    </p>
+    <p>
+      There's a lot here.  I hope you'll find it as entertaining as I
+      do!
+    </p>
+  </aside>
 </section>
 
