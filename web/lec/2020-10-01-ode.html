@@ -116,7 +116,11 @@ audio: 2020-10-01-ode
 <section>
   <h3>Explicit time stepping</h3>
   <ul>
-    <li>Example: forward Euler</li>
+    <li>Example: forward Euler
+      $$
+        x_{k+1} = x_k + (\Delta t) f(x_k)
+      $$
+    </li>
     <li>Next step depends only on earlier steps</li>
     <li>Simple algorithms</li>
     <li>May have stability/stiffness issues</li>
@@ -127,7 +131,11 @@ audio: 2020-10-01-ode
 <section>
   <h3>Implicit time stepping</h3>
   <ul>
-    <li>Example: backward Euler</li>
+    <li>Example: backward Euler
+      $$
+        x_{k+1} = x_k + (\Delta t) f(x_{k+1})
+      $$
+    </li>
     <li>Next step depends on itself and on earlier steps</li>
     <li>Algorithms involve solves — complication, communication!</li>
     <li>Larger time steps, each step costs more</li>
@@ -137,7 +145,7 @@ audio: 2020-10-01-ode
 
 <section>
   <h3>A common kernel</h3>
-  <p>In all cases,lots of time in sparse matvec:</p>
+  <p>In all cases, lots of time in sparse matvec:</p>
   <ul>
     <li>Iterative linear solvers: repeated sparse matvec</li>
     <li>Iterative eigensolvers: repeated sparse matvec</li>
