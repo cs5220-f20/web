@@ -99,7 +99,7 @@
   date: 2020-10-01
   info: Parallelism and locality in simulations
   files:
-    - info: Lumped parameter models (in progress)
+    - info: Lumped parameter models
       file: lec/2020-10-01-ode.html
     - info: Distributed parameter models (in progress)
       file: lec/2020-10-01-pde.html
