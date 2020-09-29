@@ -65,6 +65,18 @@ audio: 2020-10-01-pde
   </ul>
 </section>
 
+<section>
+  <h3>Example: 1D heat equation</h3>
+  <p>Consider flow (e.g. of heat) in a uniform rod</p>
+  <ul>
+    <li>Heat (<span class="math inline">\(Q\)</span>) <span class="math inline">\(\propto\)</span> temperature (<span class="math inline">\(u\)</span>) <span class="math inline">\(\times\)</span> mass (<span class="math inline">\(\rho h\)</span>)</li>
+    <li>Heat flow <span class="math inline">\(\propto\)</span> temperature gradient (Fourier’s law)</li>
+  </ul>
+    <img src="{{ "lec/figs/heat-fd-3panel.svg" | relative_url }}"
+       alt="Derivation figure for the heat equation"
+       style="background-color:white"
+       width="60%"/>
+</section>
 
 <section>
   <h3>Example: 1D heat equation</h3>
@@ -137,7 +149,11 @@ audio: 2020-10-01-pde
 
 
 <section>
-  <h3>Explicit time stepping data dependence</h3>
+  <h3>Explicit data dependence</h3>
+    <img src="{{ "lec/figs/time-step-dependence.svg" | relative_url }}"
+       alt="Plot of information propagation for explicit heat equation time stepper"
+       style="background-color:white"
+       width="60%"/>
   <p>Nearest neighbor interactions per step <span class="math inline">\(\implies\)</span><br />
     finite rate of numerical information propagation</p>
 </section>
@@ -145,6 +161,10 @@ audio: 2020-10-01-pde
 
 <section>
   <h3>Explicit time stepping in parallel</h3>
+    <img src="{{ "lec/figs/ghost-exchange1.svg" | relative_url }}"
+       alt="Plot of ghost cell data exchange"
+       style="background-color:white"
+       width="60%"/>
   <pre>for t = 1 to N
     communicate boundary data (&quot;ghost cell&quot;)
     take time steps locally
@@ -154,6 +174,10 @@ audio: 2020-10-01-pde
 
 <section>
   <h3>Overlapping communication with computation</h3>
+    <img src="{{ "lec/figs/ghost-exchange1.svg" | relative_url }}"
+       alt="Plot of ghost cell data exchange"
+       style="background-color:white"
+       width="60%"/>
   <pre>for t = 1 to N
     start boundary data sendrecv
     compute new interior values
@@ -165,6 +189,10 @@ audio: 2020-10-01-pde
 
 <section>
   <h3>Batching time steps</h3>
+    <img src="{{ "lec/figs/ghost-exchange1.svg" | relative_url }}"
+       alt="Plot of ghost cell data exchange"
+       style="background-color:white"
+       width="60%"/>
   <pre>for t = 1 to N by B
     start boundary data sendrecv (B values)
     compute new interior values
@@ -176,8 +204,11 @@ audio: 2020-10-01-pde
 
 <section>
   <h3>Explicit pain</h3>
-  <p><embed data-src="figs/explicit-unstable-demo.pdf" style="width:80.0%" /><br />
-    Unstable for <span class="math inline">\(\delta &gt; O(h^2)\)</span>!</p>
+    <img src="{{ "lec/figs/ghost-exchange1.svg" | relative_url }}"
+       alt="Plot of ghost cell data exchange"
+       style="background-color:white"
+       width="80%"/>
+  <p>Unstable for <span class="math inline">\(\delta &gt; O(h^2)\)</span>!</p>
 </section>
 
 
