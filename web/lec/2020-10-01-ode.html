@@ -14,6 +14,9 @@ audio: 2020-10-01-ode
   <p>Please click the play button below.</p>
 
   <aside class="notes">
+    Welcome to another exciting mini-lecture on sources of locality
+    and parallelism in simulations.  This time, we are going to talk
+    about lumped-parameter simulations.
   </aside>
 </section>
 
@@ -35,6 +38,29 @@ audio: 2020-10-01-ode
         <li>concentrations in tank vs. spatially varying concentrations</li>
     </ul></li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      What do we mean when we talk about lumped parameter simulations?
+      Basically, we mean systems of differential equations.  These
+      types of systems occur all over engineering: think circuit
+      simulations, structural simulations, or models of chemical
+      reactors.  We call these "lumped" models because we make
+      simplifying assumptions about physical quantities like voltages,
+      displacement fields, or chemical concentrations.  With these
+      assumptions, we can describe the fields in terms of relatively
+      few variables.  In contrast, distributed-parameter models work
+      with more faithful representations of the continuous fields -
+      though everything is still on the computer, so we are only ever
+      really going to deal with a finite number of variables when we
+      get down into the code.
+    </p>
+    <p>
+      The terms "lumped parameter" and "distributed parameter" mostly
+      come from certain corners of engineering; if you prefer, I won't
+      mind if you call these ODE and PDE models.
+    </p>
+  </aside>
 </section>
 
 
@@ -47,6 +73,22 @@ audio: 2020-10-01-ode
       (DAEs)</li>
   </ul>
   <p>Often (not always) <em>sparse</em>.</p>
+
+  <aside class="notes">
+    <p>
+      OK, I said we were talking about ordinary differential
+      equations, but really I should have been more careful and said
+      we were interested in ordinary differential equations or
+      differential-algebraic equations.  The latter involve both
+      differential equations and algebraic constraints.  We can
+      generally convert a DAE into an ODE by differentiating the
+      constraints, but it's often better to work directly with the DAE.
+    </p>
+    <p>
+      Whether we are looking at ODEs or DAEs, though, we frequently
+      get fast algorithms by exploiting <em>sparsity</em>.
+    </p>
+  </aside>
 </section>
 
 
@@ -63,6 +105,27 @@ audio: 2020-10-01-ode
     <li>Often arises from physical or logical locality</li>
     <li>Corresponds to <span class="math inline">\(A\)</span> being sparse (mostly zeros)</li>
   </ul>
+  <aside class="notes">
+    <p>
+      When we talk about sparsity in this setting, we are really
+      talking about a <em>dependency graph</em> between variables.
+      In this graph, each variable is represented by a node, and
+      we have an edge between i and j if the derivative of x_j
+      depends on x_i.  In the special case of a linear system of ODEs,
+      sparsity of the system refers to sparsity of the system matrix A
+      (or the property that most of the entries of A are zero).
+      But we can talk about sparsity of nonlinear equations, too.
+    </p>
+    <p>
+      Why do we expect to see sparsity in simulations of physics or of
+      engineered systems?  Because of locality!  In the case of
+      physics, we expect things that are close together to interact
+      more than things that are far away.  In the case of engineered
+      systems, we often try to build the system so that various things
+      interact in rather controlled ways.  Either way, sparsity is
+      pretty common across many systems we'll deal with.
+    </p>
+  </aside>
 </section>
 
 
@@ -78,6 +141,21 @@ audio: 2020-10-01-ode
     <li>Cut size is minimal (minimize communication)</li>
   </ul>
   <p>We’ll talk more about this later.</p>
+
+  <aside class="notes">
+    <p>
+      One reason we care about sparsity is that we care about
+      partitioning problems into pieces that can be treated on
+      different processors with relatively little communication.
+      This leads us to graph partitioning problems, where we try
+      to assign roughly equal numbers of nodes (or some weighted
+      analogue) to different processors in a way that minimizes
+      the number of "cut edges," or dependencies that go from
+      variables assigned to one processor to variables assigned to
+      another.  Minimizing these cut edges tends to minimize the
+      amount of data that we need to communicate during simulations.
+    </p>
+  </aside>
 </section>
 
 
@@ -90,6 +168,20 @@ audio: 2020-10-01-ode
     <li>Can solve directly or iteratively</li>
     <li>Sparsity matters a lot!</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      Of course, so far we have said that we care about ODEs, but we
+      haven't really said how we're going to analyze them.  There's
+      more than one form of analysis!  For example, one of the most
+      basic forms of analysis is <em>static analysis</em>,
+      or the computation of equilibrium solutions (that is, solutions
+      where nothing is changing).  This involves solving a linear or
+      nonlinear system of equations.  The complexity of these solver
+      algorithms, whether they use direct or iterative methods,
+      depends heavily on the sparsity pattern for the system.
+    </p>
+  </aside>
 </section>
 
 
@@ -102,6 +194,24 @@ audio: 2020-10-01-ode
     <li>Implicit methods involve linear/nonlinear solves</li>
     <li>Need to understand stiffness and stability issues</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      In addition to finding steady-state solutions, we often want to
+      run simulations that see what happens to the system from a given
+      initial state.  Because computers are not so good at dealing
+      with continuous variables like time, these dynamic simulations
+      approximate the problem by taking discrete time steps.
+      Depending on the nature of the problem, we might use an explicit
+      method or an implicit method; the latter involves solving a
+      linear or nonlinear system of equations at every step.
+      We choose between implicit and explicit methods based on the
+      so-called "stiffness" of the problem: for stiff problems,
+      explicit time-steppers blow up unless we take very small time
+      steps.  Differential-algebraic equations are infinitely stiff,
+      so we always use implicit methods for time-stepping them.
+    </p>
+  </aside>
 </section>
 
 
@@ -109,6 +219,18 @@ audio: 2020-10-01-ode
   <h3>Types of analysis: Modal</h3>
   <p>Consider <span class="math inline">\(x&#39; = f(x)\)</span> (special case: <span class="math inline">\(f(x) = Ax + b\)</span>).</p>
   <p>Might want: eigenvalues of <span class="math inline">\(A\)</span> or <span class="math inline">\(f&#39;(x_*)\)</span></p>
+
+  <aside class="notes">
+    <p>
+      If we are interested in the dynamic behavior of systems close to
+      an equilibrium, we often end up reasoning about the behavior of
+      eigenvalues and eigenvectors of Jacobian matrices.  You may
+      remember this when (or if) you took a first course in ODEs,
+      and had to draw phase-plane portraits.  This type of analysis of
+      linearized dynamics, or modal analysis, gives us a useful way to
+      think about many near-equilibrium systems.
+    </p>
+  </aside>
 </section>
 
 
@@ -125,6 +247,25 @@ audio: 2020-10-01-ode
     <li>Simple algorithms</li>
     <li>May have stability/stiffness issues</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      When we talk about numerically solving differential equations in
+      introductory courses in differential equations, we usually start
+      by describing Euler's method.  This is based on a Taylor
+      expansion of the function f around the state x_k at time t_k.
+      In pictures, we draw a vector field from each point, and
+      approximate the solution by following the vector field at every
+      step.  The resulting algorithm is simple and explicit: we don't
+      need to solve an equation to get x_{k+1}, we only need to
+      evaluate f at the previous position x_k.
+    </p>
+    <p>
+      Unfortunately, for many interesting systems, forward Euler is
+      unstable unless we take rather short steps.  The same is also
+      true of more sophisticated explicit time-stepping schemes.
+    </p>
+  </aside>
 </section>
 
 
@@ -140,6 +281,20 @@ audio: 2020-10-01-ode
     <li>Algorithms involve solves — complication, communication!</li>
     <li>Larger time steps, each step costs more</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      So if we are not always happy to use explicit time-steppers,
+      what should we use instead?  The answer is that we use implicit
+      steppers, where the position x_{k+1} is expressed as the unknown
+      in a linear or nonlinear equation.  The standard example is
+      backward Euler - which looks much like Euler, except that we
+      evaluate the function f at the new state x_{k+1} rather than at
+      the old state x_k.  We can take longer steps with implicit
+      methods without worrying about stability, but each step costs
+      more than a step of an explicit method.
+    </p>
+  </aside>
 </section>
 
 
@@ -153,6 +308,26 @@ audio: 2020-10-01-ode
     <li>Implicit time marching: iterative solves (involving matvecs)</li>
   </ul>
   <p>We need to figure out how to make matvec fast!</p>
+
+  <aside class="notes">
+    <p>
+      Somewhat surprisingly - or not, if you're a linear algebra fan -
+      sparse linear algebra algorithms sit at the heart of almost all
+      the types of analysis methods we've described.  More
+      specifically, the fundamental building block for a lot of
+      algorithms with large sparse matrices is multiplication of a
+      sparse matrix by a vector (also called sparse matvec).
+      This building block appears when we're solving linear systems,
+      computing eigenvalues and eigenvectors, time-stepping with
+      explicit methods, or solving systems of equations in a static
+      analysis or an implicit time-stepper.
+    </p>
+    <p>
+      All of this is to say: we really care about the performance of
+      sparse matvec, and will spend serious time talking about it
+      in later parts of the class.
+    </p>
+  </aside>
 </section>
 
 
@@ -168,6 +343,23 @@ audio: 2020-10-01-ode
     <li>Easy to get lots of indirect indexing!</li>
     <li>Compressed sparse storage schemes help</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      The important thing about sparse matrices is that we can
+      describe them with far fewer than n^2 parameters.  There are
+      some non-sparse matrices that have this property, too,
+      such as discrete convolution operators.  We call these
+      simple-but-not-sparse matrices "data sparse."
+    </p>
+    <p>
+      An important aspect of working with sparse matrices is figuring
+      out how to store them efficiently.  By "efficiently," I mean
+      that we want representations that don't take up too much space
+      in memory, and that we should be able to run various algorithms
+      on those representations with low complexity.
+    </p>
+  </aside>
 </section>
 
 
@@ -184,4 +376,52 @@ audio: 2020-10-01-ode
     <li>Could compress column index data (16-bit vs 64-bit)</li>
     <li>Various other optimizations — see OSKI</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      One example of a compressed storage format for sparse matrices
+      is the so-called compressed sparse row (or CSR) format.  We've
+      drawn a picture here to illustrate how it works.  The format
+      consists of three arrays: parallel data and column index arrays
+      that store the value and column of each nonzero in the matrix,
+      listed in row-major order; and a pointer array that indicates
+      the offset of each row in the data and column arrays.  This
+      turns out to be a pretty efficient general-purpose format for
+      sparse matrices where we want to compute fast matvecs.
+    </p>
+    <p>
+      One can try to be fancier, of course, particularly if there is
+      some internal structure.  We might organize the nonzero entries
+      into blocks, or compress the column index array.  These types of
+      tweaks, along with several others, are the key building blocks
+      for codes like OSKI, which produces tuned sparse matrix-vector
+      products for specific matrices.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Summary</h3>
+
+  <ul>
+    <li>ODE and DAE models widely used in engineering</li>
+    <li>Different analyses: static, dynamic, modal</li>
+    <li>Sparse linear algebra is often key</li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      Summarizing for now: many of the models that we use in
+      engineering involve large systems of ODEs or DAEs.
+      We can analyze these models in different ways,
+      whether by finding equilibria, simulating nonlinear dynamics,
+      or using eigenstuff to analyze the linearized dynamics close
+      to an equilibrium.  In each case, much of the computational
+      work can be expressed in terms of a standard building block,
+      which is sparse matrix-vector products.  And we'll talk about
+      this building block in some detail in later lectures of the
+      class.
+    </p>
+  </aside>
 </section>
