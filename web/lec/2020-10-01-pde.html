@@ -189,8 +189,8 @@ audio: 2020-10-01-pde
 
 <section>
   <h3>Batching time steps</h3>
-    <img src="{{ "lec/figs/ghost-exchange1.svg" | relative_url }}"
-       alt="Plot of ghost cell data exchange"
+    <img src="{{ "lec/figs/ghost-exchange2.svg" | relative_url }}"
+       alt="Plot of batch ghost cell data exchange"
        style="background-color:white"
        width="60%"/>
   <pre>for t = 1 to N by B
@@ -204,8 +204,8 @@ audio: 2020-10-01-pde
 
 <section>
   <h3>Explicit pain</h3>
-    <img src="{{ "lec/figs/ghost-exchange1.svg" | relative_url }}"
-       alt="Plot of ghost cell data exchange"
+    <img src="{{ "lec/figs/explicit-unstable-demo.png" | relative_url }}"
+       alt="Plot of instability in explicit heat equation stepper"
        style="background-color:white"
        width="80%"/>
   <p>Unstable for <span class="math inline">\(\delta &gt; O(h^2)\)</span>!</p>
