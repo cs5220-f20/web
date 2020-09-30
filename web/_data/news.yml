@@ -16,3 +16,6 @@
 -
   date: 2020-09-17
   text: Alternate meeting time for the non-8AM folks who still want the group experience is TR 1:25-2:40 in the <a href="https://www.cs.cornell.edu/courses/CS5220/2020fa/netid/index.html">Gather.town</a> office.  I will be there Thurs 2-4 for office hours.
+-
+  date: 2020-09-30
+  text: Please use n2-highcpu-2 rather than e2-micro instances for timing/tuning the matrix multiply project.
