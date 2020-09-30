@@ -101,7 +101,7 @@
   files:
     - info: Lumped parameter models
       file: lec/2020-10-01-ode.html
-    - info: Distributed parameter models (in progress)
+    - info: Distributed parameter models
       file: lec/2020-10-01-pde.html
 # =================
 # Week 4
