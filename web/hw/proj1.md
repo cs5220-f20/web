@@ -105,7 +105,7 @@ As a group, you should submit
   vectorization and memory architecture from the class.
   You may use any references you find online, with appropriate citation.
 - A CSV file with your timing results for the full set of matrix
-  sizes, run on an `e2-micro` instance on GCP.  This is the output of
+  sizes, run on an `n2-highcpu-2` instance on GCP.  This is the output of
   `matmul-mine.x` in the default drivers.
 - Your code base, either as an archive file (`zip` or Uniz `tgz` are
   fine) or as a pointer to a git repository that I can access.  If you
