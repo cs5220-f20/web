@@ -14,6 +14,21 @@ audio: 2020-10-01-pde
   <p>Please click the play button below.</p>
 
   <aside class="notes">
+    <p>
+      Welcome to the fourth of our four mini-lectures on locality and
+      parallelism in simulations.  The topic this time is distributed
+      parameter models - also known as partial differential equations.
+    </p>
+    <p>
+      Note: I do not expect you all to be expert in numerical PDEs!
+      I didn't expect you all to be computer architects, either;
+      past experience suggests most of you who know about architecture
+      probably know less about vice-versa.  I believe in spreading the
+      joy of new concepts.  Fortunately, the goal here isn't to get
+      you to really deeply understand numerical PDEs.  Rather, it's to
+      point out some ideas about the computational patterns that
+      appear in these types of simulations.
+    </p>
   </aside>
 </section>
 
@@ -50,6 +65,59 @@ audio: 2020-10-01-pde
       </tr>
     </tbody>
   </table>
+
+  <aside class="notes">
+    <p>
+      All right.  If you're going to talk about PDEs at a cocktail
+      party, you should know the names of the main classes of PDEs
+      that everyone around you is talking about.
+    </p>
+    <p>
+      First, there are elliptic PDEs.  These come up in equilibrium
+      problems, like finding the electrostatic potential for a system.
+      They're steady-state problem, so no real time dependence;
+      but the solution at one point in space depends on the behavior
+      everywhere else in space, at least within the domain.  So we
+      say that this class of problems has global dependence in space.
+    </p>
+    <p>
+      Second, there are hyperbolic PDEs.  These are the equations that
+      describe waves and signals and the like.  The usual model
+      problem people talk about is propagation of sound.  This is a
+      time-dependent problem, so it's more complicated then elliptic
+      problems in that way.  But waves travels through space at
+      a finite speed, so points that are far from each other can be
+      dealt with more-or-less independently, at least over short
+      periods.
+    </p>
+    <p>
+      Yes, yes, sometimes we do frequency-domain analysis of sound.
+      Who pointed that out?  Oh, I guess it's just me here.  Moving
+      on, then...
+    </p>
+    <p>
+      The third type of PDE is parabolic equations.  Think diffusion
+      processes here, like the diffusion of heat.  These problems are
+      time-dependent, but the equations don't give us anything like a
+      speed of sound.  Everything affects everything else
+      instantaneously, though maybe not by a lot.
+    </p>
+    <p>
+      The differences between these types of equations turn out to
+      matter a lot when it comes time to design - and parallelize -
+      numerical solution algorithms.  We'll sketch why in the rest of
+      this deck.
+    </p>
+    <p>
+      And now, you're ready for that cocktail party!  Or you would be,
+      if we were going to cocktail parties any more.  And if you
+      frequented the types of cocktail parties attended by numerical
+      PDE folks.
+    </p>
+    <p>
+      OK, let's just move on with the lecture, shall we?
+    </p>
+  </aside>
 </section>
 
 
@@ -63,6 +131,21 @@ audio: 2020-10-01-pde
     <li>Local dependence from finite wave speeds;<br />
       limits communication</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      When I say that elliptic and parabolic equations involve global
+      dependence across space, that should make you nervous.  We like
+      locality, because we don't like communicating.  Global
+      dependence generally means lots of communication; local
+      dependence means that we only have to communicate with nearby
+      neighbors in our computations.
+    </p>
+    <p>
+      All right, this is a little abstract.  Let's turn to an example
+      to make things concrete.
+    </p>
+  </aside>
 </section>
 
 <section>
@@ -76,6 +159,37 @@ audio: 2020-10-01-pde
        alt="Derivation figure for the heat equation"
        style="background-color:white"
        width="60%"/>
+    <aside class="notes">
+      <p>
+        Our first example will be heat flow in a uniform rod (that is,
+        a 1D medium where the heat capacity is constant).
+      </p>
+      <p>
+        In this setting, the amount of heat in a region is
+        proportional to the temperature times the mass.  Heat flows
+        from hotter regions to colder regions, tending to even out
+        over time.  We sometimes introduce this in terms of Fourier's
+        law, which says that the heat flow is proportional to the
+        temperature gradient.  But I learned another derivation when I
+        first saw this stuff, in terms of Newton's law of cooling.
+      </p>
+      <p>
+        Newton's law of cooling says that we lose heat across an
+        interface at a rate proportional to the temperature jump
+        across the interface (and the surface area of that interface).
+        This is the way we figure out how long a body has been dead,
+        for example, where by "we" I mean somebody completely other
+        than me - I've never been called on to do this in person.
+      </p>
+      <p>
+        So suppose we think of our long, uniform rod as a sequence of
+        short, uniform rods, each with roughly constant temperature.
+        The rate at which heat moves from one of these short segments
+        to its neighbors is determined by Newton's law of cooling.
+        If we let the length of these short segments go to zero,
+        in the limit we recover Fourier's law.
+      </p>
+    </aside>
 </section>
 
 <section>
@@ -94,6 +208,24 @@ audio: 2020-10-01-pde
       C \left[ \frac{u(x-h)-2u(x)+u(x+h)}{h^2} \right] \rightarrow
       C \frac{\partial^2 u}{\partial x^2}
       \end{aligned}\]</span></p>
+
+  <aside class="notes">
+    <p>
+      Here's the same thing in terms of equations rather than words
+      and pictures.  You can stop and stare at it for a moment, if
+      it's useful to you, but the punchline is what I just said:
+      we can derive the heat equation in terms of a limiting argument
+      on a simpler model, where we split our uniform rod into slices
+      of length h.
+    </p>
+    <p>
+      Why do I repeat this?  Because it turns out that one way to
+      solve PDEs is to go through this derivation in reverse.  Rather
+      than getting a spatial derivative through a process of limits on
+      small-but-finite things, we use finite differences to
+      approximate derivatives.
+    </p>
+  </aside>
 </section>
 
 
@@ -102,6 +234,18 @@ audio: 2020-10-01-pde
   <p>Heat equation with <span class="math inline">\(u(0) = u(1) =
       0\)</span> <span class="math display">\[\frac{\partial u}{\partial
       t} = C \frac{\partial^2 u}{\partial x^2}\]</span></p>
+
+  <aside class="notes">
+    <p>
+      All right.  Let's talk now about how we can solve a PDE like the
+      heat equation on a computer.  For the full problem, note that we
+      need boundary conditions (which we have written down here) and an
+      initial value for the temperature u (which we have not written
+      down).  This problem is continuous in space and time, so we need
+      some way to discretize both.  We'll start with discretizing the
+      spatial part.
+    </p>
+  </aside>
 </section>
 
 
@@ -112,6 +256,20 @@ audio: 2020-10-01-pde
       u}{\partial x^2} \approx
       \frac{u(x-h)-2u(x)+u(x+h)}{h^2}\]</span>
   </p>
+
+  <aside class="notes">
+    <p>
+    There are a lot of different ways to discretize in space, but the
+    method we're going to use today is a finite difference approach.
+    That is, we think of having values of u on a mesh with spacing h
+    at each time, and we approximate the derivative of u at a point
+    with a linear combination of values of points in the local
+    neighborhood.  The pattern is to take twice the value at the point
+    minus the values at the neighboring points, and divide the whole
+    thing by h^2.  This is sometimes called a finite difference
+    stencil operation.
+    </p>
+  </aside>
 </section>
 
 
@@ -128,12 +286,35 @@ audio: 2020-10-01-pde
       &amp;         &amp;        &amp;  -1     &amp; 2
       \end{bmatrix}
       \begin{bmatrix} u_1 \\ u_2 \\ \vdots \\ u_{n-2} \\ u_{n-1} \end{bmatrix}\]</span></p>
+
+  <aside class="notes">
+    <p>
+      So now we approximate the continuous temperature field at a
+      given time with temperature values on n-1 evenly spaced points
+      between 0 and 1, with boundary values u_0 = 0 and u_n = 1.
+      Replacing the second derivative in space with the finite
+      difference stencil approximation on this mesh gives us a system
+      of ODEs: $du/dt$ is $-Ch^-2$ times the tridiagonal matrix $T$
+      with 2 on the main diagonal, -1 on the off diagonal, and 0
+      everywhere else.
+    </p>
+  </aside>
 </section>
 
 
 <section>
   <h3>Explicit time stepping</h3>
   <p>Approximate PDE by ODE system (“method of lines”): <span class="math display">\[\frac{du}{dt} = C h^{-2} T u\]</span> Now need a time-stepping scheme for the ODE.</p>
+
+  <aside class="notes">
+    <p>
+    We've taken care of space, but left time alone so far.  This is
+    sometimes called a spatial semi-discretization; more specifically,
+    this particular semi-discretization is called the "method of
+    lines."  It's progress, but if we actually want to solve the PDE
+    on a computer, we need to deal with time, too.
+    </p>
+  </aside>
 </section>
 
 
@@ -145,6 +326,19 @@ audio: 2020-10-01-pde
     <li>Taking a time step <span class="math inline">\(\equiv\)</span> sparse matvec with <span class="math inline">\(\left( I - C \frac{\delta}{h^2} T \right)\)</span></li>
     <li>This may not end well...</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      OK, let's do the easy thing that I've already warned you might
+      be a bad idea, just to see what happens.  We're going to
+      approximate the ODE using forward Euler.  That means that taking
+      a time step is the same as a sparse matrix-vector multiply with
+      a tridiagonal matrix.  This won't end well for the heat
+      equation, but it's worth thinking through how the dependencies
+      in the method play out as a setup for thinking about other types
+      of equations and methods in a little bit.
+    </p>
+  </aside>
 </section>
 
 
@@ -156,6 +350,22 @@ audio: 2020-10-01-pde
        width="60%"/>
   <p>Nearest neighbor interactions per step <span class="math inline">\(\implies\)</span><br />
     finite rate of numerical information propagation</p>
+
+  <aside class="notes">
+    <p>
+      When we do a method like forward Euler, we only interact with
+      nearest neighbors at each step, which means that information can
+      only move through the mesh at a rate of one grid point per time
+      step.  So in the plot here, we start with the blue information
+      on the left and the yellow information on the right, and let
+      time march in the vertical direction.  All the points that have
+      "seen" both blue and yellow information are marked in green.
+      And you can see it takes several steps before everyone sees
+      information coming from both halves of the domain!  That's a
+      structure that we can use when we are thinking about effective
+      parallel strategies.
+    </p>
+  </aside>
 </section>
 
 
@@ -166,9 +376,28 @@ audio: 2020-10-01-pde
        style="background-color:white"
        width="60%"/>
   <pre>for t = 1 to N
-    communicate boundary data (&quot;ghost cell&quot;)
-    take time steps locally
-    end</pre>
+  communicate boundary data (&quot;ghost cell&quot;)
+  take time steps locally
+end</pre>
+
+  <aside class="notes">
+    <p>
+      Let's think about a message passing environment first, with just
+      two processors.  Each processor "owns" data for half of the
+      domain, but they need a little data from the other half in order
+      to be able to take a time step.  So before each time step, we
+      have a message exchange, where each processor sends its boundary
+      data to the neighboring processor.  The neighbor boundary data gets
+      stored together with the data owned by the processor, placed in
+      so called "ghost cells" that are indexed with the same scheme as
+      the rest of the data, but might not be updated by the time
+      stepper.
+    </p>
+    <p>
+      Once we receive boundary data, we can update the local part of
+      the domain without any further communication.
+    </p>
+  </aside>
 </section>
 
 
@@ -179,11 +408,27 @@ audio: 2020-10-01-pde
        style="background-color:white"
        width="60%"/>
   <pre>for t = 1 to N
-    start boundary data sendrecv
-    compute new interior values
-    finish sendrecv
-    compute new boundary values
-    end</pre>
+  start boundary data sendrecv
+  compute new interior values
+  finish sendrecv
+  compute new boundary values
+end</pre>
+
+  <aside class="notes">
+    <p>
+      Communication latencies are big, so we don't necessarily want to
+      have to wait for a message to complete before we start
+      computing.  So really, we will probably do something more
+      complicated than what I sketched a moment ago.  Instead of
+      exchanging boundary data and then taking a time step, we will
+      start the data exchange, then do most of the updates for the
+      time step, and then complete the exchange before finishing the
+      bit of the time step that actually depends on the boundary
+      values.  This lets us overlap communication with computation,
+      doing some useful work with the processor rather than twiddling
+      our thumbs while waiting for messages.
+    </p>
+  </aside>
 </section>
 
 
@@ -194,11 +439,31 @@ audio: 2020-10-01-pde
        style="background-color:white"
        width="60%"/>
   <pre>for t = 1 to N by B
-    start boundary data sendrecv (B values)
-    compute new interior values
-    finish sendrecv (B values)
-    compute new boundary values
-    end</pre>
+  start boundary data sendrecv (B values)
+  compute new interior values
+  finish sendrecv (B values)
+  compute new boundary values
+end</pre>
+
+  <aside class="notes">
+    <p>
+      The problem with the scheme we've discussed so far is that we
+      can do a <em>lot</em> of work in the time it takes to send one
+      message - so much work, in fact, that we might still be unable
+      to hide the cost of the communication underneath of our
+      computation.  But a big part of the communication overhead comes not from
+      the volume of data that we are sending - the bandwidth costs -
+      but from message latency.  And we can avoid paying that latency
+      cost so often by batching up the communication events.  Instead
+      of sending boundary data before every time steps, we send
+      boundary data every B time steps, then operate independently.
+      If we're going to go for B steps, we need to send B layers of boundary
+      data in that message.  Nothing changes the fundamental fact that
+      we're propagating one boundary layer per time step on average;
+      we are just changing the frequency with which we communicate,
+      and thus the number of latency times we have to hide.
+    </p>
+  </aside>
 </section>
 
 
@@ -209,6 +474,25 @@ audio: 2020-10-01-pde
        style="background-color:white"
        width="80%"/>
   <p>Unstable for <span class="math inline">\(\delta &gt; O(h^2)\)</span>!</p>
+
+  <aside class="notes">
+    <p>
+      All right, now that we're feeling very clever about our skills
+      with organizing communication, let's look what happens when we
+      apply this technique to the heat equation.  As we foreshadowed,
+      the result doesn't look good.  This is a 1D problem, with time
+      running from back to front and space running from left to
+      right.  And, as you can see, the nice smooth temperature profile
+      that we started with develops oscillations that grow in
+      magnitude as time proceeds.  This is what I meant when I said
+      the simulation blows up.  This is <em>not</em> a physical
+      phenomenon; it's just a numerical artifact that comes from
+      taking time steps that are too long for the discretization.
+      Unfortunately, this will happen in general for the heat equation
+      unless we take time steps smaller than the square of the spatial
+      step.
+    </p>
+  </aside>
 </section>
 
 
@@ -223,6 +507,22 @@ audio: 2020-10-01-pde
         <li>Good if you like numerical linear algebra?</li>
     </ul></li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      As we've mentioned before, we can avoid the instability that we
+      just saw by switching from an explicit time-stepper to an
+      implicit scheme, something like backward Euler.  Where forward
+      Euler involves multiplying by a tridiagonal matrix at every
+      step, backward Euler involves solving a tridiagonal linear
+      system of equations at every step.  With backward Euler, we have
+      no time step restrictions for stability, though we do still need
+      to control the time step in order to maintain good accuracy.
+      But each step involves solving a linear system, which is maybe a
+      bit more complicated than doing a sparse matvec.  So this is a
+      complication, though it's good news for any numerical linear
+      algebra fans following along from home.
+  </aside>
 </section>
 
 
@@ -235,6 +535,27 @@ audio: 2020-10-01-pde
     <li>Stable step determined by fastest time scale</li>
     <li>Works fine for <em>hyperbolic</em> PDEs</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      So what have we learned?  Explicit time-steppers like forward
+      Euler tend to propagate information at a finite rate through a
+      numerical mesh, at least when we are using a finite difference
+      discretization like the one we've discussed so far.  In the
+      linear case, taking a time step is just a sparse matvec.  But we
+      get into trouble if the physics can move information around our
+      domain faster than the numerical method can keep up.  The stable
+      step is limited by the fastest time scale, and that fastest time
+      scale is effectively infinite for parabolic differential
+      equations like the heat equation.  On the other hand, this
+      approach works fine for hyperbolic PDEs like the wave equation,
+      where the physics has a natural speed of information propagation
+      to it.  We just need to make sure that our numerics keeps up
+      with the physics by not letting the time steps get too long.
+      If you hang around with numerical PDE people, you'll sometimes
+      hear this referred to as the CFL condition.
+    </p>
+  </aside>
 </section>
 
 
@@ -250,18 +571,64 @@ audio: 2020-10-01-pde
     </ul></li>
     <li>Critical for parabolic PDEs</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      In contrast to explicit time steppers, implicit time steppers
+      (like backward Euler) don't need to resolve the fastest time
+      scales in the system.  This means that we can generally take
+      longer steps than we would with an explicit stepper, and not get
+      into so much trouble with numerical instability (though we still
+      have to think about the role of the time step in overall
+      solution accuracy).  But we may pay more per step than we do
+      with an explicit method, because we need to solve a system of
+      equations at every step.  And our favorite solution algorithms
+      involve... sparse matvecs again!  You can't get away from them.
+      Of course, our favorite solver algorithms also usually involve
+      some other ingredients, but we'll get to that later in the
+      course.
+    </p>
+    <p>
+      When we are solving parabolic PDEs like the heat equation, we
+      really have very little choice.  Implicit time steppers are the
+      only viable option.  For hyperbolic PDEs, we can go explicit or
+      implicit, though explicit methods are often favored.
+    </p>
+  </aside>
 </section>
 
 
 <section>
   <h3>Poisson problems</h3>
   <p>Consider 2D Poisson <span class="math display">\[-\nabla^2 u =
-      \frac{\partial^2 u}{\partial x^2} +
+      -\frac{\partial^2 u}{\partial x^2} -
       \frac{\partial^2 u}{\partial y^2} = f\]</span></p>
   <ul>
     <li>Prototypical elliptic problem (steady state)</li>
     <li>Similar to a backward Euler step on heat equation</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      So far, we've been talking a lot about parabolic and hyperbolic
+      equations.  But at the start of the slide deck, we also
+      mentioned elliptic equations, usually associated with
+      steady-state problems.  The prototypical example of an elliptic
+      problem is the Poisson equation, shown here.
+    </p>
+    <p>
+      You might notice that the Poisson equation looks a lot like the
+      type of equation we would see in a backward Euler step on the
+      heat equation.  Turns out that figuring out how to solve Poisson
+      fast is also useful for figuring out how to efficiently
+      implement implicit solvers for the heat equation.
+    </p>
+    <p>
+      We considered just one spatial dimension in the case of the heat
+      equation, but had to deal with time.  For Poisson, we don't have
+      to worry about time, so let's consider two spatial dimensions.
+    </p>
+  </aside>
 </section>
 
 
@@ -270,6 +637,17 @@ audio: 2020-10-01-pde
   <p><span class="math inline">\(u_{i,j} = h^{-2} \left(
       4u_{i,j}-u_{i-1,j}-u_{i+1,j}-u_{i,j-1}-u_{i,j+1}
       \right)\)</span></p>
+
+  <aside class="notes">
+    <p>
+      We'll use the same finite difference scheme for the second
+      derivatives in Poisson that we used for the second derivatives
+      in the heat equation.  But instead of having to look at just two
+      neighbors on a line, we know want to look at four neighbors on a
+      2D mesh: up, down, left, and right.  We'll index the mesh points
+      by row and column when we think about things this way.
+    </p>
+  </aside>
 </section>
 
 
@@ -288,6 +666,28 @@ audio: 2020-10-01-pde
       &amp;    &amp;    &amp;    &amp;    &amp; -1 &amp;    &amp; -1 &amp;  4
       \end{array}
       \right]\]</span></p>
+
+  <aside class="notes">
+    <p>
+      We might think about the discrete solution as a collection of
+      values on a 2D grid, but for setting up solvers, it's worthwhile
+      thinking about a 1D indexing scheme.  Let's consider what
+      happens when we lay out the mesh points in column major order.
+      In that case, we can write down the finite difference
+      approximation in terms of a sparse matrix-vector product with a
+      matrix like the one shown here.  This is for a three-by-three
+      mesh, because otherwise we would run out of room on the slide!
+      The matrix is block tridiagonal, with tridiagonal blocks on the
+      main diagonal.  So it's a little more complicated than the
+      tridiagonal matrix T we saw before, but related.
+    </p>
+    <p>
+      If this was my matrix computations class, this is the part of
+      the lecture where I'd start going on and on about Kronecker
+      products and the vec operator.  But... it's not my matrix
+      computations class.  So let's move on for now.
+    </p>
+  </aside>
 </section>
 
 
@@ -297,6 +697,29 @@ audio: 2020-10-01-pde
     unknowns</p>
   <p>Ref: Demmel, <em>Applied Numerical Linear Algebra</em>, SIAM, 1997.</p>
   <p>Remember: best MFlop/s <span class="math inline">\(\neq\)</span> fastest solution!</p>
+
+  <aside class="notes">
+    <p>
+      People have thought a lot about numerical methods for solving
+      the Poisson equation, or things that look like the Poisson
+      equation.  My presentation is stolen from Jim Demmel's book on
+      numerical linear algebra (with full disclosure that Jim was one
+      of my advisors in grad school).
+    </p>
+    <p>
+      I'm going to show you the asymptotic complexity results in the
+      next couple slides.  You might object that this goes against
+      what I told you earlier about not putting too much faith in
+      asymptotic complexity.  But remember, too, that performance is
+      about both the rate at which work gets done <em>and</em> the
+      total amount of work.  The simpler methods may get better flop
+      rates than the more complicated methods, but the methods with
+      better asymptotic complexity still win on big problems.  And
+      when the number of unknowns is the square (or cube in 3D) of the
+      number of points per side of the mesh, our problems get big
+      pretty fast.
+    </p>
+  </aside>
 </section>
 
 
@@ -333,6 +756,38 @@ audio: 2020-10-01-pde
       </tr>
     </tbody>
   </table>
+
+  <aside class="notes">
+    <p>
+      We usually start with talking about pretty general methods that
+      work with big classes of linear systems.  Methods based on
+      Gaussian elimination solve all types of linear systems, but they
+      are expensive - N^3 space, where N is the number of mesh points
+      in this case.  You aren't going to use these for even toy
+      problems in 3D; it just costs too much.  These methods use a lot
+      of space, too.  We do a little better with band variants that
+      use the fact that all the entries far from the diagonal are
+      zero, but it's still expensive.      
+    </p>
+    <p>
+      At the same complexity level as band Gaussian elimination,
+      there's the simplest iterative method we're going to discuss:
+      Jacobi's method.  That turns out to take N^2 time to reduce
+      the error by a constant amount.
+    </p>
+    <p>
+      We've also written down computing an explicit inverse (or, if
+      you are a PDE person, working with a solver based on Green's
+      functions).  Because we know the Green's function for this type
+      of problem, we can do this in N^2 time.  It gets more complex
+      when we can't write down the Green's function so easily.
+    </p>
+    <p>
+      You don't need to worry if you've never heard of a Green's
+      function before, by the way.  The point is that this is still a
+      pretty expensive thing to do.
+    </p>
+  </aside>
 </section>
 
 
@@ -374,6 +829,29 @@ audio: 2020-10-01-pde
       </tr>
     </tbody>
   </table>
+
+  <aside class="notes">
+    <p>
+      The faster methods for solving Poisson problems rely more and
+      more on the structure of the PDE.  The method of conjugate
+      gradients and red-black SOR iteration are general-purpose
+      iterative solvers, but the analysis of their rate of convergence
+      on Poisson discretizations depends a lot on the nature of the
+      Poisson problem.  We can get these to run in O(N^3/2) time on
+      this problem, and we'll talk about that later.  We can also
+      solve 2D Poisson in O(N^3/2) using a sparse LU factorization;
+      there, we don't care so much that we are solving Poisson, but we
+      do care that the sparsity pattern is associated with a
+      nearest-neighbor mesh in 2D.  Finally, we can get log-linear
+      time using Fourier transforms, or even linear time using
+      multigrid methods.  But those are really tied to this type of
+      linear system.
+    </p>
+    <p>
+      We will talk about many of these types of linear solvers later
+      in the semester.
+    </p>
+  </aside>
 </section>
 
 
@@ -389,6 +867,32 @@ audio: 2020-10-01-pde
     </ul></li>
     <li>Iterative solves boil down to matvec!</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      All right.  So if we are doing implicit time stepping or solving
+      steady-state PDEs like Poisson, we end up solving large linear
+      systems of equations.  And if we're doing more complicated
+      nonlinear problems, we solve nonlinear systems of equations;
+      but the nonlinear solvers we use are things like Newton's
+      iteration, which involves a linear solve at every step.  So for
+      a lot of reasons, we are going to care about linear solvers.
+    </p>
+    <p>
+      As I alluded to a moment ago, there are two general classes of
+      linear solvers.  Direct methods like Gaussian elimination just
+      directly solve the problem.  They are great when they apply, but
+      they cost too much to be used for lots of big PDE solvers.  So
+      for solving PDEs, we often focus on iterative methods, which
+      take an initial guess and incrementally make it better and
+      better until we decide that the level of error is acceptable.
+      Making those iterative methods converge fast often involves some
+      problem-specific thinking.  But there's also a piece that is
+      crucial to the step-by-step performance that we can think about
+      in a somewhat problem-independent way: and that piece is the
+      sparse matvec operation.
+    </p>
+  </aside>  
 </section>
 
 
@@ -407,6 +911,26 @@ audio: 2020-10-01-pde
       </ul>
     </li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      OK, let's wrap up our lightning intro to numerical PDEs.  For
+      time-dependent PDEs, we can use either implicit or explicit
+      solvers, just like with ODEs.  We often choose the method based on
+      the type of PDE: implicit for parabolic equations, explicit for
+      hyperbolic (though we could also do implicit methods there, if we
+      wanted).
+    </p>
+    <p>
+      Implicit methods generally require solving sparse linear or
+      nonlinear systems of equations.  Direct solution algorithms like
+      Gaussian elimination don't necessarily scale well to problems
+      the size of PDE meshes, so we are likely to turn to iterative
+      solvers.  And both iterative solvers and explicit time steppers
+      lean pretty heavily on sparse matvecs, at least for linear
+      PDEs.
+    </p>
+  </aside>
 </section>
 
 
@@ -418,6 +942,22 @@ audio: 2020-10-01-pde
     <li>Can partition into subdomains that communicate only through boundary data</li>
     <li>More on graph partitioning later</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      Sparsity matters a lot for numerical PDEs.  When we discretize,
+      differential operators turn into local stencil operations that
+      involve looking over nearest-neighbor patches.  The matrix
+      sparsity patterns are derived from that nearest-neighbor
+      structure.  Partitioning the problem on a parallel machine
+      often can be thought of in terms of splitting up the mesh points
+      into coherent subdomains, where we only have to communicate the
+      data that lies at subdomain boundaries.  And we'll talk about
+      how to think about this type of partitioning for non-structured
+      problems in the more general framework of graph partitioning
+      later on in the semester.
+    </p>
+  </aside>
 </section>
 
 
@@ -428,4 +968,36 @@ audio: 2020-10-01-pde
     <li>Depends on mesh structure</li>
     <li>Also depends on flops/point</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      On a final note, you shouldn't read too much into the simplicity
+      of the stencil operations we discussed so far.  Not all
+      nearest-neighbor operations that we do are this cheap!  But part
+      of the reason for focusing on these simple stencils is that they
+      are often the hardest to tune, because they offer relatively
+      little local work.  Methods where we have bigger stencils, or
+      problems where we have to do more flops per mesh point in order
+      to take a time step, have more local work and are hence easier
+      to tune.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Onward</h3>
+
+  <aside class="notes">
+    <p>
+      And so we conclude our week on locality and parallelism in
+      simulations.  We'll continue seeing the problems introduced this
+      week throughout the remainder of the semester, so it is worth
+      going back through this deck more than once if you're puzzled.
+    </p>
+    <p>
+      Next week, though, we will be getting into the nuts and bolts of
+      distributed memory programming with MPI.
+    </p>
+  </aside>
 </section>
