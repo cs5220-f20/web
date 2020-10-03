@@ -134,7 +134,7 @@ audio: 2020-10-06-mpi
   <h3>Ring topology</h3>
   <img src="{{ "lec/figs/topo-ring.svg" | relative_url }}"
        alt="Diagram of ring topology"
-       width="30%"/>
+       width="30%"/><br/>
   <ul>
     <li>$p$ links</li>
     <li>Diameter $p/2$</li>
@@ -159,7 +159,7 @@ audio: 2020-10-06-mpi
   <h3>Torus</h3>
   <img src="{{ "lec/figs/topo-torus.svg" | relative_url }}"
        alt="Diagram of torus topology"
-       width="30%"/>
+       width="40%"/>
   <p>Torus : Mesh :: Ring : Linear</p>
 </section>
 
@@ -168,7 +168,7 @@ audio: 2020-10-06-mpi
   <h3>Hypercube</h3>
   <img src="{{ "lec/figs/topo-cube.svg" | relative_url }}"
        alt="Diagram of hypercube topology"
-       width="30%"/>
+       width="40%"/>
   <ul>
     <li>Label processors with binary numbers</li>
     <li>Connect $p_1$ to $p_2$ if labels differ in one bit</li>
@@ -575,7 +575,7 @@ MPI_Recv(buf, count, datatype,
   <h3>Blocking and buffering</h3>
   <img src="{{ "lec/figs/mpi-send-buf.svg" | relative_url }}"
        alt="Diagram of buffered message send"
-       width="60%"/>
+       width="80%"/>
   <p>Block until data “in system” — maybe in a buffer?</p>
 </section>
 
@@ -584,7 +584,7 @@ MPI_Recv(buf, count, datatype,
   <h3>Blocking and buffering</h3>
   <img src="{{ "lec/figs/mpi-send-nbuf.svg" | relative_url }}"
        alt="Diagram of unbuffered message send"
-       width="60%"/>
+       width="80%"/>
   <p>Alternative: don’t copy, block until done.</p>
 </section>
 
@@ -593,8 +593,8 @@ MPI_Recv(buf, count, datatype,
   <h3>Problem 1: Potential deadlock</h3>
   <img src="{{ "lec/figs/mpi-send-dead.svg" | relative_url }}"
        alt="Diagram of deadlock scenario"
-       width="20%"/>
-  <p>Both processors wait to finish send before they can receive!<br />
+       width="30%"/>
+  <p>Both processors wait to send before they receive!<br />
     May not happen if lots of buffering on both sides.</p>
 </section>
 
@@ -603,7 +603,7 @@ MPI_Recv(buf, count, datatype,
   <h3>Solution 1: Alternating order</h3>
   <img src="{{ "lec/figs/mpi-send-dead.svg" | relative_url }}"
        alt="Diagram of breaking deadlock scenario by alternate send/recv"
-       width="20%"/>
+       width="30%"/>
   <p>Could alternate who sends and who receives.</p>
 </section>
 
