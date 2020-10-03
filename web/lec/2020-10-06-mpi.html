@@ -1,0 +1,866 @@
+---
+title: MPI programming
+layout: slides
+audio: 2020-10-06-mpi
+---
+
+<section>
+  <h3>Plan for this week</h3>
+  <ul>
+    <li>This week: distributed memory programming
+      <ul>
+        <li>Distributed memory HW issues (topologies, cost models)</li>
+        <li>Message-passing programming concepts (and MPI)</li>
+        <li>Some simple examples</li>
+    </ul></li>
+    <li>Next week: shared memory programming
+      <ul>
+        <li>Shared memory HW issues (cache coherence)</li>
+        <li>Threaded programming concepts (pthreads and OpenMP)</li>
+        <li>A simple example (Monte Carlo)</li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Basic questions</h3>
+  <p>How much does a message cost?</p>
+  <ul>
+    <li><em>Latency</em>: time to get between processors</li>
+    <li><em>Bandwidth</em>: data transferred per unit time</li>
+    <li>How does <em>contention</em> affect communication?</li>
+  </ul>
+  <p>This is a combined hardware-software question!</p>
+  <p>We want to understand just enough for reasonable modeling.</p>
+</section>
+
+
+<section>
+  <h3>Thinking about interconnects</h3>
+  <p>Several features characterize an interconnect:</p>
+  <ul>
+    <li><em>Topology</em>: who do the wires connect?</li>
+    <li><em>Routing</em>: how do we get from A to B?</li>
+    <li><em>Switching</em>: circuits, store-and-forward?</li>
+    <li><em>Flow control</em>: how do we manage limited resources?</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Thinking about interconnects</h3>
+  <ul>
+    <li>Links are like streets</li>
+    <li>Switches are like intersections</li>
+    <li>Hops are like blocks traveled</li>
+    <li>Routing algorithm is like a travel plan</li>
+    <li>Stop lights are like flow control</li>
+    <li>Short packets are like cars, long ones like buses?</li>
+  </ul>
+  <p>At some point the analogy breaks down…</p>
+</section>
+
+
+<section>
+  <h3>Bus topology</h3>
+  <img src="{{ "lec/figs/topo-bus.svg" | relative_url }}"
+       alt="Diagram of bus topology"
+       width="60%"/>  
+  <ul>
+    <li>One set of wires (the bus)</li>
+    <li>Only one processor allowed at any given time
+      <ul>
+        <li><em>Contention</em> for the bus is an issue</li>
+    </ul></li>
+    <li>Example: basic Ethernet, some SMPs</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Crossbar</h3>
+  <img src="{{ "lec/figs/topo-xbar.svg" | relative_url }}"
+       alt="Diagram of crossbar topology"
+       width="60%"/>  
+  <ul>
+    <li>Dedicated path from every input to every output
+      <ul>
+        <li>Takes $O(p^2)$ switches and wires!</li>
+    </ul></li>
+    <li>Example: recent AMD/Intel multicore chips<br />
+      (older: front-side bus)</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Bus vs. crossbar</h3>
+  <ul>
+    <li>Crossbar: more hardware</li>
+    <li>Bus: more contention (less capacity?)</li>
+    <li>Generally seek happy medium
+      <ul>
+        <li>Less contention than bus</li>
+        <li>Less hardware than crossbar</li>
+        <li>May give up one-hop routing</li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Network properties</h3>
+  <p>Think about latency and bandwidth via two quantities:</p>
+  <ul>
+    <li><em>Diameter</em>: max distance between nodes</li>
+    <li><em>Bisection bandwidth</em>: smallest bandwidth cut to bisect
+      <ul>
+        <li>Particularly important for all-to-all communication</li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Linear topology</h3>
+  <img src="{{ "lec/figs/topo-linear.svg" | relative_url }}"
+       alt="Diagram of linear topology"
+       width="60%"/>
+  <ul>
+    <li>$p-1$ links</li>
+    <li>Diameter $p-1$</li>
+    <li>Bisection bandwidth $1$</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Ring topology</h3>
+  <img src="{{ "lec/figs/topo-ring.svg" | relative_url }}"
+       alt="Diagram of ring topology"
+       width="60%"/>  
+  <ul>
+    <li>$p$ links</li>
+    <li>Diameter $p/2$</li>
+    <li>Bisection bandwidth $2$</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Mesh</h3>
+  <img src="{{ "lec/figs/topo-mesh.svg" | relative_url }}"
+       alt="Diagram of mesh topology"
+       width="60%"/>  
+  <ul>
+    <li>May be more than two dimensions</li>
+    <li>Route along each dimension in turn</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Torus</h3>
+  <img src="{{ "lec/figs/topo-torus.svg" | relative_url }}"
+       alt="Diagram of torus topology"
+       width="60%"/>  
+  <p>Torus : Mesh :: Ring : Linear</p>
+</section>
+
+
+<section>
+  <h3>Hypercube</h3>
+  <img src="{{ "lec/figs/topo-cube.svg" | relative_url }}"
+       alt="Diagram of hypercube topology"
+       width="60%"/>  
+  <ul>
+    <li>Label processors with binary numbers</li>
+    <li>Connect $p_1$ to $p_2$ if labels differ in one bit</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Fat tree</h3>
+  <img src="{{ "lec/figs/topo-fat.svg" | relative_url }}"
+       alt="Diagram of fat tree topology"
+       width="60%"/>  
+  <ul>
+    <li>Processors at leaves</li>
+    <li>Increase link bandwidth near root</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Others...</h3>
+  <ul>
+    <li>Butterfly network</li>
+    <li>Omega network</li>
+    <li>Cayley graph</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Current picture</h3>
+  <ul>
+    <li>Old: latencies = hops</li>
+    <li>New: roughly constant latency (?)
+      <ul>
+        <li>Wormhole routing (or cut-through) flattens latencies vs store-forward at hardware level</li>
+        <li>Software stack dominates HW latency!</li>
+        <li>Latencies <em>not</em> same between networks (in box vs across)</li>
+        <li>May also have store-forward at library level</li>
+    </ul></li>
+    <li>Old: mapping algorithms to topologies</li>
+    <li>New: avoid topology-specific optimization
+      <ul>
+        <li>Want code that runs on next year’s machine, too!</li>
+        <li>Bundle topology awareness in vendor MPI libraries?</li>
+        <li>Sometimes specify a <em>software</em> topology</li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>$\alpha$-$\beta$ model</h3>
+  <p>Crudest model: $t_{\mathrm{comm}} = \alpha + \beta M$</p>
+  <ul>
+    <li>$t_{\mathrm{comm}} =$ communication time</li>
+    <li>$\alpha =$ latency</li>
+    <li>$\beta =$ inverse bandwidth</li>
+    <li>$M =$ message size</li>
+  </ul>
+  <p>Works pretty well for basic guidance!</p>
+  <p>Typically $\alpha \gg \beta \gg t_{\mathrm{flop}}$. More money on network, lower $\alpha$.</p>
+</section>
+
+
+<section>
+  <h3>LogP model</h3>
+  <p>Like $\alpha$-$\beta$, but includes CPU time on send/recv:</p>
+  <ul>
+    <li>Latency: the usual</li>
+    <li>Overhead: CPU time to send/recv</li>
+    <li>Gap: min time between send/recv</li>
+    <li>P: number of processors</li>
+  </ul>
+  <p>Assumes small messages (gap $\sim$ bw for fixed message size).</p>
+</section>
+
+
+<section>
+  <h3>Communication costs</h3>
+  <p>Some basic goals:</p>
+  <ul>
+    <li>Prefer larger to smaller messages (avoid latency)</li>
+    <li>Avoid communication when possible
+      <ul>
+        <li>Great speedup for Monte Carlo and other embarrassingly parallel codes!</li>
+    </ul></li>
+    <li>Overlap communication with computation
+      <ul>
+        <li>Models tell you how much computation is needed to mask communication costs.</li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Message passing programming</h3>
+  <p>Basic operations:</p>
+  <ul>
+    <li>Pairwise messaging: send/receive</li>
+    <li>Collective messaging: broadcast, scatter/gather</li>
+    <li>Collective computation: parallel prefix (sum, max, ...)</li>
+    <li>Barriers (no need for locks!)</li>
+    <li>Environmental inquiries (who am I? do I have mail?)</li>
+  </ul>
+  <p>(Much of what follows is adapted from Bill Gropp’s material.)</p>
+</section>
+
+
+<section>
+  <h3>MPI</h3>
+  <ul>
+    <li>Message Passing Interface</li>
+    <li>An interface spec — many implementations</li>
+    <li>Bindings to C, C++, Fortran</li>
+  </ul>
+</section>
+
+
+<section>
+<h3>Hello world</h3>
+<pre><code>#include &lt;mpi.h&gt;
+#include &lt;stdio.h&gt;
+
+int main(int argc, char** argv) {
+    int rank, size;
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;size);
+    printf(&quot;Hello from %d of %d\n&quot;, rank, size);
+    MPI_Finalize();
+    return 0;
+}</code></pre>
+</section>
+
+
+<section>
+  <h3>Communicators</h3>
+  <ul>
+    <li>Processes form <em>groups</em></li>
+    <li>Messages sent in <em>contexts</em>
+      <ul>
+        <li>Separate communication for libraries</li>
+    </ul></li>
+    <li>Group + context = communicator</li>
+    <li>Identify process by rank in group</li>
+    <li>Default is MPI_COMM_WORLD</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Sending and receiving</h3>
+  <p>Need to specify:</p>
+  <ul>
+    <li>What’s the data?
+      <ul>
+        <li>Different machines use different encodings (e.g. endian-ness)</li>
+        <li>$\implies$ “bag o’ bytes” model is inadequate</li>
+    </ul></li>
+    <li>How do we identify processes?</li>
+    <li>How does receiver identify messages?</li>
+    <li>What does it mean to “complete” a send/recv?</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>MPI datatypes</h3>
+  <p>Message is (address, count, datatype). Allow:</p>
+  <ul>
+    <li>Basic types (MPI_INT, MPI_DOUBLE)</li>
+    <li>Contiguous arrays</li>
+    <li>Strided arrays</li>
+    <li>Indexed arrays</li>
+    <li>Arbitrary structures</li>
+  </ul>
+  <p>Complex data types may hurt performance?</p>
+</section>
+
+
+<section>
+  <h3>MPI tags</h3>
+  <p>Use an integer <em>tag</em> to label messages</p>
+  <ul>
+    <li>Help distinguish different message types</li>
+    <li>Can screen messages with wrong tag</li>
+    <li>MPI_ANY_TAG is a wildcard</li>
+  </ul>
+</section>
+
+
+<section>
+<h3>MPI Send/Recv</h3>
+<p>Basic blocking point-to-point communication:</p>
+<pre><code>int 
+MPI_Send(void *buf, int count, 
+         MPI_Datatype datatype, 
+         int dest, int tag, MPI_Comm comm);
+
+int 
+MPI_Recv(void *buf, int count,
+         MPI_Datatype datatype,
+         int source, int tag, MPI_Comm comm, 
+         MPI_Status *status);</code></pre>
+</section>
+
+
+<section>
+  <h3>MPI send/recv semantics</h3>
+  <ul>
+    <li>Send returns when data gets to <em>system</em>
+      <ul>
+        <li>... might not yet arrive at destination!</li>
+    </ul></li>
+    <li>Recv ignores messages that don’t match source and tag
+      <ul>
+        <li>MPI_ANY_SOURCE and MPI_ANY_TAG are wildcards</li>
+    </ul></li>
+    <li>Recv status contains more info (tag, source, size)</li>
+  </ul>
+</section>
+
+
+<section>
+<h3>Ping-pong pseudocode</h3>
+<p>Process 0:</p>
+<pre><code>for i = 1:ntrials
+  send b bytes to 1
+  recv b bytes from 1
+end</code></pre>
+<p>Process 1:</p>
+<pre><code>for i = 1:ntrials
+  recv b bytes from 0
+  send b bytes to 0
+end</code></pre>
+</section>
+
+
+<section>
+<h3>Ping-pong MPI</h3>
+<pre><code>void ping(char* buf, int n, int ntrials, int p)
+{
+    for (int i = 0; i &lt; ntrials; ++i) {
+        MPI_Send(buf, n, MPI_CHAR, p, 0, 
+                 MPI_COMM_WORLD);
+        MPI_Recv(buf, n, MPI_CHAR, p, 0, 
+                 MPI_COMM_WORLD, NULL);
+    }
+}</code></pre>
+<p>(Pong is similar)</p>
+</section>
+
+
+<section>
+<h3>Ping-pong MPI</h3>
+<pre><code>for (int sz = 1; sz &lt;= MAX_SZ; sz += 1000) {
+    if (rank == 0) {
+        clock_t t1, t2;
+        t1 = clock();
+        ping(buf, sz, NTRIALS, 1);
+        t2 = clock();
+        printf(&quot;%d %g\n&quot;, sz, 
+               (double) (t2-t1)/CLOCKS_PER_SEC);
+    } else if (rank == 1) {
+        pong(buf, sz, NTRIALS, 0);
+    }
+}</code></pre>
+</section>
+
+
+<section>
+  <h3>Running the code</h3>
+  <p>On my laptop (OpenMPI)</p>
+  <pre><code>mpicc -std=c99 pingpong.c -o pingpong.x
+      mpirun -np 2 ./pingpong.x</code></pre>
+  <p>Details vary, but this is pretty normal.</p>
+</section>
+
+
+<section>
+  <h3>Approximate $\alpha$-$\beta$ parameters (2-core laptop)</h3>
+</section>
+
+
+<section>
+  <h3>Where we are now</h3>
+  <p>Can write a lot of MPI code with 6 operations we’ve seen:</p>
+  <ul>
+    <li>MPI_Init</li>
+    <li>MPI_Finalize</li>
+    <li>MPI_Comm_size</li>
+    <li>MPI_Comm_rank</li>
+    <li>MPI_Send</li>
+    <li>MPI_Recv</li>
+  </ul>
+  <p>... but there are sometimes better ways.</p>
+  
+  <p>Next time: non-blocking and collective operations!  ### Logistics</p>
+  <ul>
+    <li>HW 2 is up, due Mar 11 (overlap).</li>
+    <li>HW 3 will go out start of next week.</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Previously on Parallel Programming</h3>
+  <p>Can write a lot of MPI code with 6 operations we’ve seen:</p>
+  <ul>
+    <li>MPI_Init</li>
+    <li>MPI_Finalize</li>
+    <li>MPI_Comm_size</li>
+    <li>MPI_Comm_rank</li>
+    <li>MPI_Send</li>
+    <li>MPI_Recv</li>
+  </ul>
+  <p>... but there are sometimes better ways. Decide on communication style using simple performance models.</p>
+</section>
+
+
+<section>
+  <h3>Communication performance</h3>
+  <ul>
+    <li>Basic info: <em>latency</em> and <em>bandwidth</em></li>
+    <li>Simplest model: $t_{\mathrm{comm}} = \alpha + \beta M$</li>
+    <li>More realistic: distinguish CPU overhead from “gap”<br />
+      ($\sim$ inverse bw)</li>
+    <li>Different networks have different parameters</li>
+    <li>Can tell a lot via a simple ping-pong experiment</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Intel MPI on totient</h3>
+  <ul>
+    <li>Two six-core chips per nodes, eight nodes</li>
+    <li>Heterogeneous network:
+      <ul>
+        <li>Crossbar switch between cores (?)</li>
+        <li>Bus between chips</li>
+        <li>Gigabit ethernet between nodes</li>
+    </ul></li>
+    <li>Default process layout (16 process example)
+      <ul>
+        <li>Processes 0-5 on first chip, first node</li>
+        <li>Processes 6-11 on second chip, first node</li>
+        <li>Processes 12-17 on first chip, second node</li>
+        <li>Processes 18-23 on second chip, second node</li>
+    </ul></li>
+    <li>Test ping-pong from 0 to 1, 11, and 23.</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Approximate $\alpha$-$\beta$ parameters (on chip)</h3>
+</section>
+
+
+<section>
+  <h3>Approximate $\alpha$-$\beta$ parameters (cross-chip)</h3>
+</section>
+
+
+<section>
+  <h3>Approximate $\alpha$-$\beta$ parameters (cross-node)</h3>
+</section>
+
+
+<section>
+  <h3>Moral</h3>
+  <p>Not all links are created equal!</p>
+  <ul>
+    <li>Might handle with mixed paradigm
+      <ul>
+        <li>OpenMP on node, MPI across</li>
+        <li>Have to worry about thread-safety of MPI calls</li>
+    </ul></li>
+    <li>Can handle purely within MPI</li>
+    <li>Can ignore the issue completely?</li>
+  </ul>
+  <p>For today, we’ll take the last approach.</p>
+</section>
+
+
+<section>
+<h3>Reminder: basic send and recv</h3>
+<pre><code>MPI_Send(buf, count, datatype, 
+         dest, tag, comm);
+
+MPI_Recv(buf, count, datatype,
+         source, tag, comm, status);</code></pre>
+<p>MPI_Send and MPI_Recv are <em>blocking</em></p>
+<ul>
+<li>Send does not return until data is in system</li>
+<li>Recv does not return until data is ready</li>
+</ul>
+</section>
+
+
+<section>
+  <h3>Blocking and buffering</h3>
+  <img src="{{ "lec/figs/mpi-send-buf.svg" | relative_url }}"
+       alt="Diagram of buffered message send"
+       width="60%"/>  
+  <p>Block until data “in system” — maybe in a buffer?</p>
+</section>
+
+
+<section>
+  <h3>Blocking and buffering</h3>
+  <img src="{{ "lec/figs/mpi-send-nbuf.svg" | relative_url }}"
+       alt="Diagram of unbuffered message send"
+       width="60%"/>  
+  <p>Alternative: don’t copy, block until done.</p>
+</section>
+
+
+<section>
+  <h3>Problem 1: Potential deadlock</h3>
+  <img src="{{ "lec/figs/mpi-send-dead.svg" | relative_url }}"
+       alt="Diagram of deadlock scenario"
+       width="60%"/>  
+  <p>Both processors wait to finish send before they can receive!<br />
+    May not happen if lots of buffering on both sides.</p>
+</section>
+
+
+<section>
+  <h3>Solution 1: Alternating order</h3>
+  <img src="{{ "lec/figs/mpi-send-dead.svg" | relative_url }}"
+       alt="Diagram of breaking deadlock scenario by alternate send/recv"
+       width="60%"/>  
+  <p>Could alternate who sends and who receives.</p>
+</section>
+
+
+<section>
+  <h3>Solution 2: Combined send/recv</h3>
+  <img src="{{ "lec/figs/mpi-sendrecv.svg" | relative_url }}"
+       alt="Diagram of send-receive primitive"
+       width="60%"/>  
+  <p>Common operations deserve explicit support!</p>
+</section>
+
+
+<section>
+<h3>Combined sendrecv</h3>
+<pre><code>MPI_Sendrecv(sendbuf, sendcount, sendtype,
+             dest, sendtag, 
+             recvbuf, recvcount, recvtype, 
+             source, recvtag,
+             comm, status);</code></pre>
+<p>Blocking operation, combines send and recv to avoid deadlock.</p>
+</section>
+
+
+<section>
+  <h3>Problem 2: Communication overhead</h3>
+  <img src="{{ "lec/figs/mpi-sendrecv-waiting.svg" | relative_url }}"
+       alt="Diagram of nonblocking send primitive"
+       width="60%"/>  
+  <p>Partial solution: nonblocking communication</p>
+</section>
+
+
+<section>
+  <h3>Blocking vs non-blocking communication</h3>
+  <ul>
+    <li>MPI_Send and MPI_Recv are <em>blocking</em>
+      <ul>
+        <li>Send does not return until data is in system</li>
+        <li>Recv does not return until data is ready</li>
+        <li>Cons: possible deadlock, time wasted waiting</li>
+    </ul></li>
+    <li>Why blocking?
+      <ul>
+        <li>Overwrite buffer during send $\implies$ evil!</li>
+        <li>Read buffer before data ready $\implies$ evil!</li>
+    </ul></li>
+    <li>Alternative: <em>nonblocking</em> communication
+      <ul>
+        <li>Split into distinct initiation/completion phases</li>
+        <li>Initiate send/recv and promise not to touch buffer</li>
+        <li>Check later for operation completion</li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Overlap communication and computation</h3>
+  <img src="{{ "lec/figs/mpi-isendrecv.svg" | relative_url }}"
+       alt="Diagram of nonblocking send/receive primitive"
+       width="60%"/>    
+</section>
+
+
+<section>
+<h3>Nonblocking operations</h3>
+<p>Initiate message:</p>
+<pre><code>MPI_Isend(start, count, datatype, dest
+          tag, comm, request);
+MPI_Irecv(start, count, datatype, dest
+          tag, comm, request);</code></pre>
+<p>Wait for message completion:</p>
+<pre><code>MPI_Wait(request, status);</code></pre>
+<p>Test for message completion:</p>
+<pre><code>MPI_Test(request, status);</code></pre>
+</section>
+
+
+<section>
+<h3>Multiple outstanding requests</h3>
+<p>Sometimes useful to have multiple outstanding messages:</p>
+<pre><code>MPI_Waitall(count, requests, statuses);
+MPI_Waitany(count, requests, index, status);
+MPI_Waitsome(count, requests, indices, statuses);</code></pre>
+<p>Multiple versions of test as well.</p>
+</section>
+
+
+<section>
+  <h3>Other send/recv variants</h3>
+  <p>Other variants of MPI_Send</p>
+  <ul>
+    <li>MPI_Ssend (synchronous) – do not complete until receive has begun</li>
+    <li>MPI_Bsend (buffered) – user provides buffer (via MPI_Buffer_attach)</li>
+    <li>MPI_Rsend (ready) – user guarantees receive has already been posted</li>
+    <li>Can combine modes (e.g. MPI_Issend)</li>
+  </ul>
+  <p>MPI_Recv receives anything.</p>
+</section>
+
+
+<section>
+  <h3>Another approach</h3>
+  <ul>
+    <li>Send/recv is one-to-one communication</li>
+    <li>An alternative is one-to-many (and vice-versa):
+      <ul>
+        <li><em>Broadcast</em> to distribute data from one process</li>
+        <li><em>Reduce</em> to combine data from all processors</li>
+        <li>Operations are called by all processes in communicator</li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+<h3>Broadcast and reduce</h3>
+<pre><code>MPI_Bcast(buffer, count, datatype,
+          root, comm);
+MPI_Reduce(sendbuf, recvbuf, count, datatype,
+           op, root, comm);</code></pre>
+<ul>
+<li>buffer is copied from root to others</li>
+<li>recvbuf receives result only at root</li>
+<li>op $\in \{$ MPI_MAX, MPI_SUM, …$\}$</li>
+</ul>
+</section>
+
+
+<section>
+<h3>Example: basic Monte Carlo</h3>
+<pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;mpi.h&gt;
+int main(int argc, char** argv) {
+    int nproc, myid, ntrials = atoi(argv[1]);
+    MPI_Init(&amp;argc, &amp;argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &amp;nproc);
+    MPI_Comm_rank(MPI_COMM_WORLD, &amp;my_id);
+    MPI_Bcast(&amp;ntrials, 1, MPI_INT, 
+              0, MPI_COMM_WORLD);
+    run_trials(myid, nproc, ntrials);
+    MPI_Finalize();
+    return 0;
+}</code></pre>
+</section>
+
+
+<section>
+<h3>Example: basic Monte Carlo</h3>
+<p>Let sum[0] = $\sum_i X_i$ and sum[1] = $\sum_i X_i^2$.</p>
+<pre><code>void run_mc(int myid, int nproc, int ntrials) {
+    double sums[2] = {0,0};
+    double my_sums[2] = {0,0};
+    /* ... run ntrials local experiments ... */
+    MPI_Reduce(my_sums, sums, 2, MPI_DOUBLE, 
+               MPI_SUM, 0, MPI_COMM_WORLD);
+    if (myid == 0) {
+        int N = nproc*ntrials;
+        double EX = sums[0]/N;
+        double EX2 = sums[1]/N;
+        printf(&quot;Mean: %g; err: %g\n&quot;, 
+               EX, sqrt((EX*EX-EX2)/N));
+    }
+}</code></pre>
+</section>
+
+
+<section>
+  <h3>Collective operations</h3>
+  <ul>
+    <li>Involve all processes in communicator</li>
+    <li>Basic classes:
+      <ul>
+        <li>Synchronization (e.g. barrier)</li>
+        <li>Data movement (e.g. broadcast)</li>
+        <li>Computation (e.g. reduce)</li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Barrier</h3>
+  <pre><code>MPI_Barrier(comm);</code></pre>
+  <p>Not much more to say. Not needed that often.</p>
+</section>
+
+
+<section>
+  <h3>Broadcast</h3>
+  <img src="{{ "lec/figs/mpi-bcast.svg" | relative_url }}"
+       alt="Diagram of MPI broadcast"
+       width="60%"/>      
+</section>
+
+
+<section>
+  <h3>Scatter/gather</h3>
+  <img src="{{ "lec/figs/mpi-gather.svg" | relative_url }}"
+       alt="Diagram of MPI gather"
+       width="60%"/>      
+</section>
+
+
+<section>
+  <h3>Allgather</h3>
+  <img src="{{ "lec/figs/mpi-allgather.svg" | relative_url }}"
+       alt="Diagram of MPI all-gather"
+       width="60%"/>      
+</section>
+
+
+<section>
+  <h3>Alltoall</h3>
+  <img src="{{ "lec/figs/mpi-alltoall.svg" | relative_url }}"
+       alt="Diagram of MPI all-to-all"
+       width="60%"/>      
+</section>
+
+
+<section>
+  <h3>Reduce</h3>
+  <img src="{{ "lec/figs/mpi-reduce.svg" | relative_url }}"
+       alt="Diagram of MPI reduce"
+       width="60%"/>      
+</section>
+
+
+<section>
+  <h3>Scan</h3>
+  <img src="{{ "lec/figs/mpi-scan.svg" | relative_url }}"
+       alt="Diagram of MPI scan"
+       width="60%"/>      
+</section>
+
+
+<section>
+  <h3>The kitchen sink</h3>
+  <ul>
+    <li>In addition to above, have vector variants (v suffix), more All variants (Allreduce), Reduce_scatter, ...</li>
+    <li>MPI3 adds one-sided communication (put/get)</li>
+    <li>MPI is <em>not</em> a small library!</li>
+    <li>But a small number of calls goes a long way
+      <ul>
+        <li>Init/Finalize</li>
+        <li>Get_comm_rank, Get_comm_size</li>
+        <li>Send/Recv variants and Wait</li>
+        <li>Allreduce, Allgather, Bcast</li>
+    </ul></li>
+  </ul>
+</section>
+
+
