@@ -7,18 +7,13 @@ audio: 2020-10-06-mpi
 <section>
   <h3>Plan for this week</h3>
   <ul>
-    <li>This week: distributed memory programming
+    <li>This week: distributed memory
       <ul>
-        <li>Distributed memory HW issues (topologies, cost models)</li>
-        <li>Message-passing programming concepts (and MPI)</li>
+        <li>HW issues (topologies, cost models)</li>
+        <li>Message-passing concepts and MPI</li>
         <li>Some simple examples</li>
     </ul></li>
-    <li>Next week: shared memory programming
-      <ul>
-        <li>Shared memory HW issues (cache coherence)</li>
-        <li>Threaded programming concepts (pthreads and OpenMP)</li>
-        <li>A simple example (Monte Carlo)</li>
-    </ul></li>
+    <li>Next week: shared memory</li>
   </ul>
 </section>
 
@@ -66,7 +61,7 @@ audio: 2020-10-06-mpi
   <h3>Bus topology</h3>
   <img src="{{ "lec/figs/topo-bus.svg" | relative_url }}"
        alt="Diagram of bus topology"
-       width="60%"/>  
+       width="50%"/>
   <ul>
     <li>One set of wires (the bus)</li>
     <li>Only one processor allowed at any given time
@@ -82,7 +77,7 @@ audio: 2020-10-06-mpi
   <h3>Crossbar</h3>
   <img src="{{ "lec/figs/topo-xbar.svg" | relative_url }}"
        alt="Diagram of crossbar topology"
-       width="60%"/>  
+       width="30%"/>
   <ul>
     <li>Dedicated path from every input to every output
       <ul>
@@ -114,9 +109,9 @@ audio: 2020-10-06-mpi
   <p>Think about latency and bandwidth via two quantities:</p>
   <ul>
     <li><em>Diameter</em>: max distance between nodes</li>
-    <li><em>Bisection bandwidth</em>: smallest bandwidth cut to bisect
+    <li><em>Bisection bandwidth</em>: smallest BW cut to bisect
       <ul>
-        <li>Particularly important for all-to-all communication</li>
+        <li>Particularly key for all-to-all comm</li>
     </ul></li>
   </ul>
 </section>
@@ -139,7 +134,7 @@ audio: 2020-10-06-mpi
   <h3>Ring topology</h3>
   <img src="{{ "lec/figs/topo-ring.svg" | relative_url }}"
        alt="Diagram of ring topology"
-       width="60%"/>  
+       width="30%"/>
   <ul>
     <li>$p$ links</li>
     <li>Diameter $p/2$</li>
@@ -152,7 +147,7 @@ audio: 2020-10-06-mpi
   <h3>Mesh</h3>
   <img src="{{ "lec/figs/topo-mesh.svg" | relative_url }}"
        alt="Diagram of mesh topology"
-       width="60%"/>  
+       width="30%"/>
   <ul>
     <li>May be more than two dimensions</li>
     <li>Route along each dimension in turn</li>
@@ -164,7 +159,7 @@ audio: 2020-10-06-mpi
   <h3>Torus</h3>
   <img src="{{ "lec/figs/topo-torus.svg" | relative_url }}"
        alt="Diagram of torus topology"
-       width="60%"/>  
+       width="30%"/>
   <p>Torus : Mesh :: Ring : Linear</p>
 </section>
 
@@ -173,7 +168,7 @@ audio: 2020-10-06-mpi
   <h3>Hypercube</h3>
   <img src="{{ "lec/figs/topo-cube.svg" | relative_url }}"
        alt="Diagram of hypercube topology"
-       width="60%"/>  
+       width="30%"/>
   <ul>
     <li>Label processors with binary numbers</li>
     <li>Connect $p_1$ to $p_2$ if labels differ in one bit</li>
@@ -185,7 +180,7 @@ audio: 2020-10-06-mpi
   <h3>Fat tree</h3>
   <img src="{{ "lec/figs/topo-fat.svg" | relative_url }}"
        alt="Diagram of fat tree topology"
-       width="60%"/>  
+       width="60%"/>
   <ul>
     <li>Processors at leaves</li>
     <li>Increase link bandwidth near root</li>
@@ -369,15 +364,15 @@ int main(int argc, char** argv) {
 <section>
 <h3>MPI Send/Recv</h3>
 <p>Basic blocking point-to-point communication:</p>
-<pre><code>int 
-MPI_Send(void *buf, int count, 
-         MPI_Datatype datatype, 
+<pre><code>int
+MPI_Send(void *buf, int count,
+         MPI_Datatype datatype,
          int dest, int tag, MPI_Comm comm);
 
-int 
+int
 MPI_Recv(void *buf, int count,
          MPI_Datatype datatype,
-         int source, int tag, MPI_Comm comm, 
+         int source, int tag, MPI_Comm comm,
          MPI_Status *status);</code></pre>
 </section>
 
@@ -418,9 +413,9 @@ end</code></pre>
 <pre><code>void ping(char* buf, int n, int ntrials, int p)
 {
     for (int i = 0; i &lt; ntrials; ++i) {
-        MPI_Send(buf, n, MPI_CHAR, p, 0, 
+        MPI_Send(buf, n, MPI_CHAR, p, 0,
                  MPI_COMM_WORLD);
-        MPI_Recv(buf, n, MPI_CHAR, p, 0, 
+        MPI_Recv(buf, n, MPI_CHAR, p, 0,
                  MPI_COMM_WORLD, NULL);
     }
 }</code></pre>
@@ -436,7 +431,7 @@ end</code></pre>
         t1 = clock();
         ping(buf, sz, NTRIALS, 1);
         t2 = clock();
-        printf(&quot;%d %g\n&quot;, sz, 
+        printf(&quot;%d %g\n&quot;, sz,
                (double) (t2-t1)/CLOCKS_PER_SEC);
     } else if (rank == 1) {
         pong(buf, sz, NTRIALS, 0);
@@ -471,7 +466,7 @@ end</code></pre>
     <li>MPI_Recv</li>
   </ul>
   <p>... but there are sometimes better ways.</p>
-  
+
   <p>Next time: non-blocking and collective operations!  ### Logistics</p>
   <ul>
     <li>HW 2 is up, due Mar 11 (overlap).</li>
@@ -563,7 +558,7 @@ end</code></pre>
 
 <section>
 <h3>Reminder: basic send and recv</h3>
-<pre><code>MPI_Send(buf, count, datatype, 
+<pre><code>MPI_Send(buf, count, datatype,
          dest, tag, comm);
 
 MPI_Recv(buf, count, datatype,
@@ -580,7 +575,7 @@ MPI_Recv(buf, count, datatype,
   <h3>Blocking and buffering</h3>
   <img src="{{ "lec/figs/mpi-send-buf.svg" | relative_url }}"
        alt="Diagram of buffered message send"
-       width="60%"/>  
+       width="60%"/>
   <p>Block until data “in system” — maybe in a buffer?</p>
 </section>
 
@@ -589,7 +584,7 @@ MPI_Recv(buf, count, datatype,
   <h3>Blocking and buffering</h3>
   <img src="{{ "lec/figs/mpi-send-nbuf.svg" | relative_url }}"
        alt="Diagram of unbuffered message send"
-       width="60%"/>  
+       width="60%"/>
   <p>Alternative: don’t copy, block until done.</p>
 </section>
 
@@ -598,7 +593,7 @@ MPI_Recv(buf, count, datatype,
   <h3>Problem 1: Potential deadlock</h3>
   <img src="{{ "lec/figs/mpi-send-dead.svg" | relative_url }}"
        alt="Diagram of deadlock scenario"
-       width="60%"/>  
+       width="20%"/>
   <p>Both processors wait to finish send before they can receive!<br />
     May not happen if lots of buffering on both sides.</p>
 </section>
@@ -608,7 +603,7 @@ MPI_Recv(buf, count, datatype,
   <h3>Solution 1: Alternating order</h3>
   <img src="{{ "lec/figs/mpi-send-dead.svg" | relative_url }}"
        alt="Diagram of breaking deadlock scenario by alternate send/recv"
-       width="60%"/>  
+       width="20%"/>
   <p>Could alternate who sends and who receives.</p>
 </section>
 
@@ -617,7 +612,7 @@ MPI_Recv(buf, count, datatype,
   <h3>Solution 2: Combined send/recv</h3>
   <img src="{{ "lec/figs/mpi-sendrecv.svg" | relative_url }}"
        alt="Diagram of send-receive primitive"
-       width="60%"/>  
+       width="60%"/>
   <p>Common operations deserve explicit support!</p>
 </section>
 
@@ -625,8 +620,8 @@ MPI_Recv(buf, count, datatype,
 <section>
 <h3>Combined sendrecv</h3>
 <pre><code>MPI_Sendrecv(sendbuf, sendcount, sendtype,
-             dest, sendtag, 
-             recvbuf, recvcount, recvtype, 
+             dest, sendtag,
+             recvbuf, recvcount, recvtype,
              source, recvtag,
              comm, status);</code></pre>
 <p>Blocking operation, combines send and recv to avoid deadlock.</p>
@@ -637,7 +632,7 @@ MPI_Recv(buf, count, datatype,
   <h3>Problem 2: Communication overhead</h3>
   <img src="{{ "lec/figs/mpi-sendrecv-waiting.svg" | relative_url }}"
        alt="Diagram of nonblocking send primitive"
-       width="60%"/>  
+       width="60%"/>
   <p>Partial solution: nonblocking communication</p>
 </section>
 
@@ -670,7 +665,7 @@ MPI_Recv(buf, count, datatype,
   <h3>Overlap communication and computation</h3>
   <img src="{{ "lec/figs/mpi-isendrecv.svg" | relative_url }}"
        alt="Diagram of nonblocking send/receive primitive"
-       width="60%"/>    
+       width="80%"/>
 </section>
 
 
@@ -749,7 +744,7 @@ int main(int argc, char** argv) {
     MPI_Init(&amp;argc, &amp;argv);
     MPI_Comm_size(MPI_COMM_WORLD, &amp;nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &amp;my_id);
-    MPI_Bcast(&amp;ntrials, 1, MPI_INT, 
+    MPI_Bcast(&amp;ntrials, 1, MPI_INT,
               0, MPI_COMM_WORLD);
     run_trials(myid, nproc, ntrials);
     MPI_Finalize();
@@ -765,13 +760,13 @@ int main(int argc, char** argv) {
     double sums[2] = {0,0};
     double my_sums[2] = {0,0};
     /* ... run ntrials local experiments ... */
-    MPI_Reduce(my_sums, sums, 2, MPI_DOUBLE, 
+    MPI_Reduce(my_sums, sums, 2, MPI_DOUBLE,
                MPI_SUM, 0, MPI_COMM_WORLD);
     if (myid == 0) {
         int N = nproc*ntrials;
         double EX = sums[0]/N;
         double EX2 = sums[1]/N;
-        printf(&quot;Mean: %g; err: %g\n&quot;, 
+        printf(&quot;Mean: %g; err: %g\n&quot;,
                EX, sqrt((EX*EX-EX2)/N));
     }
 }</code></pre>
@@ -803,7 +798,7 @@ int main(int argc, char** argv) {
   <h3>Broadcast</h3>
   <img src="{{ "lec/figs/mpi-bcast.svg" | relative_url }}"
        alt="Diagram of MPI broadcast"
-       width="60%"/>      
+       width="80%"/>
 </section>
 
 
@@ -811,7 +806,7 @@ int main(int argc, char** argv) {
   <h3>Scatter/gather</h3>
   <img src="{{ "lec/figs/mpi-gather.svg" | relative_url }}"
        alt="Diagram of MPI gather"
-       width="60%"/>      
+       width="80%"/>
 </section>
 
 
@@ -819,7 +814,7 @@ int main(int argc, char** argv) {
   <h3>Allgather</h3>
   <img src="{{ "lec/figs/mpi-allgather.svg" | relative_url }}"
        alt="Diagram of MPI all-gather"
-       width="60%"/>      
+       width="80%"/>
 </section>
 
 
@@ -827,7 +822,7 @@ int main(int argc, char** argv) {
   <h3>Alltoall</h3>
   <img src="{{ "lec/figs/mpi-alltoall.svg" | relative_url }}"
        alt="Diagram of MPI all-to-all"
-       width="60%"/>      
+       width="80%"/>
 </section>
 
 
@@ -835,7 +830,7 @@ int main(int argc, char** argv) {
   <h3>Reduce</h3>
   <img src="{{ "lec/figs/mpi-reduce.svg" | relative_url }}"
        alt="Diagram of MPI reduce"
-       width="60%"/>      
+       width="80%"/>
 </section>
 
 
@@ -843,7 +838,7 @@ int main(int argc, char** argv) {
   <h3>Scan</h3>
   <img src="{{ "lec/figs/mpi-scan.svg" | relative_url }}"
        alt="Diagram of MPI scan"
-       width="60%"/>      
+       width="80%"/>
 </section>
 
 
