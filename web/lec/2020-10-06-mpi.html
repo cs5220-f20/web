@@ -21,11 +21,11 @@ audio: 2020-10-06-mpi
   <ul>
     <li>Pairwise messaging: send/receive</li>
     <li>Collective messaging: broadcast, scatter/gather</li>
-    <li>Collective computation: parallel prefix (sum, max, ...)</li>
+    <li>Collective computation: parallel prefix (sum, max)</li>
     <li>Barriers (no need for locks!)</li>
     <li>Environmental inquiries (who am I? do I have mail?)</li>
   </ul>
-  <p>(Much of what follows is adapted from Bill Gropp’s material.)</p>
+  <p>(Much of what follows is adapted from Bill Gropp.)</p>
 </section>
 
 
@@ -98,7 +98,7 @@ sbatch foo.sub         # Submit to queue (SLURM)
     </ul></li>
     <li>Group + context = communicator</li>
     <li>Identify process by rank in group</li>
-    <li>Default is MPI_COMM_WORLD</li>
+    <li>Default is <tt>MPI_COMM_WORLD</tt></li>
   </ul>
 </section>
 
@@ -123,7 +123,7 @@ sbatch foo.sub         # Submit to queue (SLURM)
   <h3>MPI datatypes</h3>
   <p>Message is (address, count, datatype). Allow:</p>
   <ul>
-    <li>Basic types (MPI_INT, MPI_DOUBLE)</li>
+    <li>Basic types (<tt>MPI_INT</tt>, <tt>MPI_DOUBLE</tt>)</li>
     <li>Contiguous arrays</li>
     <li>Strided arrays</li>
     <li>Indexed arrays</li>
@@ -139,7 +139,7 @@ sbatch foo.sub         # Submit to queue (SLURM)
   <ul>
     <li>Help distinguish different message types</li>
     <li>Can screen messages with wrong tag</li>
-    <li>MPI_ANY_TAG is a wildcard</li>
+    <li><tt>MPI_ANY_TAG</tt> is a wildcard</li>
   </ul>
 </section>
 
@@ -167,9 +167,9 @@ MPI_Recv(void *buf, int count,
       <ul>
         <li>... might not yet arrive at destination!</li>
     </ul></li>
-    <li>Recv ignores messages that don’t match source and tag
+    <li>Recv ignores messages that mismatch source/tag
       <ul>
-        <li>MPI_ANY_SOURCE and MPI_ANY_TAG are wildcards</li>
+        <li><tt>MPI_ANY_SOURCE</tt> and <tt>MPI_ANY_TAG</tt> wildcards</li>
     </ul></li>
     <li>Recv status contains more info (tag, source, size)</li>
   </ul>
@@ -299,9 +299,9 @@ end</code></pre>
 
 
 <section>
-  <h3>Blocking vs non-blocking communication</h3>
+  <h3>Blocking vs non-blocking</h3>
   <ul>
-    <li>MPI_Send and MPI_Recv are <em>blocking</em>
+    <li><tt>MPI_Send</tt> and <tt>MPI_Recv</tt> are <em>blocking</em>
       <ul>
         <li>Send does not return until data is in system</li>
         <li>Recv does not return until data is ready</li>
@@ -312,12 +312,16 @@ end</code></pre>
         <li>Overwrite buffer during send $\implies$ evil!</li>
         <li>Read buffer before data ready $\implies$ evil!</li>
     </ul></li>
-    <li>Alternative: <em>nonblocking</em> communication
-      <ul>
-        <li>Split into distinct initiation/completion phases</li>
-        <li>Initiate send/recv and promise not to touch buffer</li>
-        <li>Check later for operation completion</li>
-    </ul></li>
+  </ul>
+</section>
+
+<section>
+  <h3>Blocking vs non-blocking</h3>
+  <p>Alternative: <em>nonblocking</em> communication</p>
+  <ul>
+    <li>Split into distinct initiation/completion phases</li>
+    <li>Initiate send/recv and promise not to touch buffer</li>
+    <li>Check later for operation completion</li>
   </ul>
 </section>
 
@@ -356,14 +360,14 @@ MPI_Waitsome(count, requests, indices, statuses);</code></pre>
 
 <section>
   <h3>Other send/recv variants</h3>
-  <p>Other variants of MPI_Send</p>
+  <p>Other variants of <tt>MPI_Send</tt></p>
   <ul>
-    <li>MPI_Ssend (synchronous) – do not complete until receive has begun</li>
-    <li>MPI_Bsend (buffered) – user provides buffer (via MPI_Buffer_attach)</li>
-    <li>MPI_Rsend (ready) – user guarantees receive has already been posted</li>
-    <li>Can combine modes (e.g. MPI_Issend)</li>
+    <li><tt>MPI_Ssend</tt> (synchronous) – do not complete until receive has begun</li>
+    <li><tt>MPI_Bsend</tt> (buffered) – user provides buffer (via <tt>MPI_Buffer_attach</tt>)</li>
+    <li><tt>MPI_Rsend</tt> (ready) – user guarantees receive has already been posted</li>
+    <li>Can combine modes (e.g. <tt>MPI_Issend</tt>)</li>
   </ul>
-  <p>MPI_Recv receives anything.</p>
+  <p><tt>MPI_Recv</tt> receives anything.</p>
 </section>
 
 
@@ -390,7 +394,7 @@ MPI_Reduce(sendbuf, recvbuf, count, datatype,
 <ul>
 <li>buffer is copied from root to others</li>
 <li>recvbuf receives result only at root</li>
-<li>op $\in \{$ MPI_MAX, MPI_SUM, …$\}$</li>
+<li>op $\in \{$ <tt>MPI_MAX</tt>, <tt>MPI_SUM</tt>, …$\}$</li>
 </ul>
 </section>
 
