@@ -1,7 +1,7 @@
 ---
 title: MPI programming
 layout: slides
-audio: 2020-10-06-mpi
+audio: 2020-10-06-mpi1
 ---
 
 <!--
@@ -20,7 +20,6 @@ audio: 2020-10-06-mpi
   - LogP
   - Ping-pong measurements (the concept)
   - Big picture: modeling, measuring, de-slugging
-
  - MPI
    - Message passing interface
    - Short history
@@ -31,7 +30,6 @@ audio: 2020-10-06-mpi
  - MPI 1: point-to-point operations
    - Blocking sends, receives, and sendrecv
    - Nonblocking operations
-
  - MPI 2: collective operations (Thurs)
  - MPI 3: one-way communication (Thurs)
  -->
@@ -39,7 +37,7 @@ audio: 2020-10-06-mpi
 <section>
   <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
   <h2>Applications of Parallel Computers</h2>
-  <h3>Distributed parameter models</h3>
+  <h3>MPI Programming (part 1)</h3>
   <p>
     <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
   </p>
@@ -47,266 +45,6 @@ audio: 2020-10-06-mpi
 <p>
 
   
-<section>
-  <h3>Plan for this week</h3>
-  <ul>
-    <li>This week: distributed memory
-      <ul>
-        <li>HW issues (topologies, cost models)</li>
-        <li>Message-passing concepts and MPI</li>
-        <li>Some simple examples</li>
-    </ul></li>
-    <li>Next week: shared memory</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Basic questions</h3>
-  <p>How much does a message cost?</p>
-  <ul>
-    <li><em>Latency</em>: time to get between processors</li>
-    <li><em>Bandwidth</em>: data transferred per unit time</li>
-    <li>How does <em>contention</em> affect communication?</li>
-  </ul>
-  <p>This is a combined hardware-software question!</p>
-  <p>We want to understand just enough for reasonable modeling.</p>
-</section>
-
-
-<section>
-  <h3>Thinking about interconnects</h3>
-  <p>Several features characterize an interconnect:</p>
-  <ul>
-    <li><em>Topology</em>: who do the wires connect?</li>
-    <li><em>Routing</em>: how do we get from A to B?</li>
-    <li><em>Switching</em>: circuits, store-and-forward?</li>
-    <li><em>Flow control</em>: how do we manage limited resources?</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Thinking about interconnects</h3>
-  <ul>
-    <li>Links are like streets</li>
-    <li>Switches are like intersections</li>
-    <li>Hops are like blocks traveled</li>
-    <li>Routing algorithm is like a travel plan</li>
-    <li>Stop lights are like flow control</li>
-    <li>Short packets are like cars, long ones like buses?</li>
-  </ul>
-  <p>At some point the analogy breaks down…</p>
-</section>
-
-
-<section>
-  <h3>Bus topology</h3>
-  <img src="{{ "lec/figs/topo-bus.svg" | relative_url }}"
-       alt="Diagram of bus topology"
-       width="50%"/>
-  <ul>
-    <li>One set of wires (the bus)</li>
-    <li>Only one processor allowed at any given time
-      <ul>
-        <li><em>Contention</em> for the bus is an issue</li>
-    </ul></li>
-    <li>Example: basic Ethernet, some SMPs</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Crossbar</h3>
-  <img src="{{ "lec/figs/topo-xbar.svg" | relative_url }}"
-       alt="Diagram of crossbar topology"
-       width="30%"/>
-  <ul>
-    <li>Dedicated path from every input to every output
-      <ul>
-        <li>Takes $O(p^2)$ switches and wires!</li>
-    </ul></li>
-    <li>Example: recent AMD/Intel multicore chips<br />
-      (older: front-side bus)</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Bus vs. crossbar</h3>
-  <ul>
-    <li>Crossbar: more hardware</li>
-    <li>Bus: more contention (less capacity?)</li>
-    <li>Generally seek happy medium
-      <ul>
-        <li>Less contention than bus</li>
-        <li>Less hardware than crossbar</li>
-        <li>May give up one-hop routing</li>
-    </ul></li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Network properties</h3>
-  <p>Think about latency and bandwidth via two quantities:</p>
-  <ul>
-    <li><em>Diameter</em>: max distance between nodes</li>
-    <li><em>Bisection bandwidth</em>: smallest BW cut to bisect
-      <ul>
-        <li>Particularly key for all-to-all comm</li>
-    </ul></li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Linear topology</h3>
-  <img src="{{ "lec/figs/topo-linear.svg" | relative_url }}"
-       alt="Diagram of linear topology"
-       width="60%"/>
-  <ul>
-    <li>$p-1$ links</li>
-    <li>Diameter $p-1$</li>
-    <li>Bisection bandwidth $1$</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Ring topology</h3>
-  <img src="{{ "lec/figs/topo-ring.svg" | relative_url }}"
-       alt="Diagram of ring topology"
-       width="30%"/><br/>
-  <ul>
-    <li>$p$ links</li>
-    <li>Diameter $p/2$</li>
-    <li>Bisection bandwidth $2$</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Mesh</h3>
-  <img src="{{ "lec/figs/topo-mesh.svg" | relative_url }}"
-       alt="Diagram of mesh topology"
-       width="30%"/>
-  <ul>
-    <li>May be more than two dimensions</li>
-    <li>Route along each dimension in turn</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Torus</h3>
-  <img src="{{ "lec/figs/topo-torus.svg" | relative_url }}"
-       alt="Diagram of torus topology"
-       width="40%"/>
-  <p>Torus : Mesh :: Ring : Linear</p>
-</section>
-
-
-<section>
-  <h3>Hypercube</h3>
-  <img src="{{ "lec/figs/topo-cube.svg" | relative_url }}"
-       alt="Diagram of hypercube topology"
-       width="40%"/>
-  <ul>
-    <li>Label processors with binary numbers</li>
-    <li>Connect $p_1$ to $p_2$ if labels differ in one bit</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Fat tree</h3>
-  <img src="{{ "lec/figs/topo-fat.svg" | relative_url }}"
-       alt="Diagram of fat tree topology"
-       width="60%"/>
-  <ul>
-    <li>Processors at leaves</li>
-    <li>Increase link bandwidth near root</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Others...</h3>
-  <ul>
-    <li>Butterfly network</li>
-    <li>Omega network</li>
-    <li>Cayley graph</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Current picture</h3>
-  <ul>
-    <li>Old: latencies = hops</li>
-    <li>New: roughly constant latency (?)
-      <ul>
-        <li>Wormhole routing (or cut-through) flattens latencies vs store-forward at hardware level</li>
-        <li>Software stack dominates HW latency!</li>
-        <li>Latencies <em>not</em> same between networks (in box vs across)</li>
-        <li>May also have store-forward at library level</li>
-    </ul></li>
-    <li>Old: mapping algorithms to topologies</li>
-    <li>New: avoid topology-specific optimization
-      <ul>
-        <li>Want code that runs on next year’s machine, too!</li>
-        <li>Bundle topology awareness in vendor MPI libraries?</li>
-        <li>Sometimes specify a <em>software</em> topology</li>
-    </ul></li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>$\alpha$-$\beta$ model</h3>
-  <p>Crudest model: $t_{\mathrm{comm}} = \alpha + \beta M$</p>
-  <ul>
-    <li>$t_{\mathrm{comm}} =$ communication time</li>
-    <li>$\alpha =$ latency</li>
-    <li>$\beta =$ inverse bandwidth</li>
-    <li>$M =$ message size</li>
-  </ul>
-  <p>Works pretty well for basic guidance!</p>
-  <p>Typically $\alpha \gg \beta \gg t_{\mathrm{flop}}$. More money on network, lower $\alpha$.</p>
-</section>
-
-
-<section>
-  <h3>LogP model</h3>
-  <p>Like $\alpha$-$\beta$, but includes CPU time on send/recv:</p>
-  <ul>
-    <li>Latency: the usual</li>
-    <li>Overhead: CPU time to send/recv</li>
-    <li>Gap: min time between send/recv</li>
-    <li>P: number of processors</li>
-  </ul>
-  <p>Assumes small messages (gap $\sim$ bw for fixed message size).</p>
-</section>
-
-
-<section>
-  <h3>Communication costs</h3>
-  <p>Some basic goals:</p>
-  <ul>
-    <li>Prefer larger to smaller messages (avoid latency)</li>
-    <li>Avoid communication when possible
-      <ul>
-        <li>Great speedup for Monte Carlo and other embarrassingly parallel codes!</li>
-    </ul></li>
-    <li>Overlap communication with computation
-      <ul>
-        <li>Models tell you how much computation is needed to mask communication costs.</li>
-    </ul></li>
-  </ul>
-</section>
-
-
 <section>
   <h3>Message passing programming</h3>
   <p>Basic operations:</p>
@@ -325,8 +63,27 @@ audio: 2020-10-06-mpi
   <h3>MPI</h3>
   <ul>
     <li>Message Passing Interface</li>
-    <li>An interface spec — many implementations</li>
+    <li>An interface spec — many implementations<br/>
+      (OpenMPI, MPICH, MVAPICH, Intel, ...)
+    </li>
     <li>Bindings to C, C++, Fortran</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>MPI</h3>
+
+  <ul>
+    <li>Version 1.0 in 1994, 2.2 in 2009, 3.0 in 2012</li>
+    <li>MPI 3 goodies:
+      <ul>
+        <li>Nonblocking collectives</li>
+        <li>Neighborhood collectives</li>
+        <li>RMA and one-sided comm</li>
+      </ul>
+    </li>
+    <li>Will stick to MPI-2 today</li>
   </ul>
 </section>
 
@@ -345,6 +102,19 @@ int main(int argc, char** argv) {
     MPI_Finalize();
     return 0;
 }</code></pre>
+</section>
+
+
+<section>
+  <h3>Building, queueing, running</h3>
+
+  <p>Several steps to actually run</p>
+  <pre>
+mpicc -o foo.x foo.c   # Compile the program
+sbatch foo.sub         # Submit to queue (SLURM)
+# mpirun -n 2 ./foo.x  # (in foo.sub) Run on 2 procs
+  </pre>
+  <p>This is all platform-specific.</p>
 </section>
 
 
@@ -489,128 +259,6 @@ end</code></pre>
   <pre><code>mpicc -std=c99 pingpong.c -o pingpong.x
       mpirun -np 2 ./pingpong.x</code></pre>
   <p>Details vary, but this is pretty normal.</p>
-</section>
-
-
-<section>
-  <h3>Approximate $\alpha$-$\beta$ parameters (2-core laptop)</h3>
-</section>
-
-
-<section>
-  <h3>Where we are now</h3>
-  <p>Can write a lot of MPI code with 6 operations we’ve seen:</p>
-  <ul>
-    <li>MPI_Init</li>
-    <li>MPI_Finalize</li>
-    <li>MPI_Comm_size</li>
-    <li>MPI_Comm_rank</li>
-    <li>MPI_Send</li>
-    <li>MPI_Recv</li>
-  </ul>
-  <p>... but there are sometimes better ways.</p>
-
-  <p>Next time: non-blocking and collective operations!  ### Logistics</p>
-  <ul>
-    <li>HW 2 is up, due Mar 11 (overlap).</li>
-    <li>HW 3 will go out start of next week.</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Previously on Parallel Programming</h3>
-  <p>Can write a lot of MPI code with 6 operations we’ve seen:</p>
-  <ul>
-    <li>MPI_Init</li>
-    <li>MPI_Finalize</li>
-    <li>MPI_Comm_size</li>
-    <li>MPI_Comm_rank</li>
-    <li>MPI_Send</li>
-    <li>MPI_Recv</li>
-  </ul>
-  <p>... but there are sometimes better ways. Decide on communication style using simple performance models.</p>
-</section>
-
-
-<section>
-  <h3>Communication performance</h3>
-  <ul>
-    <li>Basic info: <em>latency</em> and <em>bandwidth</em></li>
-    <li>Simplest model: $t_{\mathrm{comm}} = \alpha + \beta M$</li>
-    <li>More realistic: distinguish CPU overhead from “gap”<br />
-      ($\sim$ inverse bw)</li>
-    <li>Different networks have different parameters</li>
-    <li>Can tell a lot via a simple ping-pong experiment</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Intel MPI on totient</h3>
-  <ul>
-    <li>Two six-core chips per nodes, eight nodes</li>
-    <li>Heterogeneous network:
-      <ul>
-        <li>Crossbar switch between cores (?)</li>
-        <li>Bus between chips</li>
-        <li>Gigabit ethernet between nodes</li>
-    </ul></li>
-    <li>Default process layout (16 process example)
-      <ul>
-        <li>Processes 0-5 on first chip, first node</li>
-        <li>Processes 6-11 on second chip, first node</li>
-        <li>Processes 12-17 on first chip, second node</li>
-        <li>Processes 18-23 on second chip, second node</li>
-    </ul></li>
-    <li>Test ping-pong from 0 to 1, 11, and 23.</li>
-  </ul>
-</section>
-
-
-<section>
-  <h3>Approximate $\alpha$-$\beta$ parameters (on chip)</h3>
-</section>
-
-
-<section>
-  <h3>Approximate $\alpha$-$\beta$ parameters (cross-chip)</h3>
-</section>
-
-
-<section>
-  <h3>Approximate $\alpha$-$\beta$ parameters (cross-node)</h3>
-</section>
-
-
-<section>
-  <h3>Moral</h3>
-  <p>Not all links are created equal!</p>
-  <ul>
-    <li>Might handle with mixed paradigm
-      <ul>
-        <li>OpenMP on node, MPI across</li>
-        <li>Have to worry about thread-safety of MPI calls</li>
-    </ul></li>
-    <li>Can handle purely within MPI</li>
-    <li>Can ignore the issue completely?</li>
-  </ul>
-  <p>For today, we’ll take the last approach.</p>
-</section>
-
-
-<section>
-<h3>Reminder: basic send and recv</h3>
-<pre><code>MPI_Send(buf, count, datatype,
-         dest, tag, comm);
-
-MPI_Recv(buf, count, datatype,
-         source, tag, comm, status);</code></pre>
-<p>MPI_Send and MPI_Recv are <em>blocking</em></p>
-<ul>
-<li>Send does not return until data is in system</li>
-<li>Recv does not return until data is ready</li>
-</ul>
 </section>
 
 
