@@ -1,0 +1,368 @@
+---
+title: Intro to Message Passing
+layout: slides
+audio: 2020-10-06-intro
+---
+
+<!--
+ - Introduction
+   - Message passing paradigm
+   - Comparison to shared memory (and PGAS)
+   - Networks and costs of message passing
+   - MPI programming
+   - Pointers to references
+ - Network hardware
+  - Survey of network topologies
+  - Does it matter?
+  - Near and far accesses
+ - Models of message costs
+  - Hockney (Alpha-beta) models
+  - LogP
+  - Ping-pong measurements (the concept)
+  - Big picture: modeling, measuring, de-slugging
+ -->
+
+
+<style>
+.container{
+    display: flex;
+}
+.col{
+    flex: 1;
+}
+</style>
+
+
+<section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <h3>Intro to Message Passing</h3>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
+  </p>
+  <p>Please click the play button below.</p>
+<p>
+
+  
+<section>
+  <h3>Plan for this week</h3>
+  <ul>
+    <li>This week: distributed memory
+      <ul>
+        <li>HW issues (topologies, cost models)</li>
+        <li>Message-passing concepts and MPI</li>
+        <li>Some simple examples</li>
+    </ul></li>
+    <li>Next week: shared memory (and PGAS?)</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Basic questions</h3>
+  <p>How much does a message cost?</p>
+  <ul>
+    <li><em>Latency</em>: time to get between processors</li>
+    <li><em>Bandwidth</em>: data transferred per unit time</li>
+    <li>How does <em>contention</em> affect communication?</li>
+  </ul>
+  <p>This is a combined hardware-software question!</p>
+  <p>We want to understand just enough for reasonable modeling.</p>
+</section>
+
+
+<section>
+  <h3>Thinking about interconnects</h3>
+  <p>Several features characterize an interconnect:</p>
+  <ul>
+    <li><em>Topology</em>: who do the wires connect?</li>
+    <li><em>Routing</em>: how do we get from A to B?</li>
+    <li><em>Switching</em>: circuits, store-and-forward?</li>
+    <li><em>Flow control</em>: how do we manage limited resources?</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Thinking about interconnects</h3>
+  <ul>
+    <li>Links are like streets</li>
+    <li>Switches are like intersections</li>
+    <li>Hops are like blocks traveled</li>
+    <li>Routing algorithm is like a travel plan</li>
+    <li>Stop lights are like flow control</li>
+    <li>Short packets are like cars, long ones like buses?</li>
+  </ul>
+  <p>At some point the analogy breaks down...</p>
+</section>
+
+
+<section>
+  <h3>Bus topology</h3>
+  <img src="{{ "lec/figs/topo-bus.svg" | relative_url }}"
+       alt="Diagram of bus topology"
+       width="50%"/>
+  <ul>
+    <li>One set of wires (the bus)</li>
+    <li>Only one processor allowed at any given time
+      <ul>
+        <li><em>Contention</em> for the bus is an issue</li>
+    </ul></li>
+    <li>Example: basic Ethernet, some SMPs</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Crossbar</h3>
+  <img src="{{ "lec/figs/topo-xbar.svg" | relative_url }}"
+       alt="Diagram of crossbar topology"
+       width="30%"/>
+  <ul>
+    <li>Dedicated path from every input to every output
+      <ul>
+        <li>Takes $O(p^2)$ switches and wires!</li>
+    </ul></li>
+    <li>Example: recent AMD/Intel multicore chips<br />
+      (older: front-side bus)</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Bus vs. crossbar</h3>
+  <ul>
+    <li>Crossbar: more hardware</li>
+    <li>Bus: more contention (less capacity?)</li>
+    <li>Generally seek happy medium
+      <ul>
+        <li>Less contention than bus</li>
+        <li>Less hardware than crossbar</li>
+        <li>May give up one-hop routing</li>
+    </ul></li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Other topologies</h3>
+  <img src="{{ "lec/figs/topo-linear.svg" | relative_url }}"
+       alt="Diagram of linear topology"
+       width="30%"/>
+  <img src="{{ "lec/figs/topo-ring.svg" | relative_url }}"
+       alt="Diagram of ring topology"
+       width="20%"/><br/>
+  <img src="{{ "lec/figs/topo-mesh.svg" | relative_url }}"
+       alt="Diagram of mesh topology"
+       width="30%"/>
+  <img src="{{ "lec/figs/topo-torus.svg" | relative_url }}"
+       alt="Diagram of torus topology"
+       width="30%"/>
+  <img src="{{ "lec/figs/topo-cube.svg" | relative_url }}"
+       alt="Diagram of hypercube topology"
+       width="30%"/>
+  <img src="{{ "lec/figs/topo-fat.svg" | relative_url }}"
+       alt="Diagram of fat tree topology"
+       width="65%"/>
+</section>
+
+
+<section>
+  <h3>Network properties</h3>
+  <p>Think about latency and bandwidth via two quantities:</p>
+  <ul>
+    <li><em>Diameter</em>: max distance between nodes
+      <ul><li>Latency depends on distance (weakly?)</li></ul>
+    </li>
+    <li><em>Bisection bandwidth</em>: smallest BW cut to bisect
+      <ul>
+        <li>Particularly key for all-to-all comm</li>
+    </ul></li>
+  </ul>
+  <aside class="notes">
+    - Mention wormhole routing
+    - Cost of software stack (including SW store-forward)
+  </aside>
+</section>
+
+
+<section>
+  <h3>MANY networks</h3>
+
+  <p>In a typical cluster</p>
+  <ul>
+    <li>Ethernet, Infiniband, Myrinet</li>
+    <li>Buses within boxes?</li>
+    <li>Something between cores?</li>
+  </ul>
+  <p>All with different behaviors.</p>
+</section>
+
+
+<section>
+  <h3>Modeling picture</h3>
+
+  <ul>
+    <li>DO distinguish different networks</li>
+    <li>Otherwise, want simple perf models
+      <ul>
+        <li><a href="https://doi.org/10.1016/S0167-8191(06)80021-9">Hockney model ($\alpha$-$\beta$)</a></li>
+        <li><a href="https://www2.eecs.berkeley.edu/Pubs/TechRpts/1992/6262.html">LogP</a> and company</li>
+        <li><a href="https://dx.doi.org/10.1145/3284358">And many others</a></li>
+    </li>
+  </ul>
+</section>
+
+
+<section>
+  <blockquote>
+    All models are wrong, but some are useful.<br> -- George E. P. Box
+  </blockquote>
+</section>
+
+
+<section>
+  <h3>$\alpha$-$\beta$ model (Hockney 94)</h3>
+  <p>Crudest model: $t_{\mathrm{comm}} = \alpha + \beta M$</p>
+  <ul>
+    <li>$t_{\mathrm{comm}} =$ communication time</li>
+    <li>$\alpha =$ latency</li>
+    <li>$\beta =$ inverse bandwidth</li>
+    <li>$M =$ message size</li>
+  </ul>
+  <p>Works pretty well for basic guidance!</p>
+  <p>Typically $\alpha \gg \beta \gg t_{\mathrm{flop}}$. More money on network, lower $\alpha$.</p>
+</section>
+
+
+<section>
+  <h3>LogP model</h3>
+  <p>Like $\alpha$-$\beta$, but includes CPU time on send/recv:</p>
+  <ul>
+    <li>Latency: the usual</li>
+    <li>Overhead: CPU time to send/recv</li>
+    <li>Gap: min time between send/recv</li>
+    <li>P: number of processors</li>
+  </ul>
+  <p>Assumes small messages (gap $\sim \beta$ for fixed message size).</p>
+</section>
+
+
+<section>
+  <h3>And many others</h3>
+
+  <p>
+    <a href="https://dx.doi.org/10.1145/3284358">Recent survey lists
+      25 models!</a>
+  </p>
+  <ul>
+    <li>More complexity, more parameters</li>
+    <li>Most miss some things (see Box quote)</li>
+    <li>Still useful for guidance!</li>
+    <li>Needs to go with experiments</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Ping-pong</h3>
+
+  <div class="container">
+    <div class="col">
+<p>Process 0:</p>
+<pre>
+for i = 1:ntrials
+  send b bytes to 1
+  recv b bytes from 1
+end
+</pre>
+    </div>
+    <div class="col">
+<p>Process 1:</p>
+<pre>
+for i = 1:ntrials
+  recv b bytes from 0
+  send b bytes to 0
+end
+</pre>
+    </div>
+  </div>
+</section>
+
+
+<section>
+  <h3>Experiment setup</h3>
+
+  <p>Open MPI on old totient (now Graphite)</p>
+  <ul>
+    <li>Two six-core chips per node, eight nodes</li>
+    <li>Heterogeneous network
+      <ul>
+        <li>Crossbar between cores (?)</li>
+        <li>Bus between chips</li>
+        <li>Gig-E between nodes</li>
+      </ul>
+  </ul>
+</section>
+
+
+<section>
+  <h3>Layout (P=24)</h3>
+
+  <p>With <tt>--map-by core</tt> and <tt>--bind-to core</tt>
+  <ul>
+    <li>P 0-5: First chip, first node</li>
+    <li>P 6-11: Second chip, first node</li>
+    <li>P 12-17: First chip, second node</li>
+    <li>P 18-23: Second chip, second node</li>
+  </ul>
+</section>
+
+
+<section>
+  <h3>On chip (0-1)</h3>
+
+  <img src="{{ "lec/figs/ping/graphite-01.svg" | relative_url }}"
+       alt="Timing of 0-1 pings"
+       width="70%"/>
+  <p>$\alpha = 0.849$ microseconds; $\beta = 0.2995$ s/GB</p>
+</section>
+
+
+<section>
+  <h3>Cross chip (0-11)</h3>
+
+  <img src="{{ "lec/figs/ping/graphite-11.svg" | relative_url }}"
+       alt="Timing of 0-11 pings"
+       width="70%"/>
+  <p>$\alpha = 2.29$ microseconds; $\beta = 1.15$ s/GB</p>
+</section>
+
+
+<section>
+  <h3>Cross node (0-23)</h3>
+
+  <img src="{{ "lec/figs/ping/graphite-23.svg" | relative_url }}"
+       alt="Timing of 0-23 pings"
+       width="70%"/>
+  <p>$\alpha = 63.1$ microseconds; $\beta = 1.99$ s/GB</p>
+</section>
+
+
+<section>
+  <h3>Takeaways</h3>
+  <ul>
+    <li>Prefer larger to smaller messages (amortize latency,
+      overhead)</li>
+    <li>More care with slower networks</li>
+    <li>Avoid communication when possible
+      <ul>
+        <li>Great speedup for Monte Carlo and other embarrassingly parallel codes!</li>
+    </ul></li>
+    <li>Overlap communication with computation
+      <ul>
+        <li>Models tell roughly computation to mask comm</li>
+        <li>Really want to measure, though</li>
+    </ul></li>
+  </ul>
+</section>
