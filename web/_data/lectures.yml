@@ -113,6 +113,11 @@
 -
   date: 2020-10-06
   info: Distributed memory programming
+  files:
+    - info: Intro to message passing
+      file: lec/2020-10-06-intro.html
+    - info: MPI programming (narration incomplete)
+      file: lec/2020-10-06-mpi.html
 -
   date: 2020-10-08
   info: Distributed memory programming
