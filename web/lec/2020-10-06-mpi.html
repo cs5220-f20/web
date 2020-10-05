@@ -12,6 +12,31 @@ audio: 2020-10-06-mpi
     <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
   </p>
   <p>Please click the play button below.</p>
+
+  <aside class="notes">
+    <p>
+      Welcome to another exciting slide deck for CS 5220!  The topic
+      for today is MPI programming.
+    </p>
+    <p>
+      OK, let's set some expectations here.  Everyone here supposedly
+      knows how to program, and has at least some familiarity with a C
+      family language.  So you all know already that you aren't going
+      to learn to be a proficient MPI programmer from one slide deck,
+      or even two.  You learn by diving into an actual problem or two with
+      a book at your side, or maybe with a reference web page open.
+      The point of this lecture is to give you a conceptual road map
+      so that you know what you are looking for when you flip through
+      your (online) book or web page.
+    </p>
+    <p>
+      We'll give you some MPI coding problems to swear at, too, but
+      that's not really part of the slide deck.
+    </p>
+    <p>
+      And, with that prelude out of the way, let's get started.
+    </p>
+  </aside>
 </section>
 
   
@@ -26,6 +51,34 @@ audio: 2020-10-06-mpi
     <li>Environmental inquiries (who am I? do I have mail?)</li>
   </ul>
   <p>(Much of what follows is adapted from Bill Gropp.)</p>
+
+  <aside class="notes">
+    <p>
+      The Message Passing Interface (or MPI) is a big interface with a
+      number of different types of operations.  Today, we'll talk
+      about five main ones.  First, there's pairwise messaging:
+      point-to-point data sends and receives.  Then there's collective
+      messaging operations that involve several senders and receivers
+      simultaneously.  There is also some support for simple types of
+      collective computation operations, like computing a sum with
+      contributions from all processors (called a reduction operation)
+      or computing a list of partial sums (called a scan or parallel
+      prefix operation).  Then there are synchronization mechanisms
+      like barriers, though their role in MPI programming is a little
+      subtler than in shared memory programming - and if you have
+      taken a course where you've seen synchronization with locks,
+      you'll be happy to know that there is no need for locks here.
+      And, last but not least, there are environmental inquiries that
+      tell us things about the run-time setup, like how many
+      processors are involved in a given MPI run, or the process
+      number (or rank, in MPI lingo) of a given processor.
+    </p>
+    <p>
+      This slide deck has evolved some over time, but it was
+      originally modeled pretty closely on a similar presentation
+      given by Bill Gropp of UIUC.
+    </p>
+  </aside>
 </section>
 
 
@@ -36,8 +89,34 @@ audio: 2020-10-06-mpi
     <li>An interface spec — many implementations<br/>
       (OpenMPI, MPICH, MVAPICH, Intel, ...)
     </li>
+    <li>Single Program Multiple Data (SPMD) style</li>
     <li>Bindings to C, C++, Fortran</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      MPI is short for Message Passing Interface.  The "interface"
+      part is important.  There are many different implementations out
+      there, with OpenMPI, MPICH, and the Intel MPI being maybe the
+      most popular.  These different implementations are not
+      guaranteed to do things the same way behind the scenes, nor to
+      inter-operate with each other.  They just implement the same
+      programming interface.
+    </p>
+    <p>
+      There are several versions of the MPI programming interface,
+      including in C, C++, and Fortran.  Other languages (like Python)
+      often have unofficial MPI interfaces, too.  We can usually use
+      MPI across language boundaries, even if we can't mix MPI
+      implementations.  For example, it's completely legitimate for a
+      C routine to send MPI messages to a Fortran routine, though it
+      certainly doesn't happen all that often, partly because of the
+      nature of MPI codes.  MPI programs are SPMD: Single Program,
+      Multiple Data.  It's possible that different MPI ranks can do
+      very different things during program execution, but they all
+      start from the same main routine.
+    </p>
+  </aside>
 </section>
 
 
@@ -55,6 +134,21 @@ audio: 2020-10-06-mpi
     </li>
     <li>Will stick to MPI-2 today</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      MPI has been around for a long time.  Version 1.0 is over a
+      quarter century old, though MPI-3 is much more recent than that -
+      less than a decade.  We'll mostly talk about MPI-2 constructs
+      today, but MPI-3 provides some nice extensions, including
+      non-blocking collective operations, neighborhood collectives,
+      and support for one-sided communications.
+    </p>
+    <p>
+      If none of that last sentence made sense, don't worry.  It
+      should after this week.
+    </p>
+  </aside>
 </section>
 
 
@@ -72,6 +166,50 @@ int main(int argc, char** argv) {
     MPI_Finalize();
     return 0;
 }</code></pre>
+
+<aside class="notes">
+  <p>
+    Let's start by walking through a "hello world" example in MPI.
+    This example, or something very similar, is in the
+    demos/graphite-hello directory.
+  </p>
+  <p>
+    We start by including the MPI header file at the very beginning.
+    The MPI header is where we have the declarations for the MPI
+    functions.  This code uses only four of those functions, but they
+    are calls that almost every MPI program makes.
+  </p>
+  <p>
+    The first call is
+    to MPI_Init, and this call always has to come first.  Notice that
+    we pass in pointers to the argc and argv inputs to main, which are
+    used to pass in command-line parameters.  That's because some MPI
+    implementations can use argc and argv to pass in data about the
+    MPI setup when the program gets started.  The MPI_Init is supposed
+    to take any of that extra stuff out, so you should ideally call it
+    before you do any argument processing (for example).
+  </p>
+  <p>
+    The last call is to MPI_Finalize.  This always has to come at the
+    end of your MPI programs, after you've finished any communication.
+  </p>
+  <p>
+    The two calls in between are not required in the same way that you
+    require the MPI_Init and MPI_Finalize calls, but they show up in
+    most MPI codes nonetheless.  MPI indexes processes by "ranks,"
+    and so MPI_Comm_rank is used to get the rank of the current
+    process (zero-indexed) and MPI_Comm_size gets the total number of
+    processes.
+  </p>
+  <p>
+    The first argument to both of these functions, MPI_COMM_WORLD, is
+    the name of the default communicator.  A communicator in MPI is a
+    collection of processes that can communicate with each other for a
+    different context.  It's not uncommon for small MPI codes to just
+    use MPI_COMM_WORLD for communication, and we'll use that as our
+    default communicator argument today.
+  </p>
+</aside>
 </section>
 
 
@@ -85,6 +223,50 @@ sbatch foo.sub         # Submit to queue (SLURM)
 # mpirun -n 2 ./foo.x  # (in foo.sub) Run on 2 procs
   </pre>
   <p>This is all platform-specific.</p>
+
+  <aside class="notes">
+    <p>
+      Writing the MPI program is only the first step.  Once we have
+      the code, we have to compile it and run it!
+    </p>
+    <p>
+      We usually compile with mpicc or mpif90 or some similarly-named
+      command.  This builds on your usual GCC or CLang or Intel
+      compiler behind the scenes, but does the work for you of
+      figuring out where the MPI support libraries and header files
+      are.
+    </p>
+    <p>
+      Once we have compiled the code, we use a command like mpirun or
+      mpiexec - depends on the implementation - to actually launch the
+      MPI job on some number of nodes.  The mpirun interface gets a
+      bunch of information both from command line variables (e.g. we
+      use -n 2 in the example above to say that we're running on two
+      processors) and from shell environment variables and from
+      files.
+    </p>
+    <p>
+      On my laptop, I would just use mpirun directly.  But if I want
+      to run on a cluster, like the Graphite cluster or the SDSC Comet
+      system that we will use in the class, I would typically submit a
+      runner job to a batch queue system.  The batch queue system is
+      responsible for sharing the resources in a big cluster or
+      supercomputer: the idea is that rather than always running tasks
+      interactively, you write a script that says what you want to do
+      and what resources you will need, and a scheduler figures out
+      when the system will be able to give you those resources, and
+      runs the code for you asynchronously.  We've used the syntax
+      here for the SLURM batch system, but there are others, like PBS
+      and SGE.  They all use different commands and work in slightly
+      different ways, but they all have the same basic functionality:
+      you tell the scheduler the resources, and it finds time on those
+      resources for you so that you can run your job.  The scheduler
+      will also frequently set up the environment variables and files
+      that the MPI implementation needs in order to know where it
+      should run things for you.  So there's a lot that goes on behind
+      the scenes here.
+    </p>
+  </aside>
 </section>
 
 
@@ -100,6 +282,17 @@ sbatch foo.sub         # Submit to queue (SLURM)
     <li>Identify process by rank in group</li>
     <li>Default is <tt>MPI_COMM_WORLD</tt></li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      As we said two slides ago, messages in MPI are sent by
+      communicators.  A communicator is a group of processes and a
+      messaging context - for example, the context of a library or
+      framework that we would like to not interfere with
+      MPI_COMM_WORLD.  As we said before, MPI_COMM_WORLD is the name
+      of the default communicator.
+    </p>
+  </aside>
 </section>
 
 
@@ -116,6 +309,35 @@ sbatch foo.sub         # Submit to queue (SLURM)
     <li>How does receiver identify messages?</li>
     <li>What does it mean to “complete” a send/recv?</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      We use communicators to communicate, naturally enough, but what
+      does communication in MPI look like?  We need to specify at
+      least three things: who is sending, who is receiving, and what
+      is in the message.  There is actually some subtlety to each of
+      these, starting with the content of the messages.  For example,
+      suppose that we wanted to send an integer across the wire.
+      Different systems can encode integers in different ways: for
+      example, most modern Intel machines are "little-endian," meaning
+      that the least significant bytes of an integer appear first in
+      memory; but there used to be common machines that were
+      "big-endian," meaning that the most significant bytes appear
+      first.  So if we want to send messages from a big-endian machine
+      to a little-endian machine, we'd better re-order the bytes in
+      our integers first.  That means that we need to know not only a
+      region in memory where the message resides, but also a bit about
+      the meaning of the bytes in that region.
+    </p>
+    <p>
+      By the way, the terms "big-endian" and "little-endian" come from
+      Gulliver's Travels.  These were the names of the opposing
+      parties in Lilliput.  The Big-Endians broke their eggs at the
+      big end; the Little-Endians, at the other end.  Yes, the whole
+      thing is obscure and a little bit silly - but that describes a
+      lot of CS, doesn't it?
+    </p>
+  </aside>
 </section>
 
 
@@ -130,6 +352,19 @@ sbatch foo.sub         # Submit to queue (SLURM)
     <li>Arbitrary structures</li>
   </ul>
   <p>Complex data types may hurt performance?</p>
+
+  <aside class="notes">
+    <p>
+      So, MPI messages are made up of different data types.  Most
+      messages involve basic data types like ints or doubles, or arrays
+      of those basic data types.  But MPI also provides support for more
+      complicated data types.  It's often worth keeping things simple if
+      you can, though.  MPI is big, and implementors tend to spend the
+      most time tuning the parts of the standard that get the most use.
+      And complicated MPI data types don't necessarily get used all that
+      often.
+    </p>
+  </aside>
 </section>
 
 
@@ -141,6 +376,19 @@ sbatch foo.sub         # Submit to queue (SLURM)
     <li>Can screen messages with wrong tag</li>
     <li><tt>MPI_ANY_TAG</tt> is a wildcard</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      Along with the data, MPI messages come with an integer tag that
+      identifies the type or sequence number of a message.  Tags
+      aren't needed to get the basic functionality in MPI, but they
+      are really convenient for helping debug when things go wrong,
+      or when messages get re-ordered in some way.  Message receivers
+      can indicate that they are expecting a particular tag, and
+      screen out messages that don't match; or they can specify
+      MPI_ANY_TAG to say that they will take any message.
+    </p>
+  </aside>
 </section>
 
 
@@ -157,6 +405,32 @@ MPI_Recv(void *buf, int count,
          MPI_Datatype datatype,
          int source, int tag, MPI_Comm comm,
          MPI_Status *status);</code></pre>
+
+<aside class="notes">
+  <p>
+    All right.  Let's introduce the next pair of MPI commands:
+    blocking send and receive.
+  </p>
+  <p>
+    MPI_Send sends a message, blocking until the message is "in the
+    system" - whatever that might mean.  We have to tell the routine
+    where the message is in memory, how many items are in the message,
+    the type of those items, the destination rank, the message tag,
+    and the communicator.
+  </p>
+  <p>
+    MPI_Recv receives a message.  The arguments look a lot like those
+    for the send, but there are a couple differences to know about.
+    First, we don't need to know the exact size of the data to be
+    received in advance; the receive count just tells us the size of the
+    buffer we are providing.  Second, the source and tag can be either
+    a processor rank and tag that we are supposed to match, or they
+    can be wildcard values.  Finally, we have an additional output
+    argument, called status, appearing at the end of the argument
+    list.  We use this to communicate additional information about
+    what we received.
+  </p>
+</aside>
 </section>
 
 
@@ -173,6 +447,18 @@ MPI_Recv(void *buf, int count,
     </ul></li>
     <li>Recv status contains more info (tag, source, size)</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      OK.  So the semantics are: we send data, and the function
+      returns when the data is on its way, whether or not it has
+      actually arrived.  The receiver then picks up the data,
+      screening on the source and tag parameters, unless the wildcards
+      MPI_ANY_SOURCE and MPI_ANY_TAG are provided.  And the receive
+      function also writes to a status object, telling us the actual
+      tag, sources, and message size of the thing we received.
+    </p>
+  </aside>
 </section>
 
 
@@ -188,6 +474,15 @@ end</code></pre>
   recv b bytes from 0
   send b bytes to 0
 end</code></pre>
+
+<aside class="notes">
+  <p>
+    With send and receive, we now have enough information to write a
+    ping-pong test.  Recall that we discussed this in the last slide
+    deck; the idea is that we send a message back and forth between
+    process 0 and process 1, varying the message size, and we do some timing.
+  </p>
+</aside>
 </section>
 
 
@@ -203,6 +498,16 @@ end</code></pre>
     }
 }</code></pre>
 <p>(Pong is similar)</p>
+
+<aside class="notes">
+  <p>
+    Here is the ping code in MPI.  Pong looks similar.  Note that MPI_CHAR
+    is a single byte, so we are sending b-byte messages back and
+    forth.  Passing a NULL pointer to the last argument of receive
+    says that we don't actually care about the results that would
+    normally be passed back in the status object.
+  </p>
+</aside>
 </section>
 
 
@@ -210,25 +515,23 @@ end</code></pre>
 <h3>Ping-pong MPI</h3>
 <pre><code>for (int sz = 1; sz &lt;= MAX_SZ; sz += 1000) {
     if (rank == 0) {
-        clock_t t1, t2;
-        t1 = clock();
+        double t1 = MPI_Wtime();
         ping(buf, sz, NTRIALS, 1);
-        t2 = clock();
-        printf(&quot;%d %g\n&quot;, sz,
-               (double) (t2-t1)/CLOCKS_PER_SEC);
+        double t2 = MPI_Wtime();
+        printf(&quot;%d %g\n&quot;, sz, t2-t1);
     } else if (rank == 1) {
         pong(buf, sz, NTRIALS, 0);
     }
 }</code></pre>
-</section>
 
-
-<section>
-  <h3>Running the code</h3>
-  <p>On my laptop (OpenMPI)</p>
-  <pre><code>mpicc -std=c99 pingpong.c -o pingpong.x
-      mpirun -np 2 ./pingpong.x</code></pre>
-  <p>Details vary, but this is pretty normal.</p>
+<aside class="notes">
+  <p>
+    At the start of the ping-pong test, both processors enter the same
+    main routine.  We starting pinging at rank 0, and ponging at rank
+    1.  We'll measure the times at rank 0 using the MPI_Wtime routine,
+    which gives the current wall clock time measured in seconds.
+  </p>
+</aside>
 </section>
 
 
@@ -238,6 +541,15 @@ end</code></pre>
        alt="Diagram of buffered message send"
        width="80%"/>
   <p>Block until data “in system” — maybe in a buffer?</p>
+
+  <aside class="notes">
+    <p>
+      I've said a couple times now that MPI_Send blocks until data is
+      in the system.  But what does that mean?  Often, it means that
+      the data has been copied from the user-space memory provided in
+      the Send call into a buffer maintained by the operating system.
+    </p>
+  </aside>
 </section>
 
 
@@ -247,6 +559,15 @@ end</code></pre>
        alt="Diagram of unbuffered message send"
        width="80%"/>
   <p>Alternative: don’t copy, block until done.</p>
+
+  <aside class="notes">
+    <p>
+      An alternative is to do a "zero-copy" send, where the network
+      card directly accesses the user buffer.  That saves some time on
+      the copy, though it means that we are not going to allow the MPI
+      program to do anything while the message is in transit.
+    </p>
+  </aside>
 </section>
 
 
@@ -257,15 +578,34 @@ end</code></pre>
        width="30%"/>
   <p>Both processors wait to send before they receive!<br />
     May not happen if lots of buffering on both sides.</p>
+
+  <aside class="notes">
+    <p>
+      We might run into a problem in systems that use the zero-copy
+      approach, or use buffered sends but don't have ample buffer
+      space.  If two processors both want to send to each other and
+      are blocked on the send, they can never reach the subsequent
+      receive!  This is a deadlock scenario.
+    </p>
+  </aside>
 </section>
 
 
 <section>
   <h3>Solution 1: Alternating order</h3>
-  <img src="{{ "lec/figs/mpi-send-dead.svg" | relative_url }}"
+  <img src="{{ "lec/figs/mpi-send-alt.svg" | relative_url }}"
        alt="Diagram of breaking deadlock scenario by alternate send/recv"
        width="30%"/>
   <p>Could alternate who sends and who receives.</p>
+
+  <aside class="notes">
+    <p>
+      One way around the deadlock is to alternate who sends and who
+      receives.  This is what happens in our ping-pong tester, for
+      example.  Of course, this gets trickier when we are building
+      more complicated exchange patterns out of sends and receives.
+    </p>
+  </aside>
 </section>
 
 
@@ -275,6 +615,14 @@ end</code></pre>
        alt="Diagram of send-receive primitive"
        width="60%"/>
   <p>Common operations deserve explicit support!</p>
+
+  <aside class="notes">
+    <p>
+      Fortunately, there are a lot of situations where we want to send
+      a message and receive a message at about the same time, so MPI
+      has a primitive for it: MPI_Sendrecv.
+    </p>
+  </aside>
 </section>
 
 
@@ -286,6 +634,15 @@ end</code></pre>
              source, recvtag,
              comm, status);</code></pre>
 <p>Blocking operation, combines send and recv to avoid deadlock.</p>
+
+<aside class="notes">
+  <p>
+    MPI_Sendrecv takes all the arguments of a send, then all of the
+    arguments of a receive, and it does the two operations in one big
+    lump.  It will manage things in order to make sure there are no
+    deadlocks for scenarios like the crossing sends that we discussed earlier.
+  </p>
+</aside>
 </section>
 
 
@@ -295,6 +652,16 @@ end</code></pre>
        alt="Diagram of nonblocking send primitive"
        width="60%"/>
   <p>Partial solution: nonblocking communication</p>
+
+  <aside class="notes">
+    <p>
+      Of course, even if we avoid deadlock, we might not be happy with
+      the cost of blocking operations like MPI_Send and MPI_Recv just
+      because we may leave the processor idle.  But we can overlap
+      communication and computation a little better with the so-called
+      nonblocking operations.
+    </p>
+  </aside>
 </section>
 
 
@@ -313,6 +680,18 @@ end</code></pre>
         <li>Read buffer before data ready $\implies$ evil!</li>
     </ul></li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      OK, we just talked about the problems with blocking sends and
+      receives.  We might deadlock if we sequence our operations in an
+      ill-advised way, and we might waste time while we wait for the
+      operations to complete.  So with these problems, why block?  The
+      answer is that we can compromise correctness if we try to read
+      or write to buffers before the send and receive complete.  The
+      blocking semantics are there to protect us.
+    </p>
+  </aside>
 </section>
 
 <section>
@@ -323,6 +702,22 @@ end</code></pre>
     <li>Initiate send/recv and promise not to touch buffer</li>
     <li>Check later for operation completion</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      The alternative to blocking communication is non-blocking
+      communication.  In these primitives, we split starting a send or
+      receive and finishing the operation into distinct phases.  In
+      between the start of a send and the end of a send, we are
+      allowed to do any work we want - as long as we promise not to
+      touch the send buffer.  The situation with receives is similar.
+    </p>
+    <p>
+      The key to correctness here is that you follow your promise not
+      to touch the buffers while messages are in progress.  If you
+      break your promise, you get undefined behavior.
+    </p>
+  </aside>
 </section>
 
 
@@ -331,6 +726,17 @@ end</code></pre>
   <img src="{{ "lec/figs/mpi-isendrecv.svg" | relative_url }}"
        alt="Diagram of nonblocking send/receive primitive"
        width="80%"/>
+
+  <aside class="notes">
+    <p>
+      Here's the behavior in pictures.  Two processors want to
+      exchange data, so we start a nonblocking send-receive
+      operation.  Then we do some work that doesn't depend on the
+      message, and only block on exchange completion after we've done
+      that work.  If we have enough work, we can completely mask the
+      communication cost.
+    </p>
+  </aside>
 </section>
 
 
@@ -345,6 +751,20 @@ MPI_Irecv(start, count, datatype, dest
 <pre><code>MPI_Wait(request, status);</code></pre>
 <p>Test for message completion:</p>
 <pre><code>MPI_Test(request, status);</code></pre>
+
+<aside class="notes">
+  <p>
+    The relevant MPI calls to start a non-blocking send or receive are
+    MPI_Isend and MPI_Irecv.  Each of these calls has an output
+    argument called "request" that creates a handle that we can use
+    later to refer to the operation.  The MPI_Wait and MPI_Test
+    objects take the request object as an input; MPI_Wait blocks
+    until message completion, and MPI_Test returns whether the message
+    is done.  These calls have an output argument called status
+    that tells us the status of the message - this is the same type of
+    status object that we saw in the call to MPI_Recv.
+  </p>
+</aside>
 </section>
 
 
@@ -355,6 +775,15 @@ MPI_Irecv(start, count, datatype, dest
 MPI_Waitany(count, requests, index, status);
 MPI_Waitsome(count, requests, indices, statuses);</code></pre>
 <p>Multiple versions of test as well.</p>
+
+<aside class="notes">
+  <p>
+    Sometimes we have more than one non-blocking send or receive in
+    progress, and we want to wait on some or all of them.  There are
+    versions of MPI_Test that look at multiple pending requests,
+    too.
+  </p>
+</aside>
 </section>
 
 
@@ -368,6 +797,22 @@ MPI_Waitsome(count, requests, indices, statuses);</code></pre>
     <li>Can combine modes (e.g. <tt>MPI_Issend</tt>)</li>
   </ul>
   <p><tt>MPI_Recv</tt> receives anything.</p>
+
+  <aside class="notes">
+    <p>
+      There are other variants of the MPI_Send, too.  The synchronous
+      version makes sure that the message is actually received before
+      proceeding; the buffered version provides an adequate user-space
+      buffer; and the ready version guarantees that the receiver has
+      already posted a receive operation before we begin.  We can
+      combine modes, too.  There are a lot of combinations.
+    </p>
+    <p>
+      Receive is simpler: we basically just use the blocking version
+      or the nonblocking version.  No ready, buffered, or synchronous
+      modes on this end.
+    </p>
+  </aside>
 </section>
 
 
@@ -382,6 +827,16 @@ MPI_Waitsome(count, requests, indices, statuses);</code></pre>
         <li>Operations are called by all processes in communicator</li>
     </ul></li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      Point-to-point message exchanges are only one way to organize
+      communications in a message-passing code.  We can also use
+      all-to-one and one-to-all patterns, or even all-to-all
+      patterns.  Examples here include broadcast, reduction, and
+      scatter-gather, among others.  Let's go through a few instances now.
+    </p>
+  </aside>
 </section>
 
 
@@ -396,6 +851,25 @@ MPI_Reduce(sendbuf, recvbuf, count, datatype,
 <li>recvbuf receives result only at root</li>
 <li>op $\in \{$ <tt>MPI_MAX</tt>, <tt>MPI_SUM</tt>, …$\}$</li>
 </ul>
+
+<aside class="notes">
+  <p>
+    Two of the most fundamental collective operations are broadcasting
+    and reduction.  MPI_Bcast sends a message from a root node that is
+    received at every other node in the communicator.  The arguments
+    look much like the arguments to MPI_Send and MPI_Recv, except for
+    the presence of the root rank argument and the absence of a status
+    object.
+  </p>
+  <p>
+    MPI_Reduce goes the other way: the root node receives
+    contributions from every processor, and combines them via some
+    associative operation like max or sum.  Note that we have to
+    specify a buffer for data to be sent and another buffer for the
+    result to be retrieved, but the receive buffer is only used at the
+    root process.
+  </p>
+</aside>
 </section>
 
 
@@ -411,10 +885,22 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &amp;my_id);
     MPI_Bcast(&amp;ntrials, 1, MPI_INT,
               0, MPI_COMM_WORLD);
-    run_trials(myid, nproc, ntrials);
+    run_mc(myid, nproc, ntrials);
     MPI_Finalize();
     return 0;
 }</code></pre>
+
+<aside class="notes">
+  <p>
+    Let's give an example of using broadcast and reduce in a Monte
+    Carlo computation.  We start by deciding how many trials each
+    processor should compute; in this case, we just get it from the
+    command line, but maybe we would do something more elaborate.
+    From rank 0, we are going to broadcast the number of trials per
+    processor to all the other ranks; then we will actually run the
+    Monte Carlo computation.
+  </p>
+  </aside>
 </section>
 
 
@@ -435,6 +921,27 @@ int main(int argc, char** argv) {
                EX, sqrt((EX*EX-EX2)/N));
     }
 }</code></pre>
+
+<aside class="notes">
+  <p>
+    The idea of Monte Carlo is that we'll run lots of independent
+    computational experiments, and then compute a sample mean and
+    variance over those experiments.  To do this, we need to get the
+    sum of experiment outputs and the sum of the squares of the
+    experiment outputs.  We'll keep the local contribution to these
+    sums in the my_sums array at each processor.  Then, after we have
+    run the trials on each processor, we will reduce from these
+    my_sums array into a sums array that lives at rank 0.  Finally, at
+    rank 0 we will use the overall sums to compute a sample mean and
+    standard deviation.
+  </p>
+  <p>
+    Yes, I know that this is a biased estimator for the variance,
+    since we used an N instead of an N-1.  In Monte Carlo
+    computations, if you notice the difference between division by N
+    and division by N-1, you probably should have used more trials.
+  </p>
+</aside>
 </section>
 
 
@@ -449,6 +956,21 @@ int main(int argc, char** argv) {
         <li>Computation (e.g. reduce)</li>
     </ul></li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      Collective operations like broadcast and reduce have to be
+      called simultaneously from all ranks in a communicator, and
+      involve communications among all the processes.  We have
+      synchronization collectives like barrier; communication
+      collectives like broadcast; and computation collectives like
+      reduce.
+    </p>
+    <p>
+      We aren't going to talk about most of these in any detail,
+      but we can illustrate the basic ideas in pictures.
+    </p>
+  </aside>
 </section>
 
 
@@ -456,6 +978,16 @@ int main(int argc, char** argv) {
   <h3>Barrier</h3>
   <pre><code>MPI_Barrier(comm);</code></pre>
   <p>Not much more to say. Not needed that often.</p>
+
+  <aside class="notes">
+    <p>
+      All right, maybe no picture for the MPI barrier.  It's a
+      barrier; everyone blocks at it until all of the ranks have
+      reached it.  This is not that useful with the communication
+      operations we've discussed so far; it's more relevant when we
+      are using one-sided communication operations.
+    </p>
+  </aside>
 </section>
 
 
@@ -464,6 +996,13 @@ int main(int argc, char** argv) {
   <img src="{{ "lec/figs/mpi-bcast.svg" | relative_url }}"
        alt="Diagram of MPI broadcast"
        width="80%"/>
+
+  <aside class="notes">
+    <p>
+      Here is MPI_Bcast in pictures.  We start with A only on the root
+      (rank 0); and after the broadcast, everyone has a copy.
+    </p>
+  </aside>
 </section>
 
 
@@ -472,6 +1011,18 @@ int main(int argc, char** argv) {
   <img src="{{ "lec/figs/mpi-gather.svg" | relative_url }}"
        alt="Diagram of MPI gather"
        width="80%"/>
+
+  <aside class="notes">
+    <p>
+      Broadcast sends the same data item to everyone.  Scatter and
+      gather send different data items between the root and every
+      other rank in the communicator.  For example, if the root starts
+      with ABCD and scatters to the other processors, then at the end
+      we have A at rank 0, B at rank 1, C at rank 2, and D at rank 3.
+      Gather goes the other way, collecting contributions from all the
+      ranks and putting them together in an array at the root.
+    </p>
+  </aside>
 </section>
 
 
@@ -480,6 +1031,13 @@ int main(int argc, char** argv) {
   <img src="{{ "lec/figs/mpi-allgather.svg" | relative_url }}"
        alt="Diagram of MPI all-gather"
        width="80%"/>
+
+  <aside class="notes">
+    <p>
+      Allgather is like a gather operation, but instead of just
+      gathering data to the root, every processor gets a copy.
+    </p>
+  </aside>
 </section>
 
 
@@ -488,6 +1046,14 @@ int main(int argc, char** argv) {
   <img src="{{ "lec/figs/mpi-alltoall.svg" | relative_url }}"
        alt="Diagram of MPI all-to-all"
        width="80%"/>
+
+  <aside class="notes">
+    <p>
+      And all-to-all is like a simultaneous scatter operation from every
+      rank at once.  All-to-all is also sometimes called a transpose
+      operation, for reasons that I hope are clear from the diagram!
+    </p>
+  </aside>
 </section>
 
 
@@ -496,6 +1062,16 @@ int main(int argc, char** argv) {
   <img src="{{ "lec/figs/mpi-reduce.svg" | relative_url }}"
        alt="Diagram of MPI reduce"
        width="80%"/>
+
+  <aside class="notes">
+    <p>
+      Broadcast, scatter/gather, allgather, and all-to-all are all
+      pure communication operations.  Reduce, as we've already
+      mentioned, does some computation as well.  Here we do a sum
+      reduction, but we can also do max or min reductions - any
+      associative operation will work.
+    </p>
+  </aside>
 </section>
 
 
@@ -504,6 +1080,16 @@ int main(int argc, char** argv) {
   <img src="{{ "lec/figs/mpi-scan.svg" | relative_url }}"
        alt="Diagram of MPI scan"
        width="80%"/>
+
+  <aside class="notes">
+    <p>
+      Another powerful collective computation operation is scan, or
+      parallel prefix.  The idea is that each rank p will get a
+      partial sum (or partial result) from the data at ranks 0 through
+      p.  This is fantastically useful for things like computing
+      shared global indices, for example.
+    </p>
+  </aside>
 </section>
 
 
@@ -521,6 +1107,27 @@ int main(int argc, char** argv) {
         <li>Allreduce, Allgather, Bcast</li>
     </ul></li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      We have just scratched the surface of what one can do with even
+      MPI-2.  In addition to the basic operations sketched so far,
+      there are more All variants (like Allgather), vector variants
+      that work with a chunk of data at a time, combined operations
+      like reduce-scatter (a little like send-receive), and more.
+      It's not a small library!
+    </p>
+    <p>
+      Fortunately, we can go a long way with a few operations like
+      send/receive pairs and collectives like scatter, gather,
+      broadcast, and reduction.
+    </p>
+    <p>
+      If I am ambitious, there may be another slide deck on Thursday
+      about the MPI-3 operations.  But the real next step for all of
+      you is to try some things out!  I will provide some demo codes
+      for this purpose, and we'll talk through some of them in
+      meetings this week.  Until then!
+    </p>
+  </aside>
 </section>
-
-
