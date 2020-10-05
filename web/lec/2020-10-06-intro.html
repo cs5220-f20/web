@@ -4,25 +4,6 @@ layout: slides
 audio: 2020-10-06-intro
 ---
 
-<!--
- - Introduction
-   - Message passing paradigm
-   - Comparison to shared memory (and PGAS)
-   - Networks and costs of message passing
-   - MPI programming
-   - Pointers to references
- - Network hardware
-  - Survey of network topologies
-  - Does it matter?
-  - Near and far accesses
- - Models of message costs
-  - Hockney (Alpha-beta) models
-  - LogP
-  - Ping-pong measurements (the concept)
-  - Big picture: modeling, measuring, de-slugging
- -->
-
-
 <style>
 .container{
     display: flex;
@@ -41,6 +22,12 @@ audio: 2020-10-06-intro
     <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
   </p>
   <p>Please click the play button below.</p>
+
+  <aside class="notes">
+    <p>
+      Welcome to another exciting week of 5220!
+    </p>
+  </aside>
 </section>
 
   
@@ -55,6 +42,37 @@ audio: 2020-10-06-intro
     </ul></li>
     <li>Next week: shared memory (and PGAS?)</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      The plan this week is to talk about message passing generally in
+      this deck, and how it is supported in hardware.  Then we'll talk
+      a little bit about MPI programming in the next deck.  Then we'll
+      talk next week about shared memory programming in OpenMP.
+    </p>
+    <p>
+      I know I said this last week, but I think there's some
+      pedagogical value to thinking about the message passing style of
+      programming before thinking about shared memory.  That's because
+      the types of things you have to think about to get
+      high-performance shared memory codes are often the same types of
+      things you have to think through to get high-performance message
+      passing codes.  It's just that with MPI, you're forced into it
+      in a way that you aren't always with OpenMP.
+    </p>
+    <p>
+      There are other types of programming models out there, too,
+      things that sit somewhere between traditional message-passing
+      and traditional shared memory.  For that matter, MPI sometimes
+      sits somewhere between those two traditions, thanks to the
+      features in MPI-3!  Anyhow, I hope to do something with one of
+      the Parallel Global Address Space (PGAS) languages or libraries,
+      too.
+    </p>
+    <p>
+      But for today: message passing!
+    </p>
+  </aside>
 </section>
 
 
@@ -68,6 +86,38 @@ audio: 2020-10-06-intro
   </ul>
   <p>This is a combined hardware-software question!</p>
   <p>We want to understand just enough for reasonable modeling.</p>
+
+  <aside class="notes">
+    <p>
+      One of the basic questions in designing message-passing code for
+      performance is how much a message will cost.  Remember, the time
+      for a message in isolation is a latency cost (time to get out of
+      the caller, through the processors, and to the other system)
+      together with a bandwidth cost (time per byte during the
+      transfer).  So we need to understand enough about the network to
+      get a sense for how to think about these two terms.
+    </p>
+    <p>
+      Of course, life is more complicated than that!  Often, there are
+      many messages traversing the network simultaneously, and so we
+      have to worry about congestion effects - we can't always assume
+      the effective bandwidth that one processor gets is always equal to the
+      max bandwidth the network provides.  Also, there are several
+      pieces to latency: the time to make it across the network wires
+      is one part, but there's also the time to get a message through
+      the operating system and into the network in the first place.
+      And we can try to use the processor for other work when there
+      just happens to be data going across the wires, but maybe not
+      when the CPU is busy with the overhead to initiate the message.
+      So maybe this is something that we should consider, too.
+    </p>
+    <p>
+      The point here, though, is not to turn you into networking
+      experts.  It is to give you a rough sense of what's possible so
+      that you can understand how to think about modeling the
+      performance of your code.
+    </p>
+  </aside>
 </section>
 
 
@@ -80,6 +130,28 @@ audio: 2020-10-06-intro
     <li><em>Switching</em>: circuits, store-and-forward?</li>
     <li><em>Flow control</em>: how do we manage limited resources?</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      Let's start by thinking about the network hardware: we call this
+      the network, or the network fabric, or the interconnect,
+      depending on who is doing the talking.  Several features
+      characterize the interconnect, down at the bottom level.  First,
+      there's the topology: how are the wires, nodes, and switches
+      connected to each other?  Then, there are the rules for routing
+      the messages: do we use the same path for every packet from a
+      given source to a given destination, or can it change?  And is
+      it a shortest path, or are there other policies that come into
+      play?  We also have to decide whether we are going to set up a
+      circuit and communicate on it for a while - the way that the old
+      phone connections used to work - or if we are going to break our
+      messages into packets and send them in a store-and-forward
+      fashion, which is what happens in lots of modern networks.  And
+      then, if there may be more traffic sometimes than the network
+      can gracefully handle, we have to have flow control mechanisms
+      that let us share the bandwidth resources of the network.
+    </p>
+  </aside>
 </section>
 
 
@@ -94,6 +166,25 @@ audio: 2020-10-06-intro
     <li>Short packets are like cars, long ones like buses?</li>
   </ul>
   <p>At some point the analogy breaks down...</p>
+
+  <aside class="notes">
+    <p>
+      Let's try an analogy to the physical world, one familiar to
+      anyone who has seen busy traffic.  Network nodes that produce
+      and receive traffic are like buildings.  Vehicles / messages
+      move from one building to another via the streets / links, but
+      there usually isn't a direct connection from every source to
+      every destination.  So we have intersections where streets some
+      together; the network analogy here is switches.  Routing
+      algorithms are like travel plans for individual vehicles.  And
+      flow control algorithms are like the algorithms that govern stop
+      lights.
+    </p>
+    <p>
+      Of course, it isn't a perfect analogy.  But it's a pretty
+      reasonable one, as these things go.
+    </p>
+  </aside>
 </section>
 
 
@@ -110,6 +201,23 @@ audio: 2020-10-06-intro
     </ul></li>
     <li>Example: basic Ethernet, some SMPs</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      Let's start with the simplest possible case: a bus topology.
+      A bus is one set of wires that everyone connects to.  In
+      general, only one processor is allowed to send on the bus at a
+      time, though everyone connected to the bus can see the message.
+      So figuring out how to deal with contention, or the case of
+      multiple processors that want to send simultaneously, is a big
+      issue with buses.  In fact, it's such a big issue that we rarely
+      find buses with lots of nodes.  The original Ethernet systems
+      used buses, but mostly we use switched Ethernet these days.
+      There are, however, buses that connect processors to memory on
+      most machines.  There are also buses to connect processors to
+      peripherals: after all, USB is short for Universal Serial Bus.
+    </p>
+  </aside>
 </section>
 
 
@@ -126,6 +234,21 @@ audio: 2020-10-06-intro
     <li>Example: recent AMD/Intel multicore chips<br />
       (older: front-side bus)</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      Buses represent one extreme: potentially many nodes, and one
+      shared link.  This is pretty good for minimizing the number of
+      wires we use, but not so good for sharing.  The opposite extreme
+      is the crossbar: a dedicated channel for every
+      source-destination pair in the network.  This completely gets
+      rid of the problem of contention, but the hardware gets
+      expensive quickly as we add processors.  But a crossbar is not a
+      bad way to go at all when the number of processors is modest,
+      and this type of interconnect is pretty common inside modern
+      multicore processors with not too many cores.
+    </p>
+  </aside>
 </section>
 
 
@@ -141,6 +264,18 @@ audio: 2020-10-06-intro
         <li>May give up one-hop routing</li>
     </ul></li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      Neither buses nor crossbars are that attractive when we have a
+      lot of processors to connect.  Crossbars require too much
+      hardware; buses suffer too much from contention.  Other
+      topologies balance the contention and hardware costs in various
+      ways, though usually at the cost of having more complicated
+      routing.  Or any routing, really.  There's not much to say about
+      routing on a bus or a crossbar.
+    </p>
+  </aside>
 </section>
 
 
@@ -164,6 +299,18 @@ audio: 2020-10-06-intro
   <img src="{{ "lec/figs/topo-fat.svg" | relative_url }}"
        alt="Diagram of fat tree topology"
        width="30%"/>
+
+  <aside class="notes">
+    <p>
+      In previous instances of this class, I would usually spend a few
+      minutes talking about some of the most common topologies: lines
+      and rings, meshes and tori, hypercubes and fat trees.  I'm not
+      going to do that this time, other than showing you some pretty
+      diagrams, because it's not really central to our goal of
+      understanding enough about the network to build reasonable
+      performance models.
+    </p>
+  </aside>
 </section>
 
 
@@ -180,8 +327,28 @@ audio: 2020-10-06-intro
     </ul></li>
   </ul>
   <aside class="notes">
-    - Mention wormhole routing
-    - Cost of software stack (including SW store-forward)
+    <p>
+      We can get a long way in performance modeling by characterizing
+      networks by two numbers: the network diameter, and the bisection
+      bandwidth.
+    </p>
+    <p>
+      The network diameter is the maximum number of hops
+      between nodes, and the latency is generally maximal along these
+      maximal-length paths.  So we can build a pessimistic model of
+      latency with just this one number, though it's sometimes useful
+      to have more details about the distances between pairs of
+      nodes.  For some networks, the latency is dominated by the
+      software stacks at the endpoints anyhow; in that case, we hardly
+      care about these distinctions.  But it depends.
+    </p>
+    <p>
+      The bisection bandwidth is the amount of bandwidth that we'd need to
+      cut in order to partition into two equal-size subsets of nodes.
+      Bisection bandwidth tells us something about the limiting
+      bandwidth we'd see in all-to-all communication patterns, which
+      is pretty much the worst-case scenario for contention.
+    </p>
   </aside>
 </section>
 
@@ -196,6 +363,20 @@ audio: 2020-10-06-intro
     <li>Something between cores?</li>
   </ul>
   <p>All with different behaviors.</p>
+
+  <aside class="notes">
+    <p>
+      But maybe the key thing to realize about modern parallel
+      machines is that there is not just one network.  There
+      are many networks!  In a typical cluster, we have a
+      "conventional" network like Ethernet (or Infiniband or Myrinet,
+      if we can afford a bit more) between boxes, but then we have a
+      different network - maybe a bus - connecting the different chips
+      on the motherboard, and an on-chip network that connects the
+      several cores that fit onto a single chip.  And these networks
+      have dramatically different characteristics.
+    </p>
+  </aside>
 </section>
 
 
@@ -209,8 +390,23 @@ audio: 2020-10-06-intro
         <li><a href="https://doi.org/10.1016/S0167-8191(06)80021-9">Hockney model ($\alpha$-$\beta$)</a></li>
         <li><a href="https://www2.eecs.berkeley.edu/Pubs/TechRpts/1992/6262.html">LogP</a> and company</li>
         <li><a href="https://dx.doi.org/10.1145/3284358">And many others</a></li>
+      </ul>
     </li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      So: we do want to distinguish between different networks.  But
+      otherwise, we want as simplified a model of the network as we
+      can get away with, something that captures the most salient
+      features with only a few parameters.  We'll talk briefly about
+      two such models: the Hockney model, and the LogP model.  There
+      are a bunch of others out there, and I've linked to a recent
+      survey that comments on a good 25 communication models; if you
+      want to read it, knock yourself out, but I won't blame you if
+      you skip!
+    </p>
+  </aside>
 </section>
 
 
@@ -218,6 +414,16 @@ audio: 2020-10-06-intro
   <blockquote>
     All models are wrong, but some are useful.<br> -- George E. P. Box
   </blockquote>
+
+  <aside class="notes">
+    <p>
+      Of course, our models are not going to be perfect!  But we
+      really want something that is going to help us reason about
+      possible parallel code organizations, not something that is
+      going to give exact predictions.  A simple approximation is
+      sometimes more useful for this purpose than a more complicated model.
+    </p>
+  </aside>
 </section>
 
 
@@ -231,7 +437,23 @@ audio: 2020-10-06-intro
     <li>$M =$ message size</li>
   </ul>
   <p>Works pretty well for basic guidance!</p>
-  <p>Typically $\alpha \gg \beta \gg t_{\mathrm{flop}}$. More money on network, lower $\alpha$.</p>
+  <p>Typically $\alpha \gg \beta \gg t_{\mathrm{flop}}$. More money on
+    network, lower $\alpha$.</p>
+
+  <aside class="notes">
+    <p>
+      My favorite model is one you've already seen before.  Formally,
+      this is sometimes attributed to Hockney, but it's a pretty old
+      idea; namely, the time to send a message is the latency plus the
+      message size divided by bandwidth.  So it's a simple affine
+      function of message size; and this is often a pretty
+      good model!  It doesn't give us any guidance about contention
+      effects or about the potential for overlapping communication and
+      computation, but it often does a reasonable job at capturing the
+      cost of an end-to-end message in isolation - for useful values
+      of "often" and "reasonable."
+    </p>
+  </aside>
 </section>
 
 
@@ -245,6 +467,25 @@ audio: 2020-10-06-intro
     <li>P: number of processors</li>
   </ul>
   <p>Assumes small messages (gap $\sim \beta$ for fixed message size).</p>
+
+  <aside class="notes">
+    <p>
+      A lot of communication models build off the so-called LogP
+      model (also from a mid-90s paper).  LogP is an acronym standing
+      for latency, overhead, gap, and number of processors.  The gap
+      is something like a bandwidth cost for smallish fixed-size
+      messages; the real difference between LogP and the Hockney model
+      is that LogP distinguishes between the time that messages take
+      "in the system" (without intervention from the sender or
+      receiver processors) and the overhead time that the processors
+      at the send or receive ends have to spend on dealing with the
+      messages - making system calls, copying data between buffers,
+      and so forth.  So this tells us a little more about the
+      potential for overlapping communication and computation, though
+      we still have nothing in the model to describe bandwidth
+      effects.
+    </p>
+  </aside>
 </section>
 
 
@@ -261,6 +502,22 @@ audio: 2020-10-06-intro
     <li>Still useful for guidance!</li>
     <li>Needs to go with experiments</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      You can draw a line through two points, and you probably have a
+      sense of the direction that this line is going.  The past 25
+      years have seen a small but steady line of work on communication
+      performance models that capture more and more about the network
+      behavior.
+    </p>
+    <p>
+      My own preference is to look for the simplest model that helps
+      with making design decisions, and then to back that up with
+      experiments to reveal when we are starting to run into effects
+      like contention that might not be well described by our models.
+    </p>
+  </aside>
 </section>
 
 
@@ -287,6 +544,18 @@ end
 </pre>
     </div>
   </div>
+
+  <aside class="notes">
+    <p>
+      One of the simplext experiments out there for understanding
+      network performance is a so-called ping-pong test.  The idea is
+      that we just send a message back and forth between a pair of
+      processors, and then repeat for different message sizes.  If we
+      want to get, for example, a linear model fit for the time to
+      send a message of a given size, we can just run ordinary least
+      squares on the data.
+    </p>
+  </aside>
 </section>
 
 
@@ -294,6 +563,17 @@ end
   <h3>Laptop experiment</h3>
 
   <p>Open MPI on dual-core MacBook Air</p>
+
+  <aside class="notes">
+    <p>
+      This all gets much more exciting when we do it with machines
+      that you actually use, so let's start with a ping-pong
+      experiment on my laptop.  I have a MacBook Air with two cores.
+      The code for this measurement (and the Python script to produce
+      the plot) are in the demos/ping subdirectory; I recommend trying
+      this out on your own machine!
+    </p>
+  </aside>
 </section>
 
 
@@ -303,6 +583,21 @@ end
   <img src="{{ "lec/figs/ping/graphite-01.svg" | relative_url }}"
        alt="Timing of 0-1 pings"
        width="55%"/>
+
+  <aside class="notes">
+    <p>
+      A linear model actually does a pretty good job of describing the
+      ping-pong timings on my laptop!  Note that even here, I pay
+      almost half a microsecond for message latency (where, of course,
+      I am lumping overhead into the latency).  We computed that my
+      laptop has a peak of about 25.6 GFlop/s, so this we can get
+      about 12.4 KFlops of work done in one message latency if we're
+      running close to peak.  This is more than an order of magnitude
+      worse than the worst memory access cost I saw on this machine in
+      the strided access memory benchmark we tried out a little while
+      ago.  The punchline to all of this: latencies are expensive!
+    </p>
+  </aside>
 </section>
 
 
@@ -319,19 +614,47 @@ end
         <li>Gig-E between nodes</li>
       </ul>
   </ul>
+
+  <aside class="notes">
+    <p>
+      Now let's try the same experiment on something a bit more
+      complicated.  One of the computing resources we will have for
+      this class is the Graphite cluster, and particularly the nodes
+      that used to make up the Totient cluster that Intel gave us for
+      teaching 5220.  There are eight nodes, each with two six-core
+      chips.  So we really have three different networks in this one
+      system: the on-core network between cores, which I believe is a
+      crossbar; a bus that connects the chips and main memory; and
+      Ethernet between the nodes.  We want to run the experiment on
+      each of these networks.
+    </p>
+  </aside>
 </section>
 
 
 <section>
   <h3>Layout (P=24)</h3>
 
-  <p>With <tt>--map-by core</tt> and <tt>--bind-to core</tt>
+  <p>With <tt>--map-by core</tt> and <tt>--bind-to core</tt></p>
   <ul>
     <li>P 0-5: First chip, first node</li>
     <li>P 6-11: Second chip, first node</li>
     <li>P 12-17: First chip, second node</li>
     <li>P 18-23: Second chip, second node</li>
   </ul>
+
+  <aside class="notes">
+    <p>
+    We're going to want to be a little careful here, because an MPI
+    process is <em>not</em> identical to a CPU core.  We have to tell
+    the system that we want the MPI processes to be bound to specific
+    cores, and that we want to map nearby cores to adjacent MPI ranks
+    (i.e. process numbers) as much as possible.  If we do that, we get
+    that 24 cores will span two different boxes, and we can probe all
+    three networks by looking at messages from rank 0 to rank 1, 11,
+    and 23, respectively.
+    </p>
+  </aside>
 </section>
 
 
@@ -342,6 +665,14 @@ end
   <img src="{{ "lec/figs/ping/graphite-01.svg" | relative_url }}"
        alt="Timing of 0-1 pings"
        width="55%"/>
+
+  <aside class="notes">
+    <p>
+      The on-chip network is a little slower than the on-chip network
+      on my laptop - worse latency and worse bandwidth, both.  The
+      latency is the better part of a microsecond in this case.
+    </p>
+  </aside>
 </section>
 
 
@@ -352,6 +683,14 @@ end
   <img src="{{ "lec/figs/ping/graphite-11.svg" | relative_url }}"
        alt="Timing of 0-11 pings"
        width="55%"/>
+  <aside class="notes">
+    <p>
+      When we go off-chip - but stay on the same box - the latency
+      is more than double the on-chip case, and the bandwidth is less
+      than half.  This isn't an order-of-magnitude difference, but
+      it's big enough to be worth noticing.
+    </p>
+  </aside>
 </section>
 
 
@@ -362,6 +701,24 @@ end
   <img src="{{ "lec/figs/ping/graphite-23.svg" | relative_url }}"
        alt="Timing of 0-23 pings"
        width="55%"/>
+
+  <aside class="notes">
+    <p>
+      What about when we go across nodes?  Well - Ethernet is more
+      complicated, and a simple linear model doesn't fit anywhere near as
+      well.  We can certainly see, though, that while the bandwidth
+      isn't that terrible, the latency really is.  We're now up to
+      many tens of microseconds.
+    </p>
+    <p>
+      OK, the latency for nerve signals in the human body is something like
+      tens of milliseconds in the best case - top speed is around 200
+      miles per hour in certain types of nerve fibers, and I'm about
+      six feet, so that gives me 20 milliseconds.  From that
+      perspective, tens of microseconds doesn't seem so bad.  But,
+      again: you can do a lot of flops in that amount of time! 
+    </p>
+  </aside>
 </section>
 
 
@@ -381,4 +738,30 @@ end
         <li>Really want to measure, though</li>
     </ul></li>
   </ul>
+
+  <aside class="notes">
+    <p>
+      All right, what should you take away from this?
+    </p>
+    <p>
+      First, message latencies are big, particularly for networks like
+      Ethernet.  if we don't want all our time to go to latency, we
+      had better not send too many messages.  As we discussed when
+      talking about PDE solvers, a few bigger messages might be
+      preferable to a larger number of smaller messages, even when we
+      might need some redundant work in the former case.
+      We can make pleasingly parallel codes fast because we don't need
+      much communication, but we aren't always that lucky.
+    </p>
+    <p>
+      Second, we'd really like to overlap communication with
+      computation when we can.  A fairly rough model can tell us about
+      how much work we have to have between messages in order to
+      mask as much of the message cost as we possibly can - remember,
+      there may be overhead costs that we just can't overlap.  Even if
+      we believe our models - and it isn't always wise to take them
+      too seriously - an experiment or two is often worthwhile to try
+      to sort out these types of effects.
+    </p>
+  </aside>
 </section>
