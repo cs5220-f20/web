@@ -125,7 +125,7 @@
   info: Distributed memory programming
   files:
     - info: Meeting notes
-      file: lec/2020-10-06-meeting.html
+      file: lec/2020-10-08-meeting.html
     - info: Tuned serial 1D wave
       file: lec/2020-10-08-wave-batch.html
 # =================
