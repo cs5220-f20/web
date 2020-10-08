@@ -82,7 +82,23 @@ layout:     main
         u2[i] = C1*u1[i]-u0[i] + C2*(u1[i-1]+u1[i+1]);
 }</code></pre>
 <p>Of course, we generally don’t want to take exactly one time step: we want to take many time steps. We only need to keep three consecutive time steps. We indicate the most recent completed step with <code>i0</code>; the step before is at <code>i0-1</code> (mod 3) and the step to be computed is at <code>i0+1</code> (mod 3). We’ll return the index (mod 3) of the last time step computed.</p>
-<p>We distinguish between the total number of cells that we are keeping at each step (<code>ntotal</code>) and the number of cells that we are updating (<code>nupdate</code>). In general, something is wrong if the ntotal &lt; nupdate+2. int time_steps(int ntotal, // Total number of cells (including ghosts) int nupdate, // Number of cells to update float* us, // Start of cells to be updated int i0, // Index of most recent completed step int nsteps, // Number of steps to advance float C2) // Squared wave speed { assert(ntotal &gt;= nupdate+2); for (int j = 0; j &lt; nsteps; ++j) { float* u0 = us + ((i0+2+j)%3)<em>ntotal; float</em> u1 = us + ((i0+0+j)%3)<em>ntotal; float</em> u2 = us + ((i0+1+j)%3)*ntotal; time_step(nupdate, u0, u1, u2, C2); } return (i0+nsteps)%3; }</p>
+<p>We distinguish between the total number of cells that we are keeping at each step (<code>ntotal</code>) and the number of cells that we are updating (<code>nupdate</code>). In general, something is wrong if the ntotal &lt; nupdate+2.</p>
+<pre><code>int time_steps(int ntotal,   // Total number of cells (including ghosts)
+               int nupdate,  // Number of cells to update
+               float* us,   // Start of cells to be updated
+               int i0,       // Index of most recent completed step
+               int nsteps,   // Number of steps to advance
+               float C2)    // Squared wave speed
+{
+    assert(ntotal &gt;= nupdate+2);
+    for (int j = 0; j &lt; nsteps; ++j) {
+        float* u0 = us + ((i0+2+j)%3)*ntotal;
+        float* u1 = us + ((i0+0+j)%3)*ntotal;
+        float* u2 = us + ((i0+1+j)%3)*ntotal;
+        time_step(nupdate, u0, u1, u2, C2);
+    }
+    return (i0+nsteps)%3;
+}</code></pre>
 <h2 id="initial-conditions">Initial conditions</h2>
 <p>If we want a general purpose code, it often makes sense to separate out the initial conditions from everything else. Certainly you want to make it easy to swap out one set of initial conditions for another.</p>
 <pre><code>void initial_conditions(int n, float* u0, float* u1,
