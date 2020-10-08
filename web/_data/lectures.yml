@@ -118,9 +118,16 @@
       file: lec/2020-10-06-intro.html
     - info: MPI programming
       file: lec/2020-10-06-mpi.html
+    - info: Meeting notes
+      file: lec/2020-10-06-meeting.html
 -
   date: 2020-10-08
   info: Distributed memory programming
+  files:
+    - info: Meeting notes
+      file: lec/2020-10-06-meeting.html
+    - info: Tuned serial 1D wave
+      file: lec/2020-10-08-meeting.html
 # =================
 # Week 5
 #
