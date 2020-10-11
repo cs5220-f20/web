@@ -1,0 +1,564 @@
+
+
+<section id="title-slide">
+  <h1 class="title">CS 5220</h1>
+  <p class="author">David Bindel</p>
+</section>
+
+
+<section>
+  <h3>Message passing pain</h3>
+  <p>Common message passing pattern</p>
+  <ul>
+    <li class="fragment">Logical <em>global</em> structure</li>
+    <li class="fragment"><em>Local</em> representation per processor</li>
+    <li class="fragment">Local data may have redundancy
+      <ul>
+        <li class="fragment">Example: Data in ghost cells</li>
+        <li class="fragment">Example: Replicated book-keeping data</li>
+    </ul></li>
+  </ul>
+  <aside class="notes">
+    <p>
+      Last week, we discussed message passing programming. This is a
+      “shared nothing” model where all the data is stored locally,
+      processor-by-processor. There is a global structure, but it is
+      purely notional; there is no abstraction available for accessing a
+      shared array, for example. And the per-processor local
+      representations may have some redundancy, like extra “ghost cells”
+      in our hyperbolic PDE example.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Message passing pain</h3>
+  <p>Big pain point:</p>
+  <ul>
+    <li>Thinking about many partly-overlapping representations</li>
+    <li>Maintaining consistent picture across processes</li>
+  </ul>
+  <p>Wouldn’t it be nice to have just one representation?</p>
+  <aside class="notes">
+    <p>
+      For most people, the painful part of message-passing programming
+      is keeping the many overlapping local representations of the program
+      data consistent with a notional global representation. OK, MPI
+      syntax is painful as well, but you can write wrapper functions to
+      help you with that. So if you get started with message passing, it’s
+      tempting to think that life would be so much better with a single
+      representation of the global state, stored in shared memory.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Shared memory vs message passing</h3>
+  <ul>
+    <li>Implicit communication via memory vs explicit messages</li>
+    <li>Still need separate global vs local picture?</li>
+  </ul>
+ 
+  <aside class="notes">
+    <p>
+      In a shared memory programming system, communication happens
+      implicitly through reading and writing to shared global data
+      structures, rather than explicitly through message passing. So
+      this means that we don’t need to distinguish between the global
+      and local pictures, right?
+    </p>
+    <p>
+      You might be tempted by this point of view if you hadn’t already
+      done the matrix multiply exercise and found yourself at some point
+      thinking “wouldn’t it be nice if I could have explicit control over
+      the cache”? As it is, I expect you know already that the question of
+      whether we need to worry about local vs global data is a trick. If
+      we care about performance, we need to care about this
+      distinction.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Shared memory vs message passing</h3>
+  <p>Still need separate global vs local picture?</p>
+  <ul>
+    <li><strong>No:</strong> One thread-safe data structure may be easier</li>
+    <li><strong>Yes:</strong> More sharing can hurt performance
+      <ul>
+        <li>Synchronization costs cycles even with no contention</li>
+        <li>Contention for locks reduces parallelism</li>
+        <li>Cache coherency can slow even non-contending access</li>
+    </ul></li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      It is indeed possible to write correct shared memory code in a
+      “shared everything” style, where all the major data structures
+      exist in shared memory. We have to be careful about
+      synchronization so that we don’t get that data structure into an
+      inconsistent state, but we can do it.
+    </p>
+    <p>
+      However, too much careless sharing can hurt performance, at least
+      when we are writing to our data structure (it’s less of an issue for
+      the read-only case). The problem is that, just as message latency
+      costs can eat all our performance in message passing codes,
+      synchronization costs can eat all our performance with shared
+      memory. Actually, matters are even worse than that: even if we are
+      doing work that requires no synchronization, we might be slowed down
+      by cache coherency effects if we’re not careful about data
+      layout.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Shared memory vs message passing</h3>
+  <p>Still need separate global vs local picture?</p>
+  <ul>
+    <li>“Easy” approach: add multi-threading to serial code</li>
+    <li>Better performance: design like a message-passing code</li>
+  </ul>
+  <p>Let’s dig a little deeper on the HW side</p>
+
+  <aside class="notes">
+    <p>
+      The takeaway for all this is that high-performance shared-memory
+      code often looks an awful lot like high-performance message
+      passing code. The easy approach of starting with a serial code
+      and adding OpenMP directives to parallelize a few expensive
+      loops often just slows everything down. It’s best to think about
+      natural chunks of work and compact local data structures early
+      on.
+    </p>
+    <p>
+    I don’t mean to trash-talk shared memory here. I’d rather write
+    OpenMP code than MPI code on a single processor. I actually also
+    like programming in parallel global address space (PGAS) languages
+    more than I like MPI. There is often less code to write. But
+    there’s less code to write because some of the things that matter
+    to performance are implicit, and we need to have the mental model
+    of those implicit operations in order to reason about how to
+    organize our code for performance.
+    </p>
+    <p>
+      So let’s talk for a moment now about the hardware, and what makes
+      high-performance shared memory difficult.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Memory model</h3>
+  <ul>
+    <li>Single processor: return last write
+      <ul>
+        <li>What about DMA and memory-mapped I/O?</li>
+    </ul></li>
+    <li>Simplest generalization: <em>sequential consistency</em></li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      The programmer interacts with the hardware through an
+      abstraction. In the case of memory, that abstraction is the memory
+      model. On a single processor, we usually think of memory as having
+      the property that a read from a memory location will return the
+      last thing that we wrote to that location. There are some
+      exceptions to this even in the case of a single core, like direct
+      memory access (DMA) by the network card, but apart from those
+      special cases, the single-processor memory interface is pretty
+      simple.
+    </p>
+    <p>
+      The natural generalization of the single-processor memory
+      abstraction to the multi-processor case is called sequential
+      consistency.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Sequential consistency</h3>
+  <blockquote>
+    <p>A multiprocessor is sequentially consistent if the result of any execution is the same as if the operations of all the processors were executed in some sequential order, and the operations of each individual processor appear in this sequence in the order specified by its program.<br />
+      – Lamport, 1979</p>
+  </blockquote>
+
+  <aside class="notes">
+    <p>
+      The idea of sequential consistency is almost as old as I am. It
+      goes back to the work of Leslie Lamport in the late 70s. Lamport
+      said that sequential consistency means that memory looks like
+      multiple processors took turns reading and writing. That is, we
+      could explain the outcome of a multiprocessor program by writing an
+      interleaving of the program order executions on each processor, and
+      executing that interleaved code in order.
+    </p>
+  </aside>
+</section>
+
+
+<section id="sequential-consistency-1" class="slide level3">
+  <h3>Sequential consistency</h3>
+  <p>Program behaves <em>as if</em>:</p>
+  <ul>
+    <li>Each process runs in program order</li>
+    <li>Instructions from different processes are interleaved</li>
+    <li>Interleaved instructions ran on one processor</li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      All right. So the rules of the game are that the instructions
+      for different programs run in order, but interleaved. Note that
+      this says nothing about speed - this is all about reasoning
+      about code correctness.
+    </p>
+    <p>
+      We also are assuming that reads and writes are atomic - that is,
+      we can’t get halfway through a write and have another processor
+      start reading while half the bits are in the old state and half
+      the bits in the new state.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Example: Spin lock</h3>
+  <p>Initially, <code>flag = 0</code> and <code>sum = 0</code></p>
+  <p>Processor 1:</p>
+  <pre><code>sum += p1;
+flag = 1;</code></pre>
+  <p>Processor 2:</p>
+  <pre><code>while (!flag);
+sum += p2;</code></pre>
+
+  <aside class="notes">
+    <p>
+      Let’s give an example of reasoning about multiprocessor code
+      using sequential consistency. Suppose we have two processors
+      trying to update a shared variable (sum). We start with a shared
+      flag variable and a shared sum variable, both set to zero. After
+      each processor makes its contribution, we want to have them both
+      update the sum. In order to avoid the problem of both of them
+      reading the initial state of the sum variable, we force processor
+      1 to go before processor 2, by saying that processor 2 will wait
+      until the flag changes state before applying its update. This
+      waiting loop is sometimes called a spin loop.
+    </p>
+    <p>
+      So processor 1 applies an update and raises a flag, and then
+      processor 2 is cleared to get past the spin loop to apply its
+      update. And this is a very reasonable thing to do if we have
+      sequential consistency.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Example: Spin lock</h3>
+  <p>Without sequential consistency support, what if</p>
+  <ol type="1">
+    <li>Processor 2 caches flag?</li>
+    <li>Compiler optimizes away loop?</li>
+    <li>Compiler reorders assignments on P1?</li>
+  </ol>
+  <p>Starts to look restrictive!</p>
+
+  <aside class="notes">
+    <p>
+      But let’s think for a moment about the implications of
+      sequential consistency for this code. Somehow, processor 2 has
+      to know that it can’t just read a cached version of the flag
+      variable; otherwise, it might get stuck forever. And the
+      compiler has to know that another processor might be doing
+      something behind the scenes, otherwise it could optimize away
+      the loop, or potentially reorder things as part of the
+      instruction scheduler. After all, if we look at the code running
+      on either processor 1 or processor 2 independently, the two
+      statements that each runs look like they could be safely
+      interchanged.
+    </p>
+    <p>
+      When we start to think about all the hardware and compiler
+      optimizations we have to give up for sequential consistency,
+      suddenly it starts to look restrictive!
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Sequential consistency: the good, the bad, the ugly</h3>
+  <p>Program behavior is “intuitive”:</p>
+  <ul>
+    <li>Nobody sees garbage values</li>
+    <li>Time always moves forward</li>
+  </ul>
+  <p>One issue is <em>cache coherence</em>:</p>
+  <ul>
+    <li>Coherence: different copies, same value</li>
+    <li>Requires (nontrivial) hardware support</li>
+  </ul>
+  <p>Also an issue for optimizing compiler!</p>
+  <p>There are cheaper <em>relaxed</em> consistency models.</p>
+
+  <aside class="notes">
+    <p>
+      So, the good part of sequential consistency is that there’s an
+      intuitive mental model. Time moves forward, programs take turns,
+      nobody sees garbage values that are inconsistent with a serial
+      timeline. But there are performance issues. At the hardware level,
+      we have to worry about cache coherence: when one processor writes to
+      a shared variable, the other processor has to see the write, not
+      just keep reading from a locally cached copy. And at the software
+      level, the compiler is restricted in the types of reorderings it can
+      do.
+    </p>
+    <p>
+      Fortunately, there are alternate memory models that are easier
+      for performance, though they make reasoning about correctness
+      harder. These are usually called relaxed consistency models.
+    </p>
+    <p>
+      Before we talk about relaxed consistency, though, let’s talk for
+      a moment about how the hardware can support sequential
+      consistency.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Snoopy bus protocol</h3>
+  <p>Basic idea:</p>
+  <ul>
+    <li>Broadcast operations on memory bus</li>
+    <li>Cache controllers “snoop” on all bus transactions
+      <ul>
+        <li>Memory writes induce serial order</li>
+        <li>Act to enforce coherence (invalidate, update, etc)</li>
+    </ul></li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      Maybe the simplest hardware protocols for cache coherence are
+      the “snoopy bus” protocols. The idea is that all the processors
+      and the memory are attached to a shared bus, and every memory
+      request (and every reply from the memory) are sent across that
+      bus. All the processors can see the bus, and so the cache
+      controllers on each processor “snoop” on every bus transaction,
+      even the ones that they didn’t initiate. If one processor sends
+      a memory write across the bus, any other processor that has the
+      associated line in cache will either invalidate or update that
+      cache line. The fact that all the processors have to share the
+      same bus, and only one at a time can be actively transmitting on
+      the bus, means that the bus serves as a synchronization
+      point. So it is relatively straightforward to maintain cache
+      coherence, even if it means that we have to have some extra
+      hardware around for a cache controller to monitor the bus.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Snoopy bus protocol</h3>
+  <p>Problems: - Bus bandwidth limits scaling - Contending writes are slow</p>
+  <p>There are other protocol options (e.g. directory-based).<br />
+    But usually give up on <em>full</em> sequential consistency.</p>
+
+  <aside class="notes">
+    <p>
+      As we discussed a few lectures ago, though, we can only really
+      use buses with relatively small multiprocessors. Contention for the
+      bus slows everything down, and the bus also limits the aggregate
+      memory bandwidth available to the processors. There are more
+      sophisticated things that hardware architects can do, such as
+      directory-based protocols that involve distributing memory among the
+      processors and passing around messages for cache coherence; but
+      those often involve giving up full sequential consistency. So even
+      at the hardware level, without taking into account compiler
+      optimizations, full sequential consistency may be too much to ask
+      for.</p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Weakening sequential consistency</h3>
+  <p>Try to reduce to the <em>true</em> cost of sharing</p>
+  <ul>
+    <li><code>volatile</code> tells compiler when to worry about sharing</li>
+    <li>Atomic operations do reads/writes as a single op</li>
+    <li>Memory fences tell when to force consistency</li>
+    <li>Synchronization primitives (lock/unlock) include fences</li>
+  </ul>
+  <p>Unprotected data races give undefined behavior.</p>
+
+  <aside class="notes">
+    <p>
+      The idea with weakened consistency models is to reduce the true
+      cost of sharing by only doing things that enforce consistency
+      when they are needed. For example, the <code>volatile</code>
+      type qualifier in C tells the compiler that a variable is shared
+      (with both reads and writes involved), and so statements
+      involving that variable cannot be reordered by the compiler,
+      even if it looks like they are independent of neighboring
+      statements. We also might use hardware-supported atomic
+      operations like compare and swap or atomic increments that are
+      guaranteed to read and write to memory as part of a single
+      operation. Then there are memory fence operations, which are
+      like little barriers: the program can execute up to a fence in
+      whatever order, but it is guaranteed that all writes to memory
+      from before the fence are committed before any instructions
+      after the fence. And synchronization primitives like locks
+      generally include memory fence operations, or maybe they rely on
+      hardware-supported atomic operations.
+    </p>
+    <p>
+      These types of operations provide sequential “checkpoints” in the
+      program execution, but the weaker consistency models don’t make any
+      guarantees about the apparent interleaving of instructions between
+      those checkpoints.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Sharing</h3>
+  <p>True sharing:</p>
+  <ul>
+    <li>Frequent writes cause a bottleneck.</li>
+    <li>Idea: make independent copies (if possible).</li>
+    <li>Example problem: <code>malloc</code>/<code>free</code> data structure.</li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      So we weaken the memory model to make it easier to get good
+      compiler and hardware performance while still giving ourselves a
+      way to reason about the correctness of (correctly synchronized)
+      shared access. What’s the remaining cost associated with true
+      sharing? Shared reads are essentially free; the problem is
+      sharing data structures where we have frequent writes. This
+      suggests that when it’s possible, we might want to make
+      independent copies of some of these shared data structures, or
+      explicitly partition the data structures the same way that we
+      would in a message-passing code.
+    </p>
+    <p>
+      There are sometimes cases of shared data structures that might
+      not be entirely obvious. One of these is the data structures that
+      keep track of free space on the heap - the ones that are updated
+      by malloc and free in C, or by new and delete in C++, and are
+      almost completely invisible in some garbage-collected
+      languages. So having lots of processors dynamically allocating
+      memory for heap data structures - even if those data structures
+      are shared - can sometimes cause surprising performance
+      bottlenecks, depending on how the standard library implements
+      these tracking data structures. Some allocators are indeed pretty
+      clever about avoiding these bottlenecks, but I still tend to code
+      in a way that treats malloc and free as expensive.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Sharing</h3>
+  <p>False sharing:</p>
+  <ul>
+    <li>Distinct variables on same cache block</li>
+    <li>Idea: make processor memory contiguous (if possible)</li>
+    <li>Example problem: array of ints, one per processor</li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      Even with weak consistency models, there can be hidden costs
+      when there isn’t really any sharing. The most common example is
+      the cost of cache coherence overhead in the case of “false
+      sharing.” This happens when there are distinct variables on the
+      same cache line, so that multiple processors read and write to
+      the same cache line even if they are reading and writing to
+      different variables on that line. The memory controller
+      organizes everything by cache lines, so the hardware can’t
+      really distinguish this type of access pattern from shared reads
+      and writes. For example, we might see this if several processors
+      were all trying to write to a shared array of ints, one per
+      processor; even if each processor reads and writes a subset of
+      the ints that are disjoint from those accessed by any other
+      processor, false sharing might cause the memory controller to
+      start generating lots of cache coherence traffic, thus slowing
+      everything down.
+    </p>
+    <p>
+      We can usually avoid false sharing effects by having each
+      processor keep its local data in a contiguous chunk of memory,
+      rather than sharing an array in a fine-grained way.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Take-home message</h3>
+  <ul>
+    <li>Sequentially consistent shared memory is a useful idea...
+      <ul>
+        <li>“Natural” analogue to serial case</li>
+        <li>Architects work hard to support it</li>
+    </ul></li>
+    <li>... but implementation is costly!
+      <ul>
+        <li>Makes life hard for optimizing compilers</li>
+        <li>Coherence traffic slows things down</li>
+        <li>Helps to limit sharing</li>
+    </ul></li>
+  </ul>
+  <p>Have to think about these things to get good performance.</p>
+
+  <aside class="notes">
+    <p>
+      What’s the take-home message from all this? First, if you want
+      to write correct code, you need to have a model for how shared
+      memory behaves. Sequential consistency is maybe the most natural
+      and intuitive model, and computer architects work hard to
+      support it as well as they can. But the cost of maintaining such
+      a strong consistency model is high, both in terms of hardware
+      and in terms of lost opportunities for optimizing compilers. So
+      we usually go with weaker models of consistency where the
+      behavior under data races is undefined. Even in these weaker
+      memory models, if we want performance, it helps to limit sharing
+      - or at least to limit sharing that involves both reads and
+      writes.
+    </p>
+    <p>
+      Just like in the single-core case, there’s a lot about the
+      caches and the hardware that you don’t have to think about if
+      you only want correctness. But if you want high performance, you
+      have to have at least a rough notion of what is going on behind
+      the scenes.
+    </p>
+    <p>
+      With that out of the way, we’ll turn in the next deck to the
+      nuts and bolts of shared memory programming with OpenMP. Until
+      then!
+    </p>
+  </aside>
+</section>
+
