@@ -134,6 +134,7 @@
 -
   date: 2020-10-13
   info: Shared memory programming
+  files:
     - info: Intro to shared memory (narration in progress)
       file: lec/2020-10-13-intro.html
 -
