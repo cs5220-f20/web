@@ -27,12 +27,12 @@ audio: 2020-10-13-intro
   <h3>Message passing pain</h3>
   <p>Common message passing pattern</p>
   <ul>
-    <li class="fragment">Logical <em>global</em> structure</li>
-    <li class="fragment"><em>Local</em> representation per processor</li>
-    <li class="fragment">Local data may have redundancy
+    <li>Logical <em>global</em> structure</li>
+    <li><em>Local</em> representation per processor</li>
+    <li>Local data may have redundancy
       <ul>
-        <li class="fragment">Example: Data in ghost cells</li>
-        <li class="fragment">Example: Replicated book-keeping data</li>
+        <li>Example: Data in ghost cells</li>
+        <li>Example: Replicated book-keeping data</li>
     </ul></li>
   </ul>
   <aside class="notes">
@@ -53,8 +53,8 @@ audio: 2020-10-13-intro
   <h3>Message passing pain</h3>
   <p>Big pain point:</p>
   <ul>
-    <li>Thinking about many partly-overlapping representations</li>
-    <li>Maintaining consistent picture across processes</li>
+    <li>Many partly-overlapping representations</li>
+    <li>Need consistent picture across processes</li>
   </ul>
   <p>Wouldn’t it be nice to have just one representation?</p>
   <aside class="notes">
@@ -74,7 +74,7 @@ audio: 2020-10-13-intro
 <section>
   <h3>Shared memory vs message passing</h3>
   <ul>
-    <li>Implicit communication via memory vs explicit messages</li>
+    <li>Implicit comm via memory vs explicit messages</li>
     <li>Still need separate global vs local picture?</li>
   </ul>
  
@@ -106,9 +106,9 @@ audio: 2020-10-13-intro
     <li><strong>No:</strong> One thread-safe data structure may be easier</li>
     <li><strong>Yes:</strong> More sharing can hurt performance
       <ul>
-        <li>Synchronization costs cycles even with no contention</li>
+        <li>Synchronization costs even with no contention</li>
         <li>Contention for locks reduces parallelism</li>
-        <li>Cache coherency can slow even non-contending access</li>
+        <li>Cache coherency slows even non-contending access</li>
     </ul></li>
   </ul>
 
@@ -140,7 +140,7 @@ audio: 2020-10-13-intro
   <p>Still need separate global vs local picture?</p>
   <ul>
     <li>“Easy” approach: add multi-threading to serial code</li>
-    <li>Better performance: design like a message-passing code</li>
+    <li>Better performance: design like message-passing</li>
   </ul>
   <p>Let’s dig a little deeper on the HW side</p>
 
@@ -317,7 +317,7 @@ sum += p2;</code></pre>
 
 
 <section>
-  <h3>Sequential consistency: the good, the bad, the ugly</h3>
+  <h3>Sequential consistency</h3>
   <p>Program behavior is “intuitive”:</p>
   <ul>
     <li>Nobody sees garbage values</li>
@@ -393,8 +393,12 @@ sum += p2;</code></pre>
 
 <section>
   <h3>Snoopy bus protocol</h3>
-  <p>Problems: - Bus bandwidth limits scaling - Contending writes are slow</p>
-  <p>There are other protocol options (e.g. directory-based).<br />
+  <p>Problems:</p>
+  <ul>
+    <li>Bus bandwidth limits scaling</li>
+    <li>Contending writes are slow</li>
+  </ul>
+  <p>Have other protocol options (e.g. directory-based).<br />
     But usually give up on <em>full</em> sequential consistency.</p>
 
   <aside class="notes">
@@ -418,10 +422,10 @@ sum += p2;</code></pre>
   <h3>Weakening sequential consistency</h3>
   <p>Try to reduce to the <em>true</em> cost of sharing</p>
   <ul>
-    <li><code>volatile</code> tells compiler when to worry about sharing</li>
+    <li><code>volatile</code> tells compiler: worry about sharing</li>
     <li>Atomic operations do reads/writes as a single op</li>
     <li>Memory fences tell when to force consistency</li>
-    <li>Synchronization primitives (lock/unlock) include fences</li>
+    <li>Synchronization ops (lock/unlock) include fences</li>
   </ul>
   <p>Unprotected data races give undefined behavior.</p>
 
@@ -500,7 +504,7 @@ sum += p2;</code></pre>
   <p>False sharing:</p>
   <ul>
     <li>Distinct variables on same cache block</li>
-    <li>Idea: make processor memory contiguous (if possible)</li>
+    <li>So make processor memory contiguous (if possible)</li>
     <li>Example problem: array of ints, one per processor</li>
   </ul>
 
@@ -535,7 +539,7 @@ sum += p2;</code></pre>
 <section>
   <h3>Take-home message</h3>
   <ul>
-    <li>Sequentially consistent shared memory is a useful idea...
+    <li>Sequentially consistent shared memory useful
       <ul>
         <li>“Natural” analogue to serial case</li>
         <li>Architects work hard to support it</li>
@@ -547,7 +551,7 @@ sum += p2;</code></pre>
         <li>Helps to limit sharing</li>
     </ul></li>
   </ul>
-  <p>Have to think about these things to get good performance.</p>
+  <p>Think about these things to get good performance.</p>
 
   <aside class="notes">
     <p>
