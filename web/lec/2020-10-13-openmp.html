@@ -364,7 +364,7 @@ clang -o -Xpreprocessor -fopenmp foo.o -lomp</code></pre>
 
 <section>
 <h3>Parallel “hello world”</h3>
-<pre><code>#include &lt;stdio.h&gt;
+<pre><code class="lang-c">#include &lt;stdio.h&gt;
 #include &lt;omp.h&gt;
 
 int main()
@@ -466,7 +466,7 @@ int main()
        alt="Diagram of OpenMP parallel execution"
        width="60%"/>
 
-<pre><code>double s[MAX_THREADS];
+<pre><code class="lang-c">double s[MAX_THREADS];
 int i;
 #pragma omp parallel shared(s) private(i)
 {
@@ -492,7 +492,7 @@ int i;
        alt="Diagram of OpenMP parallel execution"
        width="60%"/>
 
-<pre><code>double s[MAX_THREADS];  // default shared
+<pre><code class="lang-c">double s[MAX_THREADS];  // default shared
 #pragma omp parallel
 {
   int i = omp_get_thread_num();  // local, so private
@@ -540,10 +540,10 @@ int i;
 <section>
 <h3>Parallel regions</h3>
 <p>Parallel regions alone? Maybe Monte Carlo:</p>
-<pre><code>    double result = 0;
-    #pragma omp parallel reduction(+:result)
-      result = run_mc(trials) / omp_get_num_threads();
-    printf(&quot;Final result: %f\n&quot;, result);</code></pre>
+<pre><code class="lang-c">double result = 0;
+#pragma omp parallel reduction(+:result)
+  result = run_mc(trials) / omp_get_num_threads();
+printf(&quot;Final result: %f\n&quot;, result);</code></pre>
 <p>Anything more interesting needs synchronization.</p>
 
 <aside class="notes">
@@ -628,12 +628,12 @@ int i;
 
 <section>
 <h3>Critical sections</h3>
-<pre><code>#pragma omp parallel
+<pre><code class="lang-c">#pragma omp parallel
 {
-  ...
+  // ...
   #pragma omp critical(my_data_cs)
   {
-    ... modify data structure here ...
+    // ... modify data structure here ...
   }
 }</code></pre>
 
@@ -653,7 +653,7 @@ int i;
 
 <section>
 <h3>Critical sections</h3>
-<pre><code>void list_push(link_t** l, int data)
+<pre><code class="lang-c">void list_push(link_t** l, int data)
 {
     link_t* link = (link_t*) malloc(sizeof(link_t));
     link-&gt;data = data;
@@ -691,7 +691,7 @@ int i;
 
 <section>
 <h3>Atomic updates</h3>
-<pre><code>#pragma omp parallel
+<pre><code class="lang-c">#pragma omp parallel
 {
   ...
   double my_piece = foo();
@@ -720,7 +720,7 @@ int i;
 
 <section>
 <h3>Atomic captures</h3>
-<pre><code>void list_push2(link_t** l, int data)
+<pre><code class="lang-c">void list_push2(link_t** l, int data)
 {
     link_t* link = (link_t*) malloc(sizeof(link_t));
     link-&gt;data = data;
@@ -759,7 +759,7 @@ int i;
        alt="Diagram of OpenMP barrier"
        width="80%"/>
 
-<pre><code>#pragma omp parallel
+<pre><code class="lang-c">#pragma omp parallel
 for (i = 0; i &lt; nsteps; ++i) {
   do_stuff
   #pragma omp barrier
@@ -817,17 +817,17 @@ for (i = 0; i &lt; nsteps; ++i) {
 <section>
 <h3>Parallel iteration</h3>
 <p>Map <strong>independent</strong> iterations across threads</p>
-<pre><code>  #pragma omp parallel for
-  for (int i = 0; i &lt; N; ++i)
-      a[i] += b[i];
+<pre><code class="lang-c">#pragma omp parallel for
+for (int i = 0; i &lt; N; ++i)
+    a[i] += b[i];
 
-  #pragma omp parallel
-  {
-      // Stuff can go here...
-      #pragma omp for
-      for (int i = 0; i &lt; N; ++i)
-          a[i] += b[i];
-  }</code></pre>
+#pragma omp parallel
+{
+    // Stuff can go here...
+    #pragma omp for
+    for (int i = 0; i &lt; N; ++i)
+        a[i] += b[i];
+}</code></pre>
 <p>Implicit barrier at end of loop (unless nowait clause)</p>
 
 <aside class="notes">
@@ -856,10 +856,10 @@ for (i = 0; i &lt; nsteps; ++i) {
 <section>
 <h3>Parallel iteration</h3>
 <p>The iteration can also go across a higher-dim index set</p>
-<pre><code>  #pragma omp parallel for collapse(2)
-  for (int i = 0; i &lt; N; ++i)
+<pre><code class="lang-c">#pragma omp parallel for collapse(2)
+for (int i = 0; i &lt; N; ++i)
     for (int j = 0; j &lt; M; ++j)
-      a[i*M+j] = foo(i,j);</code></pre>
+        a[i*M+j] = foo(i,j);</code></pre>
 
 <aside class="notes">
   <p>
@@ -934,7 +934,7 @@ for (i = 0; i &lt; nsteps; ++i) {
 <section>
 <h3>Reduction loops</h3>
 <p>How might we parallelize something like this?</p>
-<pre><code>double sum = 0;
+<pre><code class="lang-c">double sum = 0;
 for (int i = 0; i &lt; N; ++i)
     sum += big_hairy_computation(i);</code></pre>
 
@@ -952,7 +952,7 @@ for (int i = 0; i &lt; N; ++i)
 <section>
 <h3>Reduction loops</h3>
 <p>How might we parallelize something like this?</p>
-<pre><code>double sum = 0;
+<pre><code class="lang-c">double sum = 0;
 #pragma omp parallel for reduction(+:sum)
 for (int i = 0; i &lt; N; ++i)
     sum = big_hairy_computation(i);</code></pre>
@@ -976,11 +976,10 @@ for (int i = 0; i &lt; N; ++i)
 <section>
 <h3>Ordered</h3>
 <p>OK, what about something like this?</p>
-<pre><code>for (int i = 0; i &lt; N; ++i) {
+<pre><code class="lang-c">for (int i = 0; i &lt; N; ++i) {
     int result = big_hairy_computation(i);
     add_to_queue(q, result);
-}
-  </code></pre>
+}</code></pre>
 <p>Work is <em>mostly</em> independent, but not wholly.</p>
 
 <aside class="notes">
@@ -1000,12 +999,12 @@ for (int i = 0; i &lt; N; ++i)
 <section>
 <h3>Ordered</h3>
 <p>Solution: ordered directive in loop with ordered clause</p>
-<pre><code>    #pragma omp parallel for ordered
-    for (int i = 0; i &lt; N; ++i) {
-        int result = big_hairy_computation(i);
-        #pragma ordered
-        add_to_queue(q, result);
-    }</code></pre>
+<pre><code class="lang-c">#pragma omp parallel for ordered
+for (int i = 0; i &lt; N; ++i) {
+    int result = big_hairy_computation(i);
+    #pragma ordered
+    add_to_queue(q, result);
+}</code></pre>
 <p>Ensures the ordered code executes in loop order.</p>
 
 <aside class="notes">
@@ -1065,7 +1064,7 @@ for (int i = 0; i &lt; N; ++i)
 <section>
 <h3>SIMD loops</h3>
 <p>As of OpenMP 4.0:</p>
-<pre><code>#pragma omp simd reduction(+:sum) aligned(a:64)
+<pre><code class="lang-c">#pragma omp simd reduction(+:sum) aligned(a:64)
 for (int i = 0; i &lt; N; ++i) {
     a[i] = b[i] * c[i];
     sum = sum + a[i];
@@ -1086,7 +1085,7 @@ for (int i = 0; i &lt; N; ++i) {
 <h3>SIMD loops</h3>
 <p>Can also declare vectorized functions:<br />
 </p>
-<pre><code>#pragma omp declare simd
+<pre><code class="lang-c">#pragma omp declare simd
 float myfunc(float a, float b, float c)
 {
     return a*b + c;
@@ -1125,7 +1124,7 @@ float myfunc(float a, float b, float c)
 
 <section id="sections" class="slide level3">
 <h3>Sections</h3>
-<pre><code>#pragma omp parallel
+<pre><code class="lang-c">#pragma omp parallel
 {
     #pragma omp sections nowait
     {
@@ -1214,7 +1213,7 @@ float myfunc(float a, float b, float c)
 
 <section>
 <h3>Example: List traversal</h3>
-<pre><code>#pragma omp parallel
+<pre><code class="lang-c">#pragma omp parallel
 {
     #pragma omp single nowait
     {
@@ -1248,7 +1247,7 @@ float myfunc(float a, float b, float c)
 
 <section>
 <h3>Example: Tree traversal</h3>
-<pre><code>int tree_max(node_t* n)
+<pre><code class="lang-c">int tree_max(node_t* n)
 {
     int lmax, rmax;
     if (n-&gt;is_leaf)
@@ -1283,10 +1282,10 @@ float myfunc(float a, float b, float c)
 <section>
 <h3>Task dependencies</h3>
 <p>What if one task produces what another needs?</p>
-<pre><code>    #pragma omp task depend(out:x)
-    x = foo();
-    #pragma omp task depend(in:x)
-    y = bar(x);</code></pre>
+<pre><code class="lang-c">#pragma omp task depend(out:x)
+x = foo();
+#pragma omp task depend(in:x)
+y = bar(x);</code></pre>
 
 <aside class="notes">
   <p>
