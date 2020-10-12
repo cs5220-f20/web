@@ -5,7 +5,11 @@ layout:     main
 
 <p>This file has a number of small demos of OpenMP constructs. It must be compiled with the OpenMP flags turned on (see the various <code>Makefile.in</code> files to see how to do this with different compilers).</p>
 <p>Any code that uses OpenMP is going to include the <code>omp.h</code> header, where the various OpenMP library routines are declared.</p>
-<pre><code>#include &lt;omp.h&gt;</code></pre>
+<pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+#include &lt;math.h&gt;
+#include &lt;omp.h&gt;</code></pre>
 <h2 id="hello-world">Hello, world</h2>
 <p>This routine uses <code>omp_get_thread_num</code> and <code>omp_get_num_threads</code> to tell us the index of the current thread and the total number of threads in the region</p>
 <pre><code>void hello()
@@ -19,10 +23,42 @@ layout:     main
 <ul>
 <li>We use <code>omp_get_max_threads()</code> to determine the size of the array that the threads write to. This tells us the maximum number of threads allowed.</li>
 <li>We use <code>omp_get_num_threads()</code> to tell how many threads we actually got. Note that <code>omp_get_num_threads()</code> tells the number of threads <em>in the current parallel section</em>. So it has to be called from within the parallel section, not outside. We use the <code>lastprivate</code> variable declaration to make sure that the <code>nthreads</code> variable gets copied out to the outside world when the parallel region ends.</li>
-<li><p>We use a variable-length array for the output. This is technically optional in C11 (it was required in C99), but all the common compilers support it, including CLang, Intel, and GCC.</p>
-<p>void fill_array1() { int max_threads = omp_get_max_threads(); int i; int s[max_threads]; memset(s, 0, max_threads * sizeof(int)); #pragma omp parallel shared(s) private(i) { i = omp_get_thread_num(); s[i] = i; } print_array(“fill_array1:”, s, max_threads); }</p>
-<p>void fill_array2() { int max_threads = omp_get_max_threads(); int s[max_threads]; memset(s, 0, max_threads * sizeof(int)); #pragma omp parallel { int i = omp_get_thread_num(); s[i] = i; } print_array(“fill_array1:”, s, max_threads); }</p></li>
 </ul>
+<p>We also use a variable-length array for the output. This is technically optional in C11 (it was required in C99), but all the common compilers support it, including CLang, Intel, and GCC.</p>
+<pre><code>void print_array(const char* tag, int* array, int n)
+{
+    printf(&quot;%s:&quot;, tag);
+    for (int i = 0; i &lt; n; ++i)
+        printf(&quot; %d&quot;, array[i]);
+    printf(&quot;\n&quot;);
+}
+
+void fill_array1()
+{
+    int max_threads = omp_get_max_threads();
+    int i;
+    int s[max_threads];
+    memset(s, 0, max_threads * sizeof(int));
+    #pragma omp parallel shared(s) private(i)
+    {
+        i = omp_get_thread_num();
+    s[i] = i;
+    }
+    print_array(&quot;fill_array1:&quot;, s, max_threads);
+}
+
+void fill_array2()
+{
+    int max_threads = omp_get_max_threads();
+    int s[max_threads];
+    memset(s, 0, max_threads * sizeof(int));
+    #pragma omp parallel
+    {
+        int i = omp_get_thread_num();
+    s[i] = i;
+    }
+    print_array(&quot;fill_array1:&quot;, s, max_threads);
+}</code></pre>
 <h2 id="monte-carlo-and-reductions">Monte Carlo and reductions</h2>
 <p>This is a Monte Carlo experiment to compute <span class="math inline"><em>π</em>/4</span>. We are going to run this on several different threads, so we need to use different pseudo-random number streams for each thread. The <code>rand48</code> family of random number generators is not great, but the better alternatives mostly involve bringing in external libraries, so we’ll leave be.</p>
 <pre><code>double mc_pi(int ntrials, uint64_t seed)
