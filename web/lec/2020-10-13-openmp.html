@@ -67,7 +67,7 @@ audio: 2020-10-13-openmp
     <li>Call stack (per thread)</li>
     <li>Heap memory (shared)</li>
   </ul>
-  
+
   <aside class="notes">
     <p>
       I keep using the word “thread” as though it’s self-evident what
@@ -99,7 +99,7 @@ audio: 2020-10-13-openmp
     <li>Threads for parallelism</li>
     <li>Threads for concurrency</li>
   </ul>
-  
+
   <aside class="notes">
     <p>
       There are typically two reasons why people program with
@@ -147,7 +147,7 @@ audio: 2020-10-13-openmp
         <li>Attempts to use <code>v</code> wait on evaluation</li>
     </ul></li>
   </ul>
-  
+
   <aside class="notes">
     <p>
       If we are going to use threads, the first thing we have to
@@ -281,13 +281,13 @@ audio: 2020-10-13-openmp
         <li>Library calls (19%)</li>
         <li>Environment variables (1%)</li>
     </ul></li>
-    <li>Basic syntax: <code>\#omp *construct* \[*clause* \...\]</code>
+    <li>Basic syntax: <code>#omp *construct* [*clause* ...]</code>
       <ul>
         <li>Usually affects structured block (one way in/out)</li>
         <li>OK to have <code>exit()</code> in such a block</li>
     </ul></li>
   </ul>
-  
+
   <aside class="notes">
     <p>
       So far, we’ve been pretty abstract. Let’s get down to brass
@@ -370,7 +370,7 @@ clang -o -Xpreprocessor -fopenmp foo.o -lomp</code></pre>
 int main()
 {
     #pragma omp parallel
-    printf(&quot;Hello world from %d\n&quot;, 
+    printf(&quot;Hello world from %d\n&quot;,
            omp_get_thread_num());
 
     return 0;
@@ -431,7 +431,6 @@ int main()
 
 <section>
   <h3>Shared and private</h3>
-  <p>Annotations distinguish between different types of sharing:</p>
   <ul>
     <li><code>shared(x)</code> (default): One <code>x</code> shared everywhere</li>
     <li><code>private(x)</code>: Thread gets own <code>x</code> (indep. of master)</li>
@@ -517,11 +516,12 @@ int i;
   <p>Several ways to control num threads</p>
   <ul>
     <li>Default: System chooses (= number cores?)</li>
-    <li>Environment: <code>export OMP\_NUM\_THREADS=4</code></li>
-    <li>Function call: <code>omp\_set\_num\_threads(4)</code></li>
-    <li>Clause: <code>\#pragma omp parallel num\_threads(4)</code></li>
+    <li>Environment: <code>export OMP_NUM_THREADS=4</code></li>
+    <li>Function call: <code>omp_set_num_threads(4)</code></li>
+    <li>Clause: <code>#pragma omp parallel num_threads(4)</code></li>
   </ul>
   <p>Can also nest parallel regions.</p>
+
   <aside class="notes">
     <p>
       There are several different ways to choose how many threads will
@@ -539,7 +539,7 @@ int i;
 
 <section>
 <h3>Parallel regions</h3>
-<p>What to do with parallel regions alone? Maybe Monte Carlo:</p>
+<p>Parallel regions alone? Maybe Monte Carlo:</p>
 <pre><code>    double result = 0;
     #pragma omp parallel reduction(+:result)
       result = run_mc(trials) / omp_get_num_threads();
@@ -604,8 +604,8 @@ int i;
 
   <img src="{{ "lec/figs/omp-critical.svg" | relative_url }}"
        alt="Diagram of OpenMP critical section"
-       width="60%"/>
-  
+       width="80%"/>
+
   <ul>
     <li>Automatically lock/unlock at ends of <em>critical section</em></li>
     <li>Automatically memory flushes for consistency</li>
@@ -757,7 +757,7 @@ int i;
 
   <img src="{{ "lec/figs/omp-barrier.svg" | relative_url }}"
        alt="Diagram of OpenMP barrier"
-       width="60%"/>
+       width="80%"/>
 
 <pre><code>#pragma omp parallel
 for (i = 0; i &lt; nsteps; ++i) {
@@ -816,7 +816,7 @@ for (i = 0; i &lt; nsteps; ++i) {
 
 <section>
 <h3>Parallel iteration</h3>
-<p>Idea: Map <strong>independent</strong> iterations onto different threads</p>
+<p>Map <strong>independent</strong> iterations across threads</p>
 <pre><code>  #pragma omp parallel for
   for (int i = 0; i &lt; N; ++i)
       a[i] += b[i];
@@ -883,7 +883,7 @@ for (i = 0; i &lt; nsteps; ++i) {
   <ul>
     <li>Loop var is an integer, pointer, random access iterator (C++)</li>
     <li>Test compares loop var to loop-invariant expression</li>
-    <li>Increment or decrement by a loop-invariant expression</li>
+    <li>Increment/decrement by loop-invariant expression</li>
     <li>No code between loop starts in collapse set</li>
     <li>Needed to split iteration space (maybe in advance)</li>
   </ul>
@@ -910,7 +910,7 @@ for (i = 0; i &lt; nsteps; ++i) {
       <ul>
         <li>Compiler may not stop you if you screw this up!</li>
     </ul></li>
-    <li>Iterations may be assigned out-of-order on one thread!
+    <li>Iterations may be assigned out-of-order
       <ul>
         <li>Unless the loop is declared monotonic</li>
     </ul></li>
@@ -1025,8 +1025,8 @@ for (int i = 0; i &lt; N; ++i)
   <h3>Parallel loop scheduling</h3>
   <p>Partition index space different ways:</p>
   <ul>
-    <li><code>static\[(chunk)\]</code>: decide at start of loop; default chunk is n/nthreads. Lowest overhead, most potential load imbalance.</li>
-    <li><code>dynamic\[(chunk)\]</code>: each thread takes chunk iterations when it has time; default chunk is 1. Higher overhead, but automatically balances load.</li>
+    <li><code>static[(chunk)]</code>: decide at start of loop; default chunk is n/nthreads. Lowest overhead, most potential load imbalance.</li>
+    <li><code>dynamic[(chunk)]</code>: each thread takes chunk iterations when it has time; default chunk is 1. Higher overhead, but automatically balances load.</li>
     <li><code>guided</code>: take chunks of size unassigned iterations/threads; chunks get smaller toward end of loop. Somewhere between static and dynamic.</li>
     <li><code>auto</code>: up to the system!</li>
   </ul>
@@ -1127,22 +1127,22 @@ float myfunc(float a, float b, float c)
 
 <section id="sections" class="slide level3">
 <h3>Sections</h3>
-<pre><code>    #pragma omp parallel
+<pre><code>#pragma omp parallel
+{
+    #pragma omp sections nowait
     {
-        #pragma omp sections nowait
-        {
-            #pragma omp section
-            do_something();
+        #pragma omp section
+        do_something();
 
-            #pragma omp section
-            and_something_else();
+        #pragma omp section
+        and_something_else();
 
-            #pragma omp section
-            and_this_too();
-            // No implicit barrier here
-        }
-        // Implicit barrier here
-    }</code></pre>
+        #pragma omp section
+        and_this_too();
+        // No implicit barrier here
+    }
+    // Implicit barrier here
+}</code></pre>
 <p><code>sections nowait</code> to kill barrier.</p>
 
 <aside class="notes">
@@ -1255,7 +1255,7 @@ float myfunc(float a, float b, float c)
     int lmax, rmax;
     if (n-&gt;is_leaf)
         return n-&gt;value;
-    
+
     #pragma omp task shared(lmax)
         lmax = tree_max(n-&gt;l);
     #pragma omp task shared(rmax)
@@ -1284,7 +1284,7 @@ float myfunc(float a, float b, float c)
 
 <section>
 <h3>Task dependencies</h3>
-<p>What happens if one task produces what another needs?</p>
+<p>What if one task produces what another needs?</p>
 <pre><code>    #pragma omp task depend(out:x)
     x = foo();
     #pragma omp task depend(in:x)
