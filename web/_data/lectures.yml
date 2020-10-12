@@ -139,6 +139,8 @@
       file: lec/2020-10-13-intro.html
     - info: OpenMP
       file: lec/2020-10-13-openmp.html
+    - info: OpenMP demos
+      file: lec/2020-10-13-demos.html
 -
   date: 2020-10-15
   info: Shared memory programming
