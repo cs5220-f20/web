@@ -1,0 +1,1360 @@
+---
+title: OpenMP programming
+layout: slides
+audio: 2020-10-13-openmp
+---
+
+<section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <h3>OpenMP programming</h3>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
+  </p>
+  <p>Please click the play button below.</p>
+
+  <aside class="notes">
+    <p>
+      In this slide deck, we get to talk about OpenMP programming.
+      There is a lot here to talk about!  This is material that I
+      usually walk through in about two hours of lecture, and even
+      that seems fast.  Everything goes even faster when I narrate.
+      Feel free to take breaks to look at working code in the middle
+      of the deck.  Or just take a break to take a break!  There will
+      be no new decks posted on Thursday, so this is all you need to
+      finish this digesting this week.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Shared memory programming model</h3>
+  <p>Program consists of <em>threads</em> of control.</p>
+  <ul>
+    <li>Can be created dynamically</li>
+    <li>Each has private variables (e.g. local)</li>
+    <li>Each has shared variables (e.g. heap)</li>
+    <li>Communication through shared variables</li>
+    <li>Coordinate by synchronizing on variables</li>
+    <li>Examples: pthreads, C11 threads, OpenMP, Cilk, Java threads</li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      A shared memory program has “threads” of control that
+      communicate via shared memory. Each thread has some
+      thread-private data and shared variables for communication with
+      other threads. We also need some way of synchronizing, either
+      through fine-grain locking on variables or through coarser
+      synchronization constructs like barriers.
+    </p>
+    <p>
+      Examples of shared memory programming environments include POSIX
+      threads, C11 threads, OpenMP, Cilk and related models, and Java
+      threads. We will focus on programming with OpenMP.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Wait, what’s a thread?</h3>
+  <p>Processes have <em>separate state</em>. Threads share <em>some</em>:</p>
+  <ul>
+    <li>Instruction pointer (per thread)</li>
+    <li>Register file (per thread)</li>
+    <li>Call stack (per thread)</li>
+    <li>Heap memory (shared)</li>
+  </ul>
+  
+  <aside class="notes">
+    <p>
+      I keep using the word “thread” as though it’s self-evident what
+      that means. But it shouldn’t be obvious at all if you haven’t
+      seen it enough before!
+    </p>
+    <p>
+      Modern operating systems run many processes simultaneously. A
+      process is a complete program execution context: stack, heap,
+      open files, program counter, etc. The operating system is
+      responsible for sharing the hardware across processors (and
+      other resources).
+    </p>
+    <p>
+      Processes are completely independent of each other. In contrast,
+      threads have some state that is independent, and some state that
+      is shared. In particular, each thread has its own program
+      counter, register file, and call stack. But all the threads in a
+      program share the same heap and the same global segment (or the
+      part of the code where static variables live).
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Wait, what’s a thread?</h3>
+  <ul>
+    <li>Threads for parallelism</li>
+    <li>Threads for concurrency</li>
+  </ul>
+  
+  <aside class="notes">
+    <p>
+      There are typically two reasons why people program with
+      threads. The reason that we are interested in threads is the
+      opportunity for parallelism. But even on a single core, we might
+      organize a program around multiple threads
+      for <em>concurrency</em>. This is particularly useful when there
+      are many logically independent tasks that may spend a
+      significant amount of time waiting (for I/O, for example). A
+      typical example might be a server for a web application, with
+      each thread representing a different session.
+    </p>
+    <p>
+      Why do I highlight the difference? In part, because there are
+      some cases where threads are used for concurrency and are
+      useless for parallelism. In particular, in the built-in Python
+      threads, only one thread ever runs at a time; this is great for
+      concurrency, less great for parallelism. Python does have a
+      multiprocessing library that actually supports parallelism, but
+      it’s a different beast. Nor is Python the only language or
+      library that makes this distinction.
+    </p>
+    <p>
+      All right, now that you’re warned that not all threads are
+      useful for getting parallelism, let’s move on assuming that
+      we’re in the case we care about.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Mechanisms for thread birth/death</h3>
+  <ul>
+    <li>Statically allocate threads</li>
+    <li>Fork/join</li>
+    <li>Fork detached threads</li>
+    <li>Cobegin/coend (OpenMP?)
+      <ul>
+        <li>Like fork/join, but lexically scoped</li>
+    </ul></li>
+    <li>Futures
+      <ul>
+        <li><code>v = future(somefun(x))</code></li>
+        <li>Attempts to use <code>v</code> wait on evaluation</li>
+    </ul></li>
+  </ul>
+  
+  <aside class="notes">
+    <p>
+      If we are going to use threads, the first thing we have to
+      figure out is how to start and stop them. There are some
+      languages that start off with a fixed-size team of threads, just
+      as MPI starts with a fixed-size number of processors
+      in <code>MPI_COMM_WORLD</code>. But often there is some
+      mechanism to start and stop threads more dynamically.
+    </p>
+    <p>
+      One option is to make a call to “fork” a new thread, or start it
+      executing some given routine. Usually, a call to fork a thread
+      returns some type of handle that we can use later to refer to
+      that thread. The main use for this handle is to “join” on the
+      forked thread; that is, to wait for the forked thread to
+      complete its execution. By default, we usually assume that we
+      need to join a forked thread at some point in the future, but in
+      some systems we also can fork “detached” threads that do not
+      need to be joined later.
+    </p>
+    <p>
+      In OpenMP, we do something like forking and joining, but we
+      don’t do it with a function call. Instead, everything is
+      lexically scoped: you fork a team of threads at the start of an
+      OpenMP parallel section, and join all those threads at the end
+      of the section. This type of construction is sometimes called a
+      co-begin and co-end.
+    </p>
+    <p>
+      Another useful mechanism to know about is the so-called
+      “future.” A future looks a lot like an ordinary function call,
+      but instead of executing in the same thread and then returning
+      an output (and control) to the caller, it executes in a new
+      thread and returns a “promise” object to the caller. When the
+      promise object is evaluated in some expression or as the
+      argument to some function, the system joins on the thread that
+      was running the function call, and then returns the function
+      call output.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Mechanisms for synchronization</h3>
+  <ul>
+    <li>Atomic operations</li>
+    <li>Locks/mutexes (enforce mutual exclusion)</li>
+    <li>Condition variables (notification)</li>
+    <li>Monitors (like locks with lexical scoping)</li>
+    <li>Barriers</li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      Apart from starting the thread and reading or writing through
+      memory - which usually doesn’t involve any special syntax or
+      function calls - the other thing we need for shared memory
+      programming is synchronization. There are several different ways
+      to handle this.
+    </p>
+    <p>
+      At the most fine-grained level, we can use atomic
+      operations. These are operations that combine a read and a
+      write; examples include compare-and-swap operations or atomic
+      increment and decrement operations. Usually, there are a few
+      atomic operations that get direct hardware support. These are
+      useful for things like updating a shared counter, and can also
+      be used as a building block for higher-level synchronization
+      constructs.
+    </p>
+    <p>
+      At the next level up is synchronization with locks and condition
+      variables. If you’re a CS major and have taken an operating
+      systems class, you’ve probably seen this type of
+      synchronization. The idea is that only one thread can “hold” a
+      lock at a time; when the thread releases the lock, another
+      thread picks it up. Condition variables are used for threads to
+      signal each other about things like the availability of a
+      lock. But this is still pretty low-level stuff, and I don’t
+      intend to do anything with explicit locking protocols in this
+      class.
+    </p>
+    <p>
+      To reason about the correctness of threaded codes, we usually
+      think about invariants that all the threads need for
+      correctness. For example, for a shared doubly-linked list, we
+      might have the invariant that the forward pointers and the
+      backward pointers are supposed to be consistent with each
+      other. Code that adds or removes items will briefly break the
+      invariant, and during those periods it is important that nobody
+      be trying to access the data structure. Those pieces of code are
+      called critical sections, and a natural way to protect them is
+      with a construction called a monitor.
+    </p>
+    <p>
+      Monitors are to locks as cobegin/coend constructs are to
+      forks. A monitor is a synchronization construct that surrounds a
+      critical section of code, or a piece of code that only one
+      thread ought to enter at a time. Internally, monitors are
+      implemented with locks and condition variables.
+    </p>
+    <p>
+      Finally, we have barrier-based synchronization. We’ve discussed
+      barriers before, but just to remind you, the idea is that a
+      barrier represents a synchronization time in your code: everyone
+      agrees what happened before the barrier and what happens
+      after. So, for example, everyone might write into their local
+      part of a shared data structure before a barrier, and after the
+      barrier they can read from both their part of the data structure
+      and the parts belonging to other threads. Barriers are the
+      central synchronization construct in BSP, or Bulk Synchronous
+      Programming.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>OpenMP: Open spec for MultiProcessing</h3>
+  <ul>
+    <li>Standard API for multi-threaded code
+      <ul>
+        <li>Only a spec — multiple implementations</li>
+        <li>Lightweight syntax</li>
+        <li>C or Fortran (with appropriate compiler support)</li>
+    </ul></li>
+    <li>High level:
+      <ul>
+        <li>Preprocessor/compiler directives (80%)</li>
+        <li>Library calls (19%)</li>
+        <li>Environment variables (1%)</li>
+    </ul></li>
+    <li>Basic syntax: <code>\#omp *construct* \[*clause* \...\]</code>
+      <ul>
+        <li>Usually affects structured block (one way in/out)</li>
+        <li>OK to have <code>exit()</code> in such a block</li>
+    </ul></li>
+  </ul>
+  
+  <aside class="notes">
+    <p>
+      So far, we’ve been pretty abstract. Let’s get down to brass
+      tacks now, and talk about programming in OpenMP.
+    </p>
+    <p>
+      OpenMP is a standard programming interface for multi-threaded
+      code. As with MPI, OpenMP defines an interface, and not an
+      implementation. Also like MPI, there are multiple versions of
+      OpenMP for C, C++, and Fortran. Unlike MPI, OpenMP isn’t just a
+      library: we need explicit compiler support for OpenMP
+      programming.
+    </p>
+    <p>
+      Most of OpenMP goes into compiler directives. In C, we tell the
+      compiler about these directives with the <code>#pragma</code>
+      construct, which is just a way of telling the compiler about all
+      sorts of things that lie outside the scope of the usual language
+      standard. In addition to the compiler directives, there are also
+      some support library routines. Some of these library routines do
+      things directly relevant to parallel programming, like managing
+      explicit locks; others are useful extras, like the wall-clock
+      timing routines that we’ve already seen in our demos.
+    </p>
+    <p>
+      Finally, there are a handful of environment variables that
+      control things about OpenMP, such as the default number of
+      threads.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+<h3>A logistical note</h3>
+<pre><code># Intel compiler
+icc -c -qopenmp foo.c
+icc -o -qopenmp mycode.x foo.o
+
+# GCC
+gcc -c -fopenmp foo.c
+gcc -o -fopenmp mycode.x foo.o
+
+# LLVM / CLang (Linux)
+clang -c -fopenmp foo.c
+clang -o -fopenmp mycode.x foo.o
+
+# Apple LLVM / CLang (with libomp via Homebrew)
+clang -c -Xpreprocessor -fopenmp foo.c
+clang -o -Xpreprocessor -fopenmp foo.o -lomp</code></pre>
+
+<aside class="notes">
+  <p>
+    Ideally, you’ll start jumping back and forth between these slides
+    and some examples in the demo directory. So now seems like a good
+    time to tell you how to actually compile and link an OpenMP
+    program. If you are using the Intel compiler, GCC, or CLang, you
+    just need to include a command line flag when you compile and
+    link. This is <code>-fopenmp</code> in GCC and
+    CLang, <code>-qopenmp</code> for the Intel compiler. But if you
+    are on Mac OS, you are probably by default using Apple’s own
+    version of CLang and LLVM, and for a long time, that version did
+    not support OpenMP. Now it does, at least sort of. But you have to
+    include an extra flag (<code>-Xpreprocessor</code>) before
+    the <code>-fopenmp</code> flag; and you have to explicitly install
+    the OpenMP support library and link it in by
+    adding <code>-lomp</code> to the end of your link line. The
+    easiest way I know to install the OpenMP support library is via
+    Homebrew.
+  </p>
+</aside>
+</section>
+
+
+<section>
+<h3>Parallel “hello world”</h3>
+<pre><code>#include &lt;stdio.h&gt;
+#include &lt;omp.h&gt;
+
+int main()
+{
+    #pragma omp parallel
+    printf(&quot;Hello world from %d\n&quot;, 
+           omp_get_thread_num());
+
+    return 0;
+}</code></pre>
+
+<aside class="notes">
+  <p>
+    Let’s make sure that you are able to actually follow
+    along. The <code>demos/openmp</code> subdirectory includes this
+    “Hello world” program (called <code>hello.c</code>). Using the
+    Makefile in that directory, or by invoking the compiler directly
+    with OpenMP enabled, build the hello executable and run it.
+  </p>
+  <p>
+    The pragma line in the C code starts an OpenMP parallel region. At
+    the start of the region, we create a team of threads, and each
+    thread runs the code inside the region in parallel. Unless we say
+    otherwise, there is an implicit barrier at the end of the parallel
+    region. We can call <code>omp_get_thread_num</code> from within a
+    thread to get the index, between zero
+    and <code>omp_get_num_threads()</code>. So you should get out
+    something like “Hello from 0”, “Hello from 1,” etc. You can change
+    the number of threads used by default by setting
+    the <code>OMP_NUM_THREADS</code> environment variable; there are a
+    couple examples in the Makefile.
+  </p>
+</aside>
+</section>
+
+
+<section>
+  <h3>Data in parallel regions</h3>
+  <ul>
+    <li>Basic model: fork-join / cobegin-coend</li>
+    <li>Each thread runs same code block</li>
+    <li>Annotations distinguish shared/private data</li>
+    <li><em>Relaxed consistency</em> for shared data</li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      The “hello world” example shows off the basic concept of a
+      parallel region where every thread runs the code within the
+      region. Of course, the hello world code is not so interesting in
+      that it does nothing with memory! OpenMP lets us distinguish
+      between different types of variables, some of which may be
+      shared and some of which may be private. For shared data, we are
+      not guaranteed sequential consistency, so we should be careful
+      to synchronize. We’ll get to that presently.
+    </p>
+    <p>
+      We illustrate most of the OpenMP constructs described below in
+      the <code>demos.c</code> file in <code>demos/openmp</code>.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Shared and private</h3>
+  <p>Annotations distinguish between different types of sharing:</p>
+  <ul>
+    <li><code>shared(x)</code> (default): One <code>x</code> shared everywhere</li>
+    <li><code>private(x)</code>: Thread gets own <code>x</code> (indep. of master)</li>
+    <li><code>firstprivate(x)</code>: Each thread gets its own <code>x</code>, initialized by <code>x</code> from before parallel region</li>
+    <li><code>lastprivate(x)</code>: After the parallel region, private <code>x</code> set to the value last left by one of the threads (used in loops and parallel sections)</li>
+    <li><code>reduction(op:x)</code>: Does reduction on all thread <code>x</code> on exit of parallel region</li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      In fact, there’s some nuance beyond just saying some data is
+      shared and some is private. In addition to declaring variables
+      to be shared (the default for variables outside the region) or
+      private (the default for variables declared inside the shared
+      region), we can also say that the private variables are
+      initialized by similarly-named data from outside the region, or
+      that when we exit the region we will copy data out of one of our
+      private variables. We can also say that we are doing
+      a <em>reduction</em> operation on a variable, like adding all
+      the contributions over a parallel loop.
+    </p>
+    <p>
+      Let’s stick to the simple annotations for the moment, though.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Parallel regions</h3>
+
+  <img src="{{ "lec/figs/omp-region.svg" | relative_url }}"
+       alt="Diagram of OpenMP parallel execution"
+       width="60%"/>
+
+<pre><code>double s[MAX_THREADS];
+int i;
+#pragma omp parallel shared(s) private(i)
+{
+  i = omp_get_thread_num();
+  s[i] = i;
+}
+// Implicit barrier here</code></pre>
+
+<aside class="notes">
+  <p>
+    Here’s a simple code that uses both a shared and a private
+    variable. This is a fairly silly way to fill in the array s, but
+    it fits on one slide!
+  </p>
+</aside>
+</section>
+
+
+<section>
+<h3>Parallel regions</h3>
+
+  <img src="{{ "lec/figs/omp-region.svg" | relative_url }}"
+       alt="Diagram of OpenMP parallel execution"
+       width="60%"/>
+
+<pre><code>double s[MAX_THREADS];  // default shared
+#pragma omp parallel
+{
+  int i = omp_get_thread_num();  // local, so private
+  s[i] = i;
+}
+// Implicit barrier here</code></pre>
+
+<aside class="notes">
+  <p>
+    We can make that silly array fill even terser if we use the fact
+    that definitions outside a parallel region default to shared,
+    while definitions inside are always private. So we don’t really
+    need any sharing annotations.
+  </p>
+</aside>
+</section>
+
+
+<section>
+  <h3>Parallel regions</h3>
+  <p>Several ways to control num threads</p>
+  <ul>
+    <li>Default: System chooses (= number cores?)</li>
+    <li>Environment: <code>export OMP\_NUM\_THREADS=4</code></li>
+    <li>Function call: <code>omp\_set\_num\_threads(4)</code></li>
+    <li>Clause: <code>\#pragma omp parallel num\_threads(4)</code></li>
+  </ul>
+  <p>Can also nest parallel regions.</p>
+  <aside class="notes">
+    <p>
+      There are several different ways to choose how many threads will
+      run in an OpenMP region. By default, the number of threads is
+      usually equal to the number of hardware thread contexts (which
+      may be greater than the number of cores because of
+      hyperthreading). One can also set the number of threads via an
+      environment variable (we show this off in the demo Makefile), or
+      via a function call, or as a clause in the parallel pragma that
+      starts the region.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+<h3>Parallel regions</h3>
+<p>What to do with parallel regions alone? Maybe Monte Carlo:</p>
+<pre><code>    double result = 0;
+    #pragma omp parallel reduction(+:result)
+      result = run_mc(trials) / omp_get_num_threads();
+    printf(&quot;Final result: %f\n&quot;, result);</code></pre>
+<p>Anything more interesting needs synchronization.</p>
+
+<aside class="notes">
+  <p>
+    Of course, there are pretty severe limits to what we can do with
+    the constructs we’ve described so far. Unless we have
+    synchronization, we are pretty much limited to embarrassingly
+    parallel tasks like Monte Carlo computations. Maybe that’s
+    interesting because it shows how to use the OpenMP reduction
+    clause? But if anything more interesting requires synchronization,
+    we’d best talk about synchronization next.
+  </p>
+</aside>
+</section>
+
+
+<section>
+  <h3>OpenMP synchronization</h3>
+  <p>High-level synchronization:</p>
+  <ul>
+    <li><code>critical</code>: Critical sections</li>
+    <li><code>atomic</code>: Atomic update</li>
+    <li><code>barrier</code>: Barrier</li>
+    <li><code>ordered</code>: Ordered access (later)</li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      The main synchronization constructs that we will consider are
+      the four listed here: critical sections, atomic updates,
+      barriers, and ordered access specifiers. We’ll go through these
+      in order.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>OpenMP synchronization</h3>
+  <p>Low-level synchronization:</p>
+  <ul>
+    <li><code>flush</code></li>
+    <li>Locks (simple and nested)</li>
+  </ul>
+  <p>We will stay high-level.</p>
+
+  <aside class="notes">
+    <p>
+      These aren’t the only synchronization constructs in OpenMP. But
+      we’ll try to avoid the low-level flush and lock constructs.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Critical sections</h3>
+
+  <img src="{{ "lec/figs/omp-critical.svg" | relative_url }}"
+       alt="Diagram of OpenMP critical section"
+       width="60%"/>
+  
+  <ul>
+    <li>Automatically lock/unlock at ends of <em>critical section</em></li>
+    <li>Automatically memory flushes for consistency</li>
+    <li>Locks are still there if you really need them...</li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      A critical section in OpenMP is what I would call a monitor in
+      some other contexts. The idea is that only one thread can enter
+      a critical section at a time. On entering the section, we
+      acquire a lock; on exiting the section, we release the lock. We
+      also have a memory flush at the end of the section, so that
+      different threads entering the critical section see a
+      sequentially consistent picture of the data being protected.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+<h3>Critical sections</h3>
+<pre><code>#pragma omp parallel
+{
+  ...
+  #pragma omp critical(my_data_cs)
+  {
+    ... modify data structure here ...
+  }
+}</code></pre>
+
+<aside class="notes">
+  <p>
+    A critical section usually protects just a few lines of code
+    called inside a parallel region. The name of the critical section
+    in the OpenMP pragma is associated with a lock that protects the
+    operations within the critical section.
+  </p>
+  <p>
+    That’s pretty abstract. Let’s take a concrete example.
+  </p>
+</aside>
+</section>
+
+
+<section>
+<h3>Critical sections</h3>
+<pre><code>void list_push(link_t** l, int data)
+{
+    link_t* link = (link_t*) malloc(sizeof(link_t));
+    link-&gt;data = data;
+    #pragma omp critical(list_cs)
+    {
+        link-&gt;next = *l;
+        *l = link;
+    }
+}</code></pre>
+
+<aside class="notes">
+  <p>
+    Suppose that we have several threads pushing data onto a linked
+    list. We don’t really care about the order that the data goes onto
+    the list, but we do care that no data is lost. In this case, a
+    critical section is needed to avoid two threads trying to
+    simultaneously add data to the front of the list. Even under
+    sequential consistency, without the critical section we could have
+    both P0 and P1 set their new link next pointers to the same old
+    head pointer, and then each try to update the head pointer. In
+    this case, either one or the other of the new entries will get
+    lost from the list.
+  </p>
+  <p>
+    As an aside: see how the critical section name does not depend on
+    what list we are working with? This solution arguably does more
+    synchronization than needed, as we cannot update even completely
+    distinct linked lists concurrently with this approach - all the
+    updates are serialized through the same critical section. We’ll
+    see an alternate approach momentarily.
+  </p>
+</aside>
+</section>
+
+
+<section>
+<h3>Atomic updates</h3>
+<pre><code>#pragma omp parallel
+{
+  ...
+  double my_piece = foo();
+  #pragma omp atomic
+  x += my_piece;
+}</code></pre>
+<p>Only simple ops: increment/decrement or <code>x += expr</code> and co</p>
+
+<aside class="notes">
+  <p>
+    The OpemMP <code>atomic</code> pragma statements cause a single,
+    simple statement to be performed atomically. Probably the most
+    common atomic operations are updates, like the one shone here: we
+    are guaranteed that the read, update, and write back represented
+    by the increment operation will all be done together, with no
+    weird interleaving or sequentially inconsistent effects.
+  </p>
+  <p>
+    The default clause for the <code>atomic</code> pragma is an
+    update. But we can also have atomic reads, writes, or captures
+    (though one that only works in OpenMP 3.1 and later).
+  </p>
+</aside>
+</section>
+
+
+<section>
+<h3>Atomic captures</h3>
+<pre><code>void list_push2(link_t** l, int data)
+{
+    link_t* link = (link_t*) malloc(sizeof(link_t));
+    link-&gt;data = data;
+    #pragma omp atomic capture
+    {
+        link-&gt;next = *l;
+        *l = link;
+    }
+}</code></pre>
+
+<aside class="notes">
+  <p>
+    An <code>atomic</code> capture operation consists of reading and
+    replacing a data item in one step. Here, we see it used to read
+    and replace the head pointer in our linked list. This is a very
+    specific pattern - but one that happens often enough that explicit
+    support is really useful. In fact, this operation can be done with
+    compare-and-swap operations that have hardware support in almost
+    all modern multiprocessors. It’s the building block that we use
+    for lots of other synchronization primitives (like locks) as well.
+  </p>
+  <p>
+    Unlike the critical section version of this code, the version that
+    uses the atomic capture operation does not cause updates to one
+    linked list and updates to another linked list to contend with
+    each other in any way.
+  </p>
+</aside>
+</section>
+
+
+<section>
+  <h3>Barriers</h3>
+
+  <img src="{{ "lec/figs/omp-barrier.svg" | relative_url }}"
+       alt="Diagram of OpenMP barrier"
+       width="60%"/>
+
+<pre><code>#pragma omp parallel
+for (i = 0; i &lt; nsteps; ++i) {
+  do_stuff
+  #pragma omp barrier
+}</code></pre>
+
+<aside class="notes">
+  <p>
+    Mucking around with synchronization primitives at the level of an
+    atomic update is a lot like mucking around with explicit vector
+    operations. It’s sort of entertaining, and sometimes it makes a
+    big difference. But it’s also a time sink, and at the end you may
+    be left questioning your life choices.
+  </p>
+  <p>
+    Barriers are at the other end of the spectrum. Good old bulk
+    synchronous programming! The usual way this shows up is as shown
+    here. If each step only depends on data written in the previous
+    step, like in the explicit wave equation time-stepping scheme
+    we’ve seen so much of in the past week or two, then a barrier
+    between time steps is all the synchronization we need.
+  </p>
+</aside>
+</section>
+
+
+<section>
+  <h3>Work sharing</h3>
+  <p><em>Work sharing</em> constructs split work across a team</p>
+  <ul>
+    <li>Parallel <code>for</code>: split by loop iterations</li>
+    <li><code>sections</code>: non-iterative tasks</li>
+    <li><code>single</code>: only one thread executes (synchronized)</li>
+    <li><code>master</code>: master executes, others skip (no sync)</li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      All right, perhaps that’s enough synchronization for now. Let’s
+      turn to the topic of work sharing - OpenMP constructs to split
+      work across a team of threads. The most important such construct
+      for our purposes is the parallel <code>for</code> loop, where
+      independent loop iterations are assigned to different
+      processors. OpenMP sections are used to share non-iterative work
+      items. The single and master constructs are really about work
+      non-sharing, and are often used to handle things that we only
+      want to do on one thread (like I/O).
+    </p>
+    <p>
+      We’ll spend the most time, though, on the parallel for loop.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+<h3>Parallel iteration</h3>
+<p>Idea: Map <strong>independent</strong> iterations onto different threads</p>
+<pre><code>  #pragma omp parallel for
+  for (int i = 0; i &lt; N; ++i)
+      a[i] += b[i];
+
+  #pragma omp parallel
+  {
+      // Stuff can go here...
+      #pragma omp for
+      for (int i = 0; i &lt; N; ++i)
+          a[i] += b[i];
+  }</code></pre>
+<p>Implicit barrier at end of loop (unless nowait clause)</p>
+
+<aside class="notes">
+  <p>
+    The parallel for loop is used when iterations of a loop are
+    independent from each other. It won’t do what you expect when
+    there are dependencies across loop iterations!
+  </p>
+  <p>
+    The parallel for loop can appear alone in a parallel region, in
+    which case we start with the <code>omp parallel for</code> pragma;
+    or it can appear along with other work inside a parallel region,
+    in which case we the parallel region is started with <code>omp
+    parallel</code> and the for loop to be parallelized with the
+    thread team of the region is started with just <code>omp
+      for</code>.
+  </p>
+  <p>
+    Unless we explicitly say otherwise, parallel for loops have an
+    implied barrier at the end.
+  </p>
+</aside>
+</section>
+
+
+<section>
+<h3>Parallel iteration</h3>
+<p>The iteration can also go across a higher-dim index set</p>
+<pre><code>  #pragma omp parallel for collapse(2)
+  for (int i = 0; i &lt; N; ++i)
+    for (int j = 0; j &lt; M; ++j)
+      a[i*M+j] = foo(i,j);</code></pre>
+
+<aside class="notes">
+  <p>
+    Sometimes, we are interested in iterating over multi-dimensional
+    index sets, like the entries of a matrix or the cells in a 2D
+    mesh. There’s a version of parallel for in this case, too. We just
+    need to use the collapse clause, specifying the number of nested
+    loops that specify the index space to be partitioned.
+  </p>
+  <p>
+    Of course, there have to be some restrictions for a thing like
+    this to work!
+  </p>
+</aside>
+</section>
+
+
+<section>
+  <h3>Restrictions</h3>
+  <p><code>for</code> loop must be in “canonical form”</p>
+  <ul>
+    <li>Loop var is an integer, pointer, random access iterator (C++)</li>
+    <li>Test compares loop var to loop-invariant expression</li>
+    <li>Increment or decrement by a loop-invariant expression</li>
+    <li>No code between loop starts in collapse set</li>
+    <li>Needed to split iteration space (maybe in advance)</li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      The first restriction is that the loop must be in canonical
+      form. That means that we have a simple integer or pointer,
+      incremented in a simple way, up to a loop-invariant bound. And
+      in the case of a collapsed loop, we can’t have any code in the
+      outer loop except for the inner loop. All these restrictions are
+      there to make it so that the compiler can figure out the
+      iteration space in advance in order to partition it across the
+      different threads.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Restrictions</h3>
+  <ul>
+    <li>Iterations should be independent
+      <ul>
+        <li>Compiler may not stop you if you screw this up!</li>
+    </ul></li>
+    <li>Iterations may be assigned out-of-order on one thread!
+      <ul>
+        <li>Unless the loop is declared monotonic</li>
+    </ul></li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      There are a couple other restrictions, too. The first, which
+      we’ve already mentioned, is that the iterations should be
+      independent. The second is that the iteration order should
+      totally not matter - iterations may be assigned out of order
+      even on a single thread, unless we include an
+      OpenMP <code>ordered</code> clause to say otherwise (you’ll
+      recall that this is the one OpenMP synchronization construct we
+      said we’d talk about and haven’t yet discussed).
+    </p>
+  </aside>
+</section>
+
+
+<section>
+<h3>Reduction loops</h3>
+<p>How might we parallelize something like this?</p>
+<pre><code>double sum = 0;
+for (int i = 0; i &lt; N; ++i)
+    sum += big_hairy_computation(i);</code></pre>
+
+<aside class="notes">
+  <p>
+    All right, let’s get concrete. Suppose we have an iteration space
+    from 0 to N, and we want to sum up the results of big computations
+    for each point in the iteration space. How would we parallelize
+    something like this in OpenMP?
+  </p>
+</aside>
+</section>
+
+
+<section>
+<h3>Reduction loops</h3>
+<p>How might we parallelize something like this?</p>
+<pre><code>double sum = 0;
+#pragma omp parallel for reduction(+:sum)
+for (int i = 0; i &lt; N; ++i)
+    sum = big_hairy_computation(i);</code></pre>
+
+<aside class="notes">
+  <p>
+    Summing a large number of independently computed components is an
+    example of a <em>reduction</em> operation. We saw this idea in
+    MPI, as well. Like MPI, OpenMP provides special support for
+    reduction operations; in this case, we have
+    a <code>reduction</code> clause for the OpenMP for loop that tells
+    us that we should sum up all the contributions to
+    the <code>sum</code> variable encountered in the loop. We can also
+    do reductions involving subtraction, multiplication, and bitwise
+    or logical and, or, and xor operations.
+  </p>
+</aside>
+</section>
+
+
+<section>
+<h3>Ordered</h3>
+<p>OK, what about something like this?</p>
+<pre><code>for (int i = 0; i &lt; N; ++i) {
+    int result = big_hairy_computation(i);
+    add_to_queue(q, result);
+}
+  </code></pre>
+<p>Work is <em>mostly</em> independent, but not wholly.</p>
+
+<aside class="notes">
+  <p>
+    All right, but what if we want to do something like this? The
+    heavy computations in each iteration are independent, but we want
+    the queued results to appear in loop order. We could ensure that
+    the queue got the result of every loop iteration by properly
+    synchronizing the queue update function, but it wouldn’t make sure
+    that the queue received all the results in order. For that, we
+    need a new construct.
+  </p>
+</aside>
+</section>
+
+
+<section>
+<h3>Ordered</h3>
+<p>Solution: ordered directive in loop with ordered clause</p>
+<pre><code>    #pragma omp parallel for ordered
+    for (int i = 0; i &lt; N; ++i) {
+        int result = big_hairy_computation(i);
+        #pragma ordered
+        add_to_queue(q, result);
+    }</code></pre>
+<p>Ensures the ordered code executes in loop order.</p>
+
+<aside class="notes">
+  <p>
+    Maybe unsurprisingly, the construct is
+    called <code>ordered</code>. There are two pieces to this: we need
+    to add the <code>ordered</code> clause to the parallel for pragma,
+    and we need to decorate the specific line or code block that is to
+    be executed in loop order. The stuff not under the ordered pragma
+    - the big hairy computation, in this case - can be parallelized.
+  </p>
+</aside>
+</section>
+
+
+<section>
+  <h3>Parallel loop scheduling</h3>
+  <p>Partition index space different ways:</p>
+  <ul>
+    <li><code>static\[(chunk)\]</code>: decide at start of loop; default chunk is n/nthreads. Lowest overhead, most potential load imbalance.</li>
+    <li><code>dynamic\[(chunk)\]</code>: each thread takes chunk iterations when it has time; default chunk is 1. Higher overhead, but automatically balances load.</li>
+    <li><code>guided</code>: take chunks of size unassigned iterations/threads; chunks get smaller toward end of loop. Somewhere between static and dynamic.</li>
+    <li><code>auto</code>: up to the system!</li>
+  </ul>
+  <p>Default behavior is implementation-dependent.</p>
+
+  <aside class="notes">
+    <p>
+      In addition to everything else, the parallel for loop has
+      clauses to specify how the iteration space should be
+      partitioned. One option is static partitioning of the iteration
+      space. This is great if the work for every iteration is about
+      the same, but if different iterations can cost different
+      amounts, static partitioning can cause load imbalances where one
+      thread ends up taking on much more work than the others. Dynamic
+      partitioning, in contrast, means that work is assigned
+      dynamically: each thread grabs a few more iterations when it is
+      ready for more. Dynamic partitioning requires that the compiler
+      maintain some synchronized data structure for sharing out the
+      work, and that leads to some overhead. But this strategy is
+      great for load balance.
+    </p>
+    <p>
+      Guided (or tapered) strategies sit somewhere between static and
+      dynamic strategies. The system starts by assigning big blocks of
+      work, but the pieces of the iteration space that we assign get
+      smaller and smaller as the loop gets ever closer to
+      completion. This is often a good strategy to get both reasonable
+      load balance and not spend too much time scheduling iterations.
+    </p>
+    <p>
+      The default strategy, sometimes called <code>auto</code>, is
+      entirely implementation-dependent.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+<h3>SIMD loops</h3>
+<p>As of OpenMP 4.0:</p>
+<pre><code>#pragma omp simd reduction(+:sum) aligned(a:64)
+for (int i = 0; i &lt; N; ++i) {
+    a[i] = b[i] * c[i];
+    sum = sum + a[i];
+}</code></pre>
+
+<aside class="notes">
+  <p>
+    As we mentioned in earlier meetings, OpenMP 4.0 supports not only
+    thread-level parallelism, but also instruction-level parallelism
+    in the form of loop vectorization. Here’s an example of an OpenMP
+    loop vectorization.
+  </p>
+</aside>
+</section>
+
+
+<section>
+<h3>SIMD loops</h3>
+<p>Can also declare vectorized functions:<br />
+</p>
+<pre><code>#pragma omp declare simd
+float myfunc(float a, float b, float c)
+{
+    return a*b + c;
+}</code></pre>
+
+<aside class="notes">
+  <p>
+    We can also declare SIMD-friendly versions of functions to be
+    called from OpenMP SIMD loops. And there are a number of other
+    things we can do with the OpenMP SIMD support, too.
+  </p>
+</aside>
+</section>
+
+
+<section>
+<h3>Other parallel work divisions</h3>
+<ul>
+<li><code>sections</code>: like cobegin/coend</li>
+<li><code>single</code>: do only in one thread (e.g. I/O)</li>
+<li><code>master</code>: do only in master thread; others skip</li>
+</ul>
+
+<aside class="notes">
+  <p>
+    All right. Let’s turn away from loops, and talk about the other
+    three work division constructs that I promised to talk
+    about. Well, really I will talk about sections. I’ll leave you to
+    look up <code>single</code> and <code>master</code>; there isn’t
+    much more to either of them than the one-sentence explanation in
+    the slide text.
+  </p>
+</aside>
+</section>
+
+
+<section id="sections" class="slide level3">
+<h3>Sections</h3>
+<pre><code>    #pragma omp parallel
+    {
+        #pragma omp sections nowait
+        {
+            #pragma omp section
+            do_something();
+
+            #pragma omp section
+            and_something_else();
+
+            #pragma omp section
+            and_this_too();
+            // No implicit barrier here
+        }
+        // Implicit barrier here
+    }</code></pre>
+<p><code>sections nowait</code> to kill barrier.</p>
+
+<aside class="notes">
+  <p>
+    The <code>sections</code> command is used to deal with static,
+    non-iterative partitioning of work. If we have three or four
+    different things to do and they can all be done independently, we
+    can put those things into parallel sections as above.
+  </p>
+  <p>
+    As with the parallel for loop, there is an implied barrier at the
+    end of a sections construct unless we get rid of it with
+    a <code>nowait</code> clause.
+  </p>
+</aside>
+</section>
+
+
+<section>
+  <h3>Task-based parallelism</h3>
+  <ul>
+    <li>Work-sharing so far is rather limited
+      <ul>
+        <li>Work cannot be produced/consumed dynamically</li>
+        <li>Fine for data parallel array processing...</li>
+        <li>... but what about tree walks and such?</li>
+    </ul></li>
+    <li>Alternate approach (OpenMP 3.0+): Tasks</li>
+  </ul>
+
+  <aside class="notes">
+    <p>
+      The work-sharing constructs we’ve described so far all work with
+      fairly static chunks of independent work. The size of the
+      iteration space for the parallel for construct can’t change in
+      the middle of the loop, nor are we going to dynamically change
+      the set of sections in a sections construct. If we want to do
+      something more dynamic, like what happens during a parallel tree
+      walk or linked list traversal, we need another mechanism. This
+      is the reason that OpenMP 3.0 added <em>task</em> parallelism.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>Tasks</h3>
+  <p>Task involves:</p>
+  <ul>
+    <li>Task construct: task directive plus structured block</li>
+    <li>Task: Task construct + data</li>
+  </ul>
+  <p>Tasks are handled by run time, complete at barriers or <code>taskwait</code>.</p>
+
+  <aside class="notes">
+    <p>
+      A task is essentially a piece of work that a thread can pick up
+      and run, plus the data required to do that work. In a
+      task-parallel approach, we break our work into tasks that are
+      added on-the-fly to a task queue, and the threads pull tasks off
+      the queue and execute them until the queue empties out. We
+      require that “emptying out” at barriers or
+      at <code>taskwait</code> constructs.
+    </p>
+    <p>
+      Let’s make this more explicit with an example.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+<h3>Example: List traversal</h3>
+<pre><code>#pragma omp parallel
+{
+    #pragma omp single nowait
+    {
+        for (link_t* link = head; link; link = link-&gt;next)
+            #pragma omp task firstprivate(link)
+            process(link);
+    }
+    // Implicit barrier
+}</code></pre>
+<p>One thread generates tasks, others execute them.</p>
+
+<aside class="notes">
+  <p>
+    Consider a linked list, where we want to do some processing on
+    each item in the list. We can’t traverse the list with a parallel
+    for loop; it doesn’t fit into the restrictions. Instead, we’ll
+    start with a single thread that goes through and creates a task
+    for processing each link. This <code>omp single</code> section is
+    effectively a producer in a producer-consumer system with many
+    possible consumers. Depending on how quickly the tasks are
+    handled, the thread responsible for producing all the tasks may
+    then turn to doing some of the processing afterward, along with
+    the processing being done by all the other threads. There is
+    a <code>nowait</code> clause on the single section that produces
+    the tasks, but the tasks must all complete in order to pass the
+    implicit barrier at the end of the parallel region.
+  </p>
+</aside>
+</section>
+
+
+<section>
+<h3>Example: Tree traversal</h3>
+<pre><code>int tree_max(node_t* n)
+{
+    int lmax, rmax;
+    if (n-&gt;is_leaf)
+        return n-&gt;value;
+    
+    #pragma omp task shared(lmax)
+        lmax = tree_max(n-&gt;l);
+    #pragma omp task shared(rmax)
+        rmax = tree_max(n-&gt;l);
+    #pragma omp taskwait
+
+    return max(lmax, rmax);
+}</code></pre>
+<p>The <code>taskwait</code> waits for all child tasks.</p>
+
+<aside class="notes">
+  <p>
+    Here is another example with a little more structure. A binary
+    tree walker creates a pair of tasks at each non-leaf node: one to
+    process the left leaf, another to process the right leaf. We need
+    the data from the children to compute the return value for the
+    parent, so we have a <code>taskwait</code> clause after launching
+    the left and right child tasks; we can only pass
+    the <code>taskwait</code> clause once both the child tasks are
+    done. Note that we are only waiting for child tasks - we don’t
+    have to wait for every task to clear the system!
+  </p>
+</aside>
+</section>
+
+
+<section>
+<h3>Task dependencies</h3>
+<p>What happens if one task produces what another needs?</p>
+<pre><code>    #pragma omp task depend(out:x)
+    x = foo();
+    #pragma omp task depend(in:x)
+    y = bar(x);</code></pre>
+
+<aside class="notes">
+  <p>
+    There are more complicated things we can do, too. For example, we
+    might give the task scheduler constraints, like telling it that
+    one task generates an output (x) that another task needs as
+    input. In this case, the first task had better finish before the
+    second, though any number of other tasks might be scheduled on top
+    of or in between these two tasks.
+  </p>
+</aside>
+</section>
+
+
+<section>
+  <h3>Topics not addressed</h3>
+  <ul>
+    <li>Low-level synchronization (locks, flush)</li>
+    <li>OpenMP 4.x constructs for accelerator interaction</li>
+    <li>A variety of more specialized clauses</li>
+  </ul>
+  <p>See <a href="http://www.openmp.org/" class="uri">http://www.openmp.org/</a></p>
+
+  <aside class="notes">
+    <p>
+      And the list goes on. You can do a lot with what we’ve covered
+      in this deck, but of course there are a lot of specialized
+      clauses we haven’t talked about. We haven’t discussed some of
+      the low-level synchronization primitives, such as locks and
+      memory flushes; and we haven’t talked about using OpenMP to
+      program for GPUs and other accelerators, though we might get to
+      that presently.
+    </p>
+    <p>
+      In any case, you can see the OpenMP documentation if you are
+      impatient for a thorough run-down. But perhaps a better approach
+      is to dive in and start coding.
+    </p>
+  </aside>
+</section>
+
+
+<section>
+  <h3>A final reminder</h3>
+  <p>Parallelism is not performance!</p>
+
+  <aside class="notes">
+    <p>
+      Finally, I remind you again: OpenMP is not magic pixie dust! If
+      you sprinkle parallel for directives atop all the loops in your
+      serial code, you are likely to get broken code in the worst case
+      (because of dependencies you didn’t consider) and slow code in
+      the not-as-bad case. You have to amortize your synchronization
+      costs if you want any reasonable sort of speedup! The easiest
+      way to achieve this is often to program as if you were writing
+      in a message-passing environment, doing big chunks of work
+      between accesses to global memory and synchronization events.
+    </p>
+    <p>
+      Alas, previous experience teaching this class suggests that many
+      of you won’t really get what I’m saying about synchronization
+      overheads until you are faced with an example or two. Don’t
+      worry, we’ll get those examples. It’ll be fun.
+    </p>
+    <p>
+      Until next time!
+    </p>
+  </aside>
+</section>

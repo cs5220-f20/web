@@ -137,6 +137,8 @@
   files:
     - info: Intro to shared memory (narration in progress)
       file: lec/2020-10-13-intro.html
+    - info: OpenMP (narration in progress)
+      file: lec/2020-10-13-openmp.html
 -
   date: 2020-10-15
   info: Shared memory programming
