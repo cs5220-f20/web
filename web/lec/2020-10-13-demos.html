@@ -124,7 +124,18 @@ void list_push2(link_t** l, int data)
     free_list(l);
 }</code></pre>
 <h2 id="atomic-updates">Atomic updates</h2>
-<p>The mo common use of atomic operations is to update small shared data items - counters, most often. void count_evens() { int counts[2] = {0, 0}; #pragma omp parallel for for (int i = 0; i &lt; 100; ++i) { int which_counter = (i % 2); #pragma omp atomic counts[which_counter]++; } printf(“For 0 to 99: %d evens, %d odds”, counts[0], counts[1]); }</p>
+<p>The mo common use of atomic operations is to update small shared data items - counters, most often.</p>
+<pre><code>void count_evens()
+{
+    int counts[2] = {0, 0};
+    #pragma omp parallel for
+    for (int i = 0; i &lt; 100; ++i) {
+        int which_counter = (i % 2);
+        #pragma omp atomic
+        counts[which_counter]++;
+    }
+    printf(&quot;For 0 to 99: %d evens, %d odds\n&quot;, counts[0], counts[1]);
+}</code></pre>
 <h2 id="barrier-based-synchronization">Barrier-based synchronization</h2>
 <p>Barrier-based synchronization is particularly useful when we have computations organized into distinct time steps or phases, with each step depending on data written in the previous step. We’ve seen a few such computations, including the 1D wave equation. For this example, without attempting to make anything go fast, let’s try the Game of Life.</p>
 <p>We start with some (non-parallel) setup. We’ll use a simple glider pattern to test things out - this pattern translates by one cell horizontally and vertically once every four generations.</p>
@@ -210,8 +221,14 @@ void glider_test()
     print_life(&amp;board, 0, 6, 8);
 }</code></pre>
 <h2 id="task-based-list-traversal">Task-based list traversal</h2>
-<p>This list traversal code goes through a linked list and creates a task for processing each. void list_traversal_test() { link_t* head = NULL; for (int i = 0; i &lt; 10; ++i) list_push2(&amp;head, i);</p>
-<pre><code>    #pragma omp parallel
+<p>This list traversal code goes through a linked list and creates a task for processing each.</p>
+<pre><code>void list_traversal_test()
+{
+    link_t* head = NULL;
+    for (int i = 0; i &lt; 10; ++i)
+        list_push2(&amp;head, i);
+
+    #pragma omp parallel
     {
         #pragma omp single nowait
         {
