@@ -136,9 +136,10 @@ void list_test()
         list_push(&amp;l, i);
     print_list(&quot;list_test&quot;, l);
     free_list(l);
-}
-
-void list_push2(link_t** l, int data)
+}</code></pre>
+<h2 id="linked-list-and-atomic-capture">Linked list and atomic capture</h2>
+<p>The linked list example above uses a critical section to protect the list push operation. The version below uses an atomic capture operation (i.e. an atomic operation that reads out the old value from some memory and replaces it with a new value). This atomic capture approach is finer-grained than the critical section; for example, we would not have any contention when using this approach to update two distinct lists concurrently.</p>
+<pre><code>void list_push2(link_t** l, int data)
 {
     link_t* link = (link_t*) malloc(sizeof(link_t));
     link-&gt;data = data;
@@ -147,10 +148,9 @@ void list_push2(link_t** l, int data)
         link-&gt;next = *l;
         *l = link;
     }
-}</code></pre>
-<h2 id="linked-list-and-atomic-capture">Linked list and atomic capture</h2>
-<p>The linked list example above uses a critical section to protect the list push operation. The version below uses an atomic capture operation (i.e. an atomic operation that reads out the old value from some memory and replaces it with a new value). This atomic capture approach is finer-grained than the critical section; for example, we would not have any contention when using this approach to update two distinct lists concurrently.</p>
-<pre><code>void list_test2()
+}
+
+void list_test2()
 {
     link_t* l = NULL;
     #pragma omp parallel for
