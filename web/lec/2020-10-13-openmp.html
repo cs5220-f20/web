@@ -1023,14 +1023,12 @@ for (int i = 0; i &lt; N; ++i)
 
 <section>
   <h3>Parallel loop scheduling</h3>
-  <p>Partition index space different ways:</p>
   <ul>
     <li><code>static[(chunk)]</code>: decide at start of loop; default chunk is n/nthreads. Lowest overhead, most potential load imbalance.</li>
     <li><code>dynamic[(chunk)]</code>: each thread takes chunk iterations when it has time; default chunk is 1. Higher overhead, but automatically balances load.</li>
     <li><code>guided</code>: take chunks of size unassigned iterations/threads; chunks get smaller toward end of loop. Somewhere between static and dynamic.</li>
     <li><code>auto</code>: up to the system!</li>
   </ul>
-  <p>Default behavior is implementation-dependent.</p>
 
   <aside class="notes">
     <p>
