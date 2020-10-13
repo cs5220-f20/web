@@ -16,3 +16,9 @@
   links:
     - url: https://github.com/cs5220-f20/matmul-project
       text: Github repo
+-
+  due: 2020-10-20
+  text: "HW 2: XSEDE-ing expectations"
+  files:
+    - hw2.html
+    - hw2.txt

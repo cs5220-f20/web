@@ -1,0 +1,7 @@
+Please complete the following and submit via CMS, along with the completed
+telephone.c file and the output from running on Graphite.
+
+1. What is your XSEDE user name?
+2. Is there anything I should know about your situation?  Your buddies?
+3. Any other comments or suggestions?
+
