@@ -152,6 +152,11 @@
 -
   date: 2020-10-20
   info: Dense linear algebra
+  files:
+    - info: Project 2
+      file: hw/proj2.html
+    - info: Project 2 code
+      file: https://github.com/cs5220-f20/shallow-water
 -
   date: 2020-10-22
   info: Dense linear algebra

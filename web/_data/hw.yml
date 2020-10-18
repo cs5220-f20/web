@@ -22,3 +22,11 @@
   files:
     - hw2.html
     - hw2.txt
+-
+  due: 2020-11-03
+  text: "Proj 2: Shallow water"
+  files:
+    - proj2.html
+  links:
+    - url: https://github.com/cs5220-f20/shallow-water
+      text: Github repo
