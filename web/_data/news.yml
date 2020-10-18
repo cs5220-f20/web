@@ -19,3 +19,6 @@
 -
   date: 2020-09-30
   text: Please use n2-highcpu-2 rather than e2-micro instances for timing/tuning the matrix multiply project.
+-
+  date: 2020-10-17
+  text: Project 2 is posted!  Groups are on CMS.
