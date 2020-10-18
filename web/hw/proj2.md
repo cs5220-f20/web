@@ -3,7 +3,7 @@ title: Shallow water simulation
 layout: main
 ---
 
-![Dam break simulation](https://github.com/cs5220-f20/shallow-water/blob/main/img/dam_break.gif)
+![Dam break simulation](https://github.com/cs5220-f20/shallow-water/raw/main/img/dam_break.gif)
 
 Due 2020-11-03
 
