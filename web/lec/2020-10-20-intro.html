@@ -1,0 +1,327 @@
+---
+title: Intro to Dense LA
+layout: slides
+audio: 2020-10-20-intro
+---
+
+section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <h3>Intro to Dense LA</h3>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
+  </p>
+  <p>Please click the play button below.</p>
+</section>
+
+<section>
+<h3>Where we are</h3>
+<ul>
+<li>This week: <em>dense</em> linear algebra</li>
+<li>Next week: <em>sparse</em> linear algebra</li>
+</ul>
+<aside class="notes">
+<p>This week we’re taking another turn, away from the CS-centric material of the past couple weeks and toward the numerical math side of things. Specifically, we’re going to take a couple weeks to talk about dense and sparse linear algebra methods.</p>
+</aside>
+</section>
+
+<section>
+<h3>Nutshell NLA</h3>
+<ul>
+<li>Linear systems: <span class="math inline">\(Ax = b\)</span></li>
+<li>Least squares: minimize <span class="math inline">\(\|Ax-b\|_2^2\)</span></li>
+<li>Eigenvalues: <span class="math inline">\(Ax = \lambda x\)</span></li>
+</ul>
+<aside class="notes">
+<p>Let me be a little more specific what I mean by “linear algebra methods.” Numerical linear algebra is a big area, but a lot of it boils down to one of three classes of problems: solving linear systems, solving least squares problems, and solving eigenvalue or SVD problems.</p>
+</aside>
+</section>
+
+<section>
+<h3>Nutshell NLA</h3>
+<ul>
+<li>Basic paradigm: matrix factorization
+<ul>
+<li><span class="math inline">\(A = LU\)</span>, <span class="math inline">\(A = LL^T\)</span></li>
+<li><span class="math inline">\(A = QR\)</span></li>
+<li><span class="math inline">\(A = V \Lambda V^{-1}\)</span>, <span class="math inline">\(A = Q T Q^T\)</span></li>
+<li><span class="math inline">\(A = U \Sigma V^T\)</span></li>
+</ul></li>
+<li>Factorization <span class="math inline">\(\equiv\)</span> switch to basis that makes problem easy</li>
+</ul>
+<aside class="notes">
+<p>Experts in the area largely think about these types of problems in terms of matrix factorizations. That is, we write a matrix A that we care about as a product of matrices with simpler structure: mostly triangular matrices, diagonal matrices, and orthogonal or unitary matrices. We can think of these factorizations as changes of basis that make some problem of interest simpler.</p>
+<p>Some standard examples of matrix factorizations include</p>
+<ul>
+<li>The LU decomposition or Cholesky decomposition, which encapsulates what you learned about when you studied Gaussian elimination way back when (or maybe more recently, I don’t know!);</li>
+<li>The QR decomposition, which you may know something about if you remember the Gram-Schmidt process; and</li>
+<li>Eigenvalue decompositions and singular value decompositions</li>
+</ul>
+</aside>
+</section>
+
+<section>
+<h3>Dense and sparse</h3>
+<p>Two flavors: dense and sparse</p>
+<aside class="notes">
+<p>In addition to thinking about the different types of problems we might be interested and how they can be written as factorizations, we also want to think about structural properties of the matrices involved that are relevant to high-performance solution algorithms.</p>
+<p>One of the most important such structural properties is whether the matrix is <em>dense</em> or <em>sparse</em>.</p>
+</aside>
+</section>
+
+<section>
+<h3>Dense</h3>
+<p>Common structures, no complicated indexing</p>
+<ul>
+<li>General dense (all entries nonzero)</li>
+<li>Banded (zero below/above some diagonal)</li>
+<li>Symmetric/Hermitian</li>
+<li>Standard, robust algorithms (LAPACK)</li>
+</ul>
+<aside class="notes">
+<p>Fully <em>dense</em> matrices are the types of matrices that we’ve mostly discussed so far. Most of the elements are nonzero, or at least enough are nonzero that we don’t do anything special to distinguish the zeros from the nonzeros in our data structures. The data structures that we use for full dense matrices are pretty simple: row major or column major layouts, mostly. And the algorithms we use might be specialized based on some broad structural categories, like whether a matrix is symmetric or positive definite, but are otherwise rather general.</p>
+<p>I tend to think of <em>band</em> matrices as dense, though really they are somewhere between. These types of matrices store lots of zeros implicitly, which is the hallmark of sparse matrix storage. But they don’t require any fancy indexing, and there are robust general purpose algorithms in libraries like LAPACK, and from that perspective they really are like full dense matrices.</p>
+</aside>
+</section>
+
+<section>
+<h3>Sparse</h3>
+<p>Stuff not stored in dense form!</p>
+<ul>
+<li>Maybe few nonzeros (e.g. compressed sparse row formats)</li>
+<li>May be implicit (e.g. via finite differencing)</li>
+<li>May be “dense”, but with compact repn (e.g. via FFT)</li>
+<li>Most algorithms are iterative; wider variety, more subtle</li>
+<li>Build on dense ideas</li>
+</ul>
+<aside class="notes">
+<p>Sparse matrices are matrices that aren’t stored in dense form. Really, the relevant point is that they require fewer than n^2 parameters to store, and some operations (like matrix-vector product) require fewer than n^2 operations. The simplest case is when most of the entries of the matrix are zero; that’s what we usually refer to when we say a matrix is sparse. We’ve already said something about formats for that, like compressed sparse row and compressed sparse column. But there are other “data-sparse” matrices out there that admit fast, implicit representations even if an explicit reprsentation would be dense. An example is the Fast Fourier Transform matrix.</p>
+<p>But even if you think you’re only interested in problems that are sparse, like those arising from certain types of PDE discretizations, you need to know how numerical linear algebra with dense matrices works. At least, you need to know if you want your codes to run fast!</p>
+</aside>
+</section>
+
+<section>
+<h3>History: BLAS 1 (1973–1977)</h3>
+<p>Standard library of 15 ops (mostly) on vectors</p>
+<ul>
+<li>BLAS 1 == <span class="math inline">\(O(n^1)\)</span> ops on <span class="math inline">\(O(n^1)\)</span> data</li>
+<li>Up to four versions of each: S/D/C/Z</li>
+<li>Example: DAXPY
+<ul>
+<li>Double precision (real)</li>
+<li>Computes <span class="math inline">\(Ax+y\)</span></li>
+</ul></li>
+</ul>
+<aside class="notes">
+<p>Before we dive into parallel stuff, let’s go back – way back – and talk about some of the early work on libraries for high-performance linear algebra.</p>
+<p>Programming high-performance machines is not easy today, but it also wasn’t particularly easy in the 1970s. One of the difficulties, then and now, was writing code that would remain fast across multiple types of hardware. Portable correctness was easy, but folks then and now also wanted portable performance, which was and is hard.</p>
+<p>One approach is to give up on portable performance and instead seek <em>transportable</em> performance. That is, we program for a portable high-level interface, but allow the implementations below that interface to be tuned platform by platform. We’ve mentioned this strategy before. One of the first examples for linear algebra was the Basic Linear Algebra Subroutines, or BLAS. The first routines developed are what is now known as the level 1 BLAS, though they weren’t called that at the time. These are functions that operate on vectors, like dot products and vector scaling and addition operations. They involve order n operations on order n data.</p>
+<p>Because they were written in Fortran at the time, there were typically four versions of any given routine: single and double precision real and single and double precision complex versions. Also because of Fortran, the data type was encoded in the name, and the remaining six characters (since names could only be seven characters total) encoded the operation. So we have function name like DAXPY: double precision scale-and-sum operations (that is, computing alpha times x plus y, where x and y are vectors).</p>
+</aside>
+</section>
+
+<section>
+<h3>BLAS 1 goals</h3>
+<ul>
+<li>Raise level of programming abstraction</li>
+<li>Robust implementation (e.g. avoid over/underflow)</li>
+<li>Portable interface, efficient machine-specific implementation</li>
+<li>Used in LINPACK (and EISPACK?)</li>
+</ul>
+<aside class="notes">
+<p>Quirks of Fortran naming aside, the level 1 BLAS did serve to raise the level of programming abstraction. The BLAS developers also worked to make these routines really bulletproof, dealing with issues of floating point arithmetic that could cause problems in corner cases. Indeed, dealing with all the corner cases is <em>not</em> a completely trivial issue! One of my first papers involved working out corner cases for a routine at this level, the so-called Givens rotation.</p>
+<p>The level 1 BLAS was used as the basis for the LINPACK library of linear system solvers. I think it might have been used in the EISPACK library of eigenvalue solvers, too, but I don’t remember for sure.</p>
+</aside>
+</section>
+
+<section>
+<h3>History: BLAS 2 (1984–1986)</h3>
+<p>Standard library of 25 ops (mostly) on matrix/vector pairs</p>
+<ul>
+<li>BLAS2 == <span class="math inline">\(O(n^2)\)</span> ops on <span class="math inline">\(O(n^2)\)</span> data</li>
+<li>Different data types and matrix types</li>
+<li>Example: DGEMV
+<ul>
+<li>Double precision</li>
+<li>GEneral matrix</li>
+<li>Matrix-Vector product</li>
+</ul></li>
+</ul>
+<aside class="notes">
+<p>Moving on to the 1980s, the world moved on a bit, and the level 1 BLAS wasn’t cutting it any more. And so the level 2 BLAS were introduced. These are linear algebra primitives that do O(n^2) work on O(n^2) data, things like matrix-vector products. There are different matrix structures that we care about as well as different data types, so now we take the first three characters out of seven to describe the data type (character 1) and the matrix type (characters 2-3). The remaining four characters can be used to give a clear and descriptive name for the operation, right?</p>
+<p>The prototypical example of a level 2 BLAS operation is DGEMV: Double precision General matrix Matrix-Vector product.</p>
+</aside>
+</section>
+
+<section>
+<h3>BLAS 2 goals</h3>
+<ul>
+<li>BLAS1 insufficient</li>
+<li>BLAS2 for better vectorization (when vector machines roamed)</li>
+</ul>
+<aside class="notes">
+<p>Why introduce a level 2 BLAS? Well, we could say that it’s because we wanted things that weren’t in the level 1 BLAS, and I suppose that’s true. But a better way of thinking about it is that the level 1 BLAS didn’t provide enough of a platform for building high-performance libraries on top. In particular, matrix-vector operations provided opportunities for vectorization that weren’t really present in the level 1 BLAS operations.</p>
+</aside>
+</section>
+
+<section>
+<h3>History: BLAS 3 (1987–1988)</h3>
+<p>Standard library of 9 ops (mostly) on matrix/matrix</p>
+<ul>
+<li>BLAS3 == <span class="math inline">\(O(n^3)\)</span> ops on <span class="math inline">\(O(n^2)\)</span> data</li>
+<li>Different data types and matrix types</li>
+<li>Example: DGEMM
+<ul>
+<li>Double precision</li>
+<li>GEneral matrix</li>
+<li>Matrix-Matrix product</li>
+</ul></li>
+</ul>
+<aside class="notes">
+<p>You might see the pattern at this point, and so you won’t be surprised to hear that shortly after the level 2 BLAS was formalized, work began on the level 3 BLAS standard. These are matrix-matrix operations that involve O(n^3) work on O(n^2) data. The prototypical example is DGEMM, or Double precision General matrix Matrix-Matrix product. You had the opportunity to play with coding a special case of DGEMM yourself – just the version with square matrices and nothing transposed – and so you already know that this interface provides a lot of opportunities for clever tuning.</p>
+</aside>
+</section>
+
+<section>
+<h3>BLAS 3 goals</h3>
+<p>Efficient cache utilization!</p>
+<aside class="notes">
+<p>You also already know why we introduced the level 3 BLAS, because you saw it in your project. In the level 3 BLAS, the work scales faster than the data, and so there is a real opportunity for efficient cache utilization. This is much harder to get with BLAS1 and BLAS2, where all the operations have low arithmetic intensities.</p>
+<p>Also, a big part of the first project was my attempt to convince you that people who write BLAS routines for a living know what they are doing. Most of you will probably want to benefit from the fruit of their efforts.</p>
+</aside>
+</section>
+
+<section>
+<h3>Why BLAS?</h3>
+<p>LU for <span class="math inline">\(2 \times 2\)</span>: <span class="math display">\[
+\begin{bmatrix} a &amp; b \\ c &amp; d \end{bmatrix} =
+\begin{bmatrix} 1 &amp; 0 \\ c/a &amp; 1 \end{bmatrix}
+\begin{bmatrix} a &amp; b \\ 0 &amp; d-bc/a end{bmatrix}
+\]</span></p>
+<aside class="notes">
+<p>How do we use the BLAS as a platform for building high-performance linear algebra codes? To explain, let’s walk through an example, a so-called LU factorization. We’ve written the factorization here (without pivoting) for a 2-by-2 problem. The factorization into a lower triangular matrix L with ones on the diagonal (called unit lower triangular) and an upper triangular matrix U captures everything you usually think about in the Gaussian elimination algorithm. The U matrix is your reduced form, and L stores the multipliers that are used at each stage of the elimination.</p>
+<p>If you haven’t played with this for a while, I encourage you to take out a piece of paper and convince yourself that the factorization that we’ve written down is correct, and that it really does correspond to what you would do to solve a 2-by-2 linear system of equations with Gaussian elimination. Don’t worry, I’ll wait. The rest of the lecture – and the rest of the next two weeks – will go much more smoothly if you can follow this example.</p>
+</aside>
+</section>
+
+<section>
+<h3>Why BLAS?</h3>
+<p>Block elimination <span class="math display">\[
+\begin{bmatrix} A &amp; B \\ C &amp; D \end{bmatrix} =
+\begin{bmatrix} I &amp; 0 \\ CA^{-1} &amp; I \end{bmatrix}
+\begin{bmatrix} A &amp; B \\ 0 &amp; D-CA^{-1}B \end{bmatrix}
+\]</span></p>
+<aside class="notes">
+<p>All right. One of the key ideas in numerical linear algebra is that of blocking, or thinking about a matrix as being a matrix of submatrices rather than just a matrix of individual scalar elements.</p>
+<p>So suppose we have a matrix of dimension 6-by-6. We could potentially write it down as a block 2-by-2 matrix where the first block row or column has four elements, and the second block row or column has two elements. This is exactly the type of thing that we saw when we talked about tiling for matrix multiplication, but the idea works in other settings as well. For example, we can write down the 2-by-2 factorization that we discussed a moment ago with the scalar elements (a, b, c, d) replaced by submatrices (A, B, C, D). Now we have to be a little careful about the order of things that appear in products and quotients, since matrix multiplication is non-commutative, but otherwise the formula looks very much the same as the one we saw on the previous slide.</p>
+</aside>
+</section>
+
+<section>
+<h3>Why BLAS?</h3>
+<p>Block LU <span class="math display">\[
+\begin{bmatrix} A &amp; B \\ C &amp; D \end{bmatrix} = 
+\begin{bmatrix} L_{11} &amp; 0 \\ L_{12} &amp; L_{22} \end{bmatrix}
+\begin{bmatrix} U_{11} &amp; U_{12} \\ 0 &amp; U_{22} \end{bmatrix} =
+\begin{bmatrix} 
+L_{11} U_{11} &amp; L_{11} U_{12} \\ 
+L_{12} U_{11} &amp; L_{21} U_{12} + L_{22} U_{22}
+\end{bmatrix}
+\]</span></p>
+<aside class="notes">
+<p>In the previous slide, the diagonal blocks of the first factor were identity matrices, and the diagonals of the second factor were full. If instead we make the diagonal blocks of the two matrices unit lower triangular and upper triangular, respectively, we have the block LU factorization computed by ordinary Gaussian elimination. But thinking about things block by block suggests an alternate algorithm.</p>
+</aside>
+</section>
+
+<section>
+<h3>Why BLAS?</h3>
+<p>Think of <span class="math inline">\(A\)</span> as <span class="math inline">\(k \times k\)</span>, <span class="math inline">\(k\)</span> moderate:</p>
+<pre><code>[L11,U11] = small_lu(A);   % Small block LU
+U12 = L11\B;               % Triangular solve
+L12 = C/U11;               % &quot;
+S   = D-L21*U12;           % Rank k update
+[L22,U22] = lu(S);         % Finish factoring</code></pre>
+<p>Three level-3 BLAS calls!</p>
+<ul>
+<li>Two triangular solves</li>
+<li>One rank-<span class="math inline">\(k\)</span> update</li>
+</ul>
+<aside class="notes">
+<p>In particular, the block expression of Gaussian elimination suggests the following blocked algorithm (written in MATLAB notation). First, we factor a (relatively small) leading square submatrix, then apply triangular solves to complete a block row of U and block column of L. Then we do what is called a Schur complement update to the trailing submatrix. We can complete the process by factoring the Schur complement, and this itself can be done by blocked elimination.</p>
+<p>The key thing to notice here is that the majority of the work is done in three level 3 BLAS calls: two block triangular solves, and a rank-k update. The time spent factoring the leading submatrix forms a relatively small fraction of the overall work.</p>
+</aside>
+</section>
+
+<section>
+<h3><a href="http://www.netlib.org/lapack">LAPACK</a> (1989-present)</h3>
+<ul>
+<li>Supercedes earlier LINPACK and EISPACK</li>
+<li>High performance through BLAS
+<ul>
+<li>Parallel to the extent BLAS are parallel (on SMP)</li>
+<li>Linear systems and least squares are nearly 100% BLAS 3</li>
+<li>Eigenproblems, SVD — only about 50% BLAS 3</li>
+</ul></li>
+<li>Careful error bounds on everything</li>
+<li>Lots of variants for different structures</li>
+</ul>
+<aside class="notes">
+<p>Algorithms like blocked Gaussian elimination are at the heart of the LAPACK library, which has seen continuous development for over three decades now. LAPACK builds on the foundations of earlier libraries like LINPACK and EISPACK, but uses level 3 BLAS for performance as much as possible. LAPACK isn’t a small library, and there are lots of variants of routines in LAPACK for symmetric vs nonsymmetric or full vs banded structures; sometimes these involve fundamentally the same algorithms but with different data structures, and sometimes they involve rather different algorithms.</p>
+<p>As an aside, It turns out that problems like eigenvalue computations are harder to accelerate this way than linear systems are, but there has been progress on that front as well; these routines are much faster than they used to be!</p>
+<p>A lot of the innovation that went into LAPACK has to do with single-core performance. LAPACK is basically a serial library, though it can benefit from parallelization in the underlying BLAS library. Parallel takes on LAPACK came later, and are also an important part of the story.</p>
+<p>In addition to being fast, the LAPACK authors have provided careful error analyses of all the routines involved. All of this means that if you are solving standard dense matrix computations on a single core (or maybe a small multiprocessor), you should probably just use LAPACK. It’s faster and more robust than anything that you’re likely to want to write yourself. And, indeed, software systems like MATLAB, R, Julia, and NumPy and SciPy mostly use LAPACK for their dense linear algebra.</p>
+</aside>
+</section>
+
+<section>
+<h3><a href="http://www.netlib.org/scalapack">ScaLAPACK</a> (1995-present)</h3>
+<ul>
+<li>MPI implementations</li>
+<li>Only a small subset of LAPACK functionality</li>
+</ul>
+<aside class="notes">
+<p>ScaLAPACK takes LAPACK to the distributed memory world. At least, it takes a part of ScaLAPACK to that world. LAPACK is pretty big, and ScaLAPACK only ever included part of that functionality.</p>
+<p>I write that ScaLAPACK is “1995 to present,” but that’s maybe a bit generous. LAPACK continues to see active development, but most of the effort that went into ScaLAPACK has now been redirected toward other efforts. But the library is still out there, and is both useful and used.</p>
+</aside>
+</section>
+
+<section>
+<h3><a href="https://bitbucket.org/icl/plasma/src/main/">PLASMA</a> (2008-present)</h3>
+<p>Parallel LA Software for Multicore Architectures</p>
+<ul>
+<li>Target: Shared memory multiprocessors</li>
+<li>Stacks on LAPACK/BLAS interfaces</li>
+<li>Tile algorithms, tile data layout, dynamic scheduling</li>
+<li>Other algorithmic ideas, too (randomization, etc)</li>
+</ul>
+<aside class="notes">
+<p>I mentioned a few slides ago that LAPACK is fundamentally serial, except for any parallelism inherited from the BLAS. But there’s a lot of room for interesting shared memory parallelism in dense linear algebra. Indeed, I’d argue that this is probably the most interesting flavor of parallelism for dense problems, for the simple reason that really gigantic general-purpose dense linear algebra problems aren’t that common. Really huge dense problems tend to come from applications where there is some type of data sparsity, and so people figure out algorithms with better complexity eventually. But problems big enough to benefit from shared memory parallelism are more common.</p>
+<p>Anyhow: enter PLASMA. Building on top of the ideas of LAPACK and BLAS, PLASMA introduces a framework for tiled algorithms where the per-tile work can be dynamically scheduled onto different processors. There are a lot of other interesting ideas in PLASMA, too, some of which involve genuinely different algorithms rather than re-organizations of the standard LAPACK algorithms.</p>
+</aside>
+</section>
+
+<section>
+<h3><a href="https://icl.utk.edu/magma/index.html">MAGMA</a> (2008-present)</h3>
+<p>Matrix Algebra for GPU and Multicore Architectures</p>
+<ul>
+<li>Target: CUDA, OpenCL, Xeon Phi</li>
+<li>Still stacks (e.g. on CUDA BLAS)</li>
+<li>Again: tile algorithms + data, dynamic scheduling</li>
+<li>Mixed precision algorithms (+ iterative refinement)</li>
+</ul>
+<aside class="notes">
+<p>Of course, by the time the PLASMA project came about, accelerator programming had also come into its own. The MAGMA project is about running fast on top of GPUs and other types of accelerators, and is a close cousin of the PLASMA project. Both PLASMA and MAGMA use dynamically-scheduled tile-based algorithms and data structures, but MAGMA also introduces ideas involving mixed-precision computations. We’ll talk about some of these later in the semester.</p>
+</aside>
+</section>
+
+<section>
+<h3>And beyond!</h3>
+<p><a href="http://icl.utk.edu/slate/">SLATE</a>???</p>
+<p>Much is housed at <a href="http://www.icl.utk.edu/research">UTK ICL</a></p>
+<aside class="notes">
+<p>The story doesn’t end with PLASMA or MAGMA, either. The SLATE project is research in progress, an ambitious program for dense linear algebra capabilities at the exascale level. It’s the usual suspect, so I suspect that something good will come of it.</p>
+<p>But despite all the work on PLASMA, MAGMA, and SLATE, there’s a lot out there that still sits on top of LAPACK and the BLAS. The LAPACK library really is remarkably well-adapted for what it’s good at, which is moderate scale dense linear algebra problems. It’s also remarkable how many things we can map to a small set of moderate-scale dense linear algebra problems; this is what makes libraries like LAPACK so interesting!</p>
+<p>Next, though, we’ll turn to the algorithmic ideas underlying distributed-memory parallel matrix multiplication and Gaussian elimination. You are probably not going to write these types of codes yourself, but it turns out that the same computational structure can be found in other types of routines, too, and we’ll also talk a bit about those.</p>
+</aside>
+</section>
+
