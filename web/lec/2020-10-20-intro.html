@@ -88,10 +88,13 @@ audio: 2020-10-20-intro
 <h3>Sparse</h3>
 <p>Stuff not stored in dense form!</p>
 <ul>
-<li>Maybe few nonzeros (e.g. compressed sparse row formats)</li>
+<li>Maybe few nonzeros
+<ul>
+<li>e.g. compressed sparse row formats</li>
+</ul></li>
 <li>May be implicit (e.g. via finite differencing)</li>
 <li>May be “dense”, but with compact repn (e.g. via FFT)</li>
-<li>Most algorithms are iterative; wider variety, more subtle</li>
+<li>Mostly iterations; varied and subtle</li>
 <li>Build on dense ideas</li>
 </ul>
 <aside class="notes">
@@ -102,7 +105,7 @@ audio: 2020-10-20-intro
 
 <section>
 <h3>History: BLAS 1 (1973–1977)</h3>
-<p>Standard library of 15 ops (mostly) on vectors</p>
+<p>15 ops (mostly) on vectors</p>
 <ul>
 <li>BLAS 1 == <span class="math inline">\(O(n^1)\)</span> ops on <span class="math inline">\(O(n^1)\)</span> data</li>
 <li>Up to four versions of each: S/D/C/Z</li>
@@ -136,7 +139,7 @@ audio: 2020-10-20-intro
 
 <section>
 <h3>History: BLAS 2 (1984–1986)</h3>
-<p>Standard library of 25 ops (mostly) on matrix/vector pairs</p>
+<p>25 ops (mostly) on matrix/vector pairs</p>
 <ul>
 <li>BLAS2 == <span class="math inline">\(O(n^2)\)</span> ops on <span class="math inline">\(O(n^2)\)</span> data</li>
 <li>Different data types and matrix types</li>
@@ -166,7 +169,7 @@ audio: 2020-10-20-intro
 
 <section>
 <h3>History: BLAS 3 (1987–1988)</h3>
-<p>Standard library of 9 ops (mostly) on matrix/matrix</p>
+<p>9 ops (mostly) on matrix/matrix</p>
 <ul>
 <li>BLAS3 == <span class="math inline">\(O(n^3)\)</span> ops on <span class="math inline">\(O(n^2)\)</span> data</li>
 <li>Different data types and matrix types</li>
@@ -260,7 +263,7 @@ S   = D-L21*U12;           % Rank k update
 <li>High performance through BLAS
 <ul>
 <li>Parallel to the extent BLAS are parallel (on SMP)</li>
-<li>Linear systems and least squares are nearly 100% BLAS 3</li>
+<li>Linear systems, least squares – near 100% BLAS 3</li>
 <li>Eigenproblems, SVD — only about 50% BLAS 3</li>
 </ul></li>
 <li>Careful error bounds on everything</li>
