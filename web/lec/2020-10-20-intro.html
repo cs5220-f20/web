@@ -219,15 +219,16 @@ audio: 2020-10-20-intro
 
 <section>
 <h3>Why BLAS?</h3>
-<p>Block LU <span class="math display">\[
-\begin{bmatrix} A &amp; B \\ C &amp; D \end{bmatrix} = 
+<p>Block LU <span class="math display">\[\begin{split}
+\begin{bmatrix} A &amp; B \\ C &amp; D \end{bmatrix} &amp;= 
 \begin{bmatrix} L_{11} &amp; 0 \\ L_{12} &amp; L_{22} \end{bmatrix}
-\begin{bmatrix} U_{11} &amp; U_{12} \\ 0 &amp; U_{22} \end{bmatrix} =
+\begin{bmatrix} U_{11} &amp; U_{12} \\ 0 &amp; U_{22} \end{bmatrix} \\
+&amp;=
 \begin{bmatrix} 
 L_{11} U_{11} &amp; L_{11} U_{12} \\ 
 L_{12} U_{11} &amp; L_{21} U_{12} + L_{22} U_{22}
 \end{bmatrix}
-\]</span></p>
+\end{split}\]</span></p>
 <aside class="notes">
 <p>In the previous slide, the diagonal blocks of the first factor were identity matrices, and the diagonals of the second factor were full. If instead we make the diagonal blocks of the two matrices unit lower triangular and upper triangular, respectively, we have the block LU factorization computed by ordinary Gaussian elimination. But thinking about things block by block suggests an alternate algorithm.</p>
 </aside>
