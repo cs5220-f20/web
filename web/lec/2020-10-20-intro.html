@@ -196,7 +196,7 @@ audio: 2020-10-20-intro
 <p>LU for <span class="math inline">\(2 \times 2\)</span>: <span class="math display">\[
 \begin{bmatrix} a &amp; b \\ c &amp; d \end{bmatrix} =
 \begin{bmatrix} 1 &amp; 0 \\ c/a &amp; 1 \end{bmatrix}
-\begin{bmatrix} a &amp; b \\ 0 &amp; d-bc/a end{bmatrix}
+\begin{bmatrix} a &amp; b \\ 0 &amp; d-bc/a \end{bmatrix}
 \]</span></p>
 <aside class="notes">
 <p>How do we use the BLAS as a platform for building high-performance linear algebra codes? To explain, let’s walk through an example, a so-called LU factorization. We’ve written the factorization here (without pivoting) for a 2-by-2 problem. The factorization into a lower triangular matrix L with ones on the diagonal (called unit lower triangular) and an upper triangular matrix U captures everything you usually think about in the Gaussian elimination algorithm. The U matrix is your reduced form, and L stores the multipliers that are used at each stage of the elimination.</p>
