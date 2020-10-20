@@ -1,0 +1,429 @@
+---
+title: Parallel matrix multiply
+layout: slides
+audio: 2020-10-22-matmul
+---
+
+<section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <h3>Parallel matrix multiply</h3>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
+  </p>
+  <p>Please click the play button below.</p>
+</section>
+
+<section>
+<h3>Matrix vector product</h3>
+<p>Simple <span class="math inline">\(y = Ax\)</span> involves two indices <span class="math display">\[y_i = \sum_{j} A_{ij} x_j\]</span> Can organize around either one:</p>
+<pre><code>% Row-oriented
+for i = 1:n
+  y(i) = A(i,:)*x;
+end
+
+% Col-oriented
+y = 0;
+for j = 1:n
+  y = y + A(:,j)*x(j);
+end</code></pre>
+<p>... or deal with index space in other ways!</p>
+</section>
+
+<section>
+<h3>Parallel matvec: 1D row-blocked</h3>
+<figure>
+<embed data-src="figs/lec12mv1.pdf" style="width:50.0%" /><figcaption>image</figcaption>
+</figure>
+<p>Receive broadcast <span class="math inline">\({\color{red} x_0}, {\color{blue} x_1}, {\color{green} x_2}\)</span> into local <span class="math inline">\(x_0\)</span>, <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span>; then <span class="math display">\[\begin{aligned}
+    \mbox{On {\color{red}P0:}\quad}
+    {\color{red} A_{00}} x_0 + 
+    {\color{red} A_{01}} x_1 +
+    {\color{red} A_{02}} x_2 &amp;= {\color{red} y_0} \\
+    \mbox{On {\color{blue}P1:}\quad}
+    {\color{blue} A_{10}} x_0 +
+    {\color{blue} A_{11}} x_1 +
+    {\color{blue} A_{12}} x_2 &amp;= {\color{blue} y_1} \\
+    \mbox{On {\color{green}P2:}\quad}
+    {\color{green} A_{20}} x_0 +
+    {\color{green} A_{21}} x_1 +
+    {\color{green} A_{22}} x_2 &amp;= {\color{green} y_2}
+  \end{aligned}\]</span></p>
+</section>
+
+<section>
+<h3>Parallel matvec: 1D col-blocked</h3>
+<figure>
+<embed data-src="figs/lec12mv2.pdf" style="width:50.0%" /><figcaption>image</figcaption>
+</figure>
+<p>Independently compute<br />
+</p>
+<p><span class="math display">\[{\color{red}
+        z^{(0)} =
+        \begin{bmatrix} A_{00} \\ A_{10} \\ A_{20} \end{bmatrix} x_0
+      }\]</span></p>
+<p><span class="math display">\[{\color{blue}
+        z^{(1)} = 
+        \begin{bmatrix} A_{00} \\ A_{10} \\ A_{20} \end{bmatrix} x_1
+      }\]</span></p>
+<p><span class="math display">\[{\color{green}
+        z^{(2)} = 
+        \begin{bmatrix} A_{00} \\ A_{10} \\ A_{20} \end{bmatrix} x_2
+      }\]</span></p>
+
+<p>and perform reduction: <span class="math inline">\(y = {\color{red} z^{(0)}} + {\color{blue} z^{(1)}} + {\color{green} z^{(2)}}\)</span>.</p>
+</section>
+
+<section>
+<h3>Parallel matvec: 2D blocked</h3>
+<figure>
+<embed data-src="figs/lec12mv3.pdf" style="width:50.0%" /><figcaption>image</figcaption>
+</figure>
+<ul>
+<li>Involves broadcast <em>and</em> reduction</li>
+<li>... but with subsets of processors</li>
+</ul>
+</section>
+
+<section>
+<h3>Parallel matvec: 2D blocked</h3>
+<p>Broadcast <span class="math inline">\({\color{red} x_0}, {\color{yellow} x_1}\)</span> to local copies <span class="math inline">\(x_0, x_1\)</span> at P0 and P2<br />
+Broadcast <span class="math inline">\({\color{red} x_2}, {\color{yellow} x_3}\)</span> to local copies <span class="math inline">\(x_2, x_3\)</span> at P1 and P3<br />
+In parallel, compute <span class="math display">\[\begin{aligned}
+      {\color{red}
+      \begin{bmatrix}
+        A_{00} &amp; A_{01} \\
+        A_{10} &amp; A_{11}
+      \end{bmatrix}}
+      \begin{bmatrix}
+        x_0 \\ x_1
+      \end{bmatrix} &amp;=
+      {\color{red}
+      \begin{bmatrix}
+        z_0^{(0)} \\ z_1^{(0)}
+      \end{bmatrix}}
+&amp;
+      {\color{yellow}
+      \begin{bmatrix}
+        A_{02} &amp; A_{03} \\
+        A_{12} &amp; A_{13}
+      \end{bmatrix}}
+      \begin{bmatrix}
+        x_2 \\ x_3
+      \end{bmatrix} &amp;=
+      {\color{yellow}
+      \begin{bmatrix}
+        z_0^{(1)} \\ z_1^{(1)}
+      \end{bmatrix}}
+\\
+      {\color{blue}
+      \begin{bmatrix}
+        A_{20} &amp; A_{21} \\
+        A_{30} &amp; A_{31}
+      \end{bmatrix}}
+      \begin{bmatrix}
+        x_0 \\ x_1
+      \end{bmatrix} &amp;=
+      {\color{blue}
+      \begin{bmatrix}
+        z_2^{(3)} \\ z_3^{(3)}
+      \end{bmatrix}}
+&amp;
+      {\color{green}
+      \begin{bmatrix}
+        A_{20} &amp; A_{21} \\
+        A_{30} &amp; A_{31}
+      \end{bmatrix}}
+      \begin{bmatrix}
+        x_0 \\ x_1
+      \end{bmatrix} &amp;=
+      {\color{green}
+      \begin{bmatrix}
+        z_2^{(3)} \\ z_3^{(3)}
+      \end{bmatrix}}
+      \end{aligned}\]</span></p>
+
+<p>Reduce across rows: <span class="math display">\[\begin{aligned}
+  \begin{bmatrix}
+    {\color{red} y_0} \\
+    {\color{yellow} y_1}
+  \end{bmatrix} &amp;=
+  {\color{red}
+  \begin{bmatrix}
+    z_0^{(0)} \\
+    z_1^{(0)}
+  \end{bmatrix}} +
+  {\color{yellow}
+  \begin{bmatrix}
+    z_0^{(1)} \\
+    z_1^{(1)}
+  \end{bmatrix}}
+&amp;
+  \begin{bmatrix}
+    {\color{blue} y_2} \\
+    {\color{green} y_3}
+  \end{bmatrix} &amp;=
+  {\color{blue}
+  \begin{bmatrix}
+    z_2^{(2)} \\
+    z_3^{(2)}
+  \end{bmatrix}} +
+  {\color{green}
+  \begin{bmatrix}
+    z_2^{(3)} \\
+    z_3^{(3)}
+  \end{bmatrix}}\end{aligned}\]</span></p>
+</section>
+
+<section>
+<h3>Parallel matmul</h3>
+<ul>
+<li>Basic operation: <span class="math inline">\(C = C+AB\)</span></li>
+<li>Computation: <span class="math inline">\(2n^3\)</span> flops</li>
+<li>Goal: <span class="math inline">\(2n^3/p\)</span> flops per processor, minimal communication</li>
+<li>Two main contenders: SUMMA and Cannon</li>
+</ul>
+</section>
+
+<section>
+<h3>1D layout</h3>
+<figure>
+<embed data-src="figs/lec12mm1.pdf" /><figcaption>image</figcaption>
+</figure>
+<ul>
+<li>Block MATLAB notation: <span class="math inline">\(A(:,j)\)</span> means <span class="math inline">\(j\)</span>th block column</li>
+<li>Processor <span class="math inline">\(j\)</span> owns <span class="math inline">\(A(:,j)\)</span>, <span class="math inline">\(B(:,j)\)</span>, <span class="math inline">\(C(:,j)\)</span></li>
+<li><span class="math inline">\(C(:,j)\)</span> depends on <em>all</em> of <span class="math inline">\(A\)</span>, but only <span class="math inline">\(B(:,j)\)</span></li>
+<li>How do we communicate pieces of <span class="math inline">\(A\)</span>?</li>
+</ul>
+</section>
+
+<section>
+<h3>1D layout on bus (no broadcast)</h3>
+<figure>
+<embed data-src="figs/lec12mm1.pdf" style="width:80.0%" /><figcaption>image</figcaption>
+</figure>
+<ul>
+<li>Everyone computes local contributions first</li>
+<li>P0 sends <span class="math inline">\(A(:,0)\)</span> to each processor <span class="math inline">\(j\)</span> in turn;<br />
+processor <span class="math inline">\(j\)</span> receives, computes <span class="math inline">\(A(:,0) B(0,j)\)</span></li>
+<li>P1 sends <span class="math inline">\(A(:,1)\)</span> to each processor <span class="math inline">\(j\)</span> in turn;<br />
+processor <span class="math inline">\(j\)</span> receives, computes <span class="math inline">\(A(:,1) B(1,j)\)</span></li>
+<li>P2 sends <span class="math inline">\(A(:,2)\)</span> to each processor <span class="math inline">\(j\)</span> in turn;<br />
+processor <span class="math inline">\(j\)</span> receives, computes <span class="math inline">\(A(:,2) B(2,j)\)</span></li>
+</ul>
+</section>
+
+<section>
+<h3>1D layout on bus (no broadcast)</h3>
+<figure>
+<embed data-src="figs/lec12mm2.pdf" /><figcaption>image</figcaption>
+</figure>
+</section>
+
+<section>
+<h3>1D layout on bus (no broadcast)</h3>
+<pre><code>C(:,myproc) += A(:,myproc)*B(myproc,myproc)
+for i = 0:p-1
+  for j = 0:p-1
+    if (i == j)      continue;
+    if (myproc == i) i
+      send A(:,i) to processor j
+    if (myproc == j)
+      receive A(:,i) from i
+      C(:,myproc) += A(:,i)*B(i,myproc)
+    end
+  end
+end</code></pre>
+<p>Performance model?</p>
+</section>
+
+<section>
+<h3>1D layout on bus (no broadcast)</h3>
+<p>No overlapping communications, so in a simple <span class="math inline">\(\alpha-\beta\)</span> model:</p>
+<ul>
+<li><span class="math inline">\(p(p-1)\)</span> messages</li>
+<li>Each message involves <span class="math inline">\(n^2/p\)</span> data</li>
+<li>Communication cost: <span class="math inline">\(p(p-1) \alpha + (p-1) n^2 \beta\)</span></li>
+</ul>
+</section>
+
+<section>
+<h3>1D layout on ring</h3>
+<figure>
+<embed data-src="figs/lec12mm3.pdf" style="width:80.0%" /><figcaption>image</figcaption>
+</figure>
+<ul>
+<li>Every process <span class="math inline">\(j\)</span> can send data to <span class="math inline">\(j+1\)</span> simultaneously</li>
+<li>Pass slices of <span class="math inline">\(A\)</span> around the ring until everyone sees the whole matrix (<span class="math inline">\(p-1\)</span> phases).</li>
+</ul>
+</section>
+
+<section>
+<h3>1D layout on ring</h3>
+<pre><code>tmp = A(myproc)
+C(myproc) += tmp*B(myproc,myproc)
+for j = 1 to p-1
+  sendrecv tmp to myproc+1 mod p, 
+           from myproc-1 mod p
+  C(myproc) += tmp*B(myproc-j mod p, myproc)</code></pre>
+<p>Performance model?</p>
+</section>
+
+<section>
+<h3>1D layout on ring</h3>
+<p>In a simple <span class="math inline">\(\alpha-\beta\)</span> model, at each processor:</p>
+<ul>
+<li><span class="math inline">\(p-1\)</span> message sends (and simultaneous receives)</li>
+<li>Each message involves <span class="math inline">\(n^2/p\)</span> data</li>
+<li>Communication cost: <span class="math inline">\((p-1) \alpha + (1-1/p) n^2 \beta\)</span></li>
+</ul>
+</section>
+
+<section>
+<h3>Outer product algorithm</h3>
+<p>Serial: Recall outer product organization:</p>
+<pre><code>for k = 0:s-1
+  C += A(:,k)*B(k,:);
+end</code></pre>
+
+<p>Parallel: Assume <span class="math inline">\(p = s^2\)</span> processors, block <span class="math inline">\(s \times s\)</span> matrices.<br />
+For a <span class="math inline">\(2 \times 2\)</span> example: <span class="math display">\[\begin{bmatrix}
+    C_{00} &amp; C_{01} \\
+    C_{10} &amp; C_{11}
+  \end{bmatrix} =
+  \begin{bmatrix}
+    A_{00} B_{00} &amp; A_{00} B_{01} \\
+    A_{10} B_{00} &amp; A_{10} B_{01} 
+  \end{bmatrix} +
+  \begin{bmatrix}
+    A_{01} B_{10} &amp; A_{01} B_{11} \\
+    A_{11} B_{10} &amp; A_{11} B_{11} 
+  \end{bmatrix}\]</span></p>
+<ul>
+<li>Processor for each <span class="math inline">\((i,j)\)</span> <span class="math inline">\(\implies\)</span> parallel work for each <span class="math inline">\(k\)</span>!</li>
+<li>Note everyone in row <span class="math inline">\(i\)</span> uses <span class="math inline">\(A(i,k)\)</span> at once,<br />
+and everyone in row <span class="math inline">\(j\)</span> uses <span class="math inline">\(B(k,j)\)</span> at once.</li>
+</ul>
+</section>
+
+<section>
+<h3>Parallel outer product (SUMMA)</h3>
+<pre><code>for k = 0:s-1
+  for each i in parallel
+    broadcast A(i,k) to row
+  for each j in parallel
+    broadcast A(k,j) to col
+  On processor (i,j), C(i,j) += A(i,k)*B(k,j);
+end</code></pre>
+<p>If we have tree along each row/column, then</p>
+<ul>
+<li><span class="math inline">\(\log(s)\)</span> messages per broadcast</li>
+<li><span class="math inline">\(\alpha + \beta n^2/s^2\)</span> per message</li>
+<li><span class="math inline">\(2 \log(s) (\alpha s + \beta n^2/s)\)</span> total communication</li>
+<li>Compare to 1D ring: <span class="math inline">\((p-1) \alpha + (1-1/p) n^2 \beta\)</span></li>
+</ul>
+
+<p>Note: Same ideas work with block size <span class="math inline">\(b &lt; n/s\)</span></p>
+</section>
+
+<section>
+<h3>SUMMA</h3>
+</section>
+
+<section>
+<h3>SUMMA</h3>
+</section>
+
+<section>
+<h3>SUMMA</h3>
+</section>
+
+<section>
+<h3>Parallel outer product (SUMMA)</h3>
+<p>If we have tree along each row/column, then</p>
+<ul>
+<li><span class="math inline">\(\log(s)\)</span> messages per broadcast</li>
+<li><span class="math inline">\(\alpha + \beta n^2/s^2\)</span> per message</li>
+<li><span class="math inline">\(2 \log(s) (\alpha s + \beta n^2/s)\)</span> total communication</li>
+</ul>
+
+<p>Assuming communication and computation can potentially overlap <em>completely</em>, what does the speedup curve look like?</p>
+</section>
+
+<section>
+<h3>Cannon’s algorithm</h3>
+<p><span class="math display">\[\begin{bmatrix}
+    C_{00} &amp; C_{01} \\
+    C_{10} &amp; C_{11}
+  \end{bmatrix} =
+  \begin{bmatrix}
+    A_{00} B_{00} &amp; A_{01} B_{11} \\
+    A_{11} B_{10} &amp; A_{10} B_{01}
+  \end{bmatrix} +
+  \begin{bmatrix}
+    A_{01} B_{10} &amp; A_{00} B_{01} \\
+    A_{10} B_{00} &amp; A_{11} B_{11}
+  \end{bmatrix}\]</span></p>
+
+<p>Idea: Reindex products in block matrix multiply <span class="math display">\[\begin{aligned}
+    C(i,j) &amp;= \sum_{k = 0}^{p-1} A(i,k) B(k,j) \\
+          &amp;= \sum_{k = 0}^{p-1} A(i,\, k+i+j \mod p) \; B(k+i+j \mod p, j)
+  \end{aligned}\]</span> For a fixed <span class="math inline">\(k\)</span>, a given block of <span class="math inline">\(A\)</span> (or <span class="math inline">\(B\)</span>) is needed for contribution to <em>exactly one</em> <span class="math inline">\(C(i,j)\)</span>.</p>
+</section>
+
+<section>
+<h3>Cannon’s algorithm</h3>
+<pre><code>% Move A(i,j) to A(i,i+j)
+for i = 0 to s-1
+  cycle A(i,:) left by i
+
+% Move B(i,j) to B(i+j,j)
+for j = 0 to s-1
+  cycle B(:,j) up by j
+
+for k = 0 to s-1
+  in parallel;
+    C(i,j) = C(i,j) + A(i,j)*B(i,j);
+  cycle A(:,i) left by 1
+  cycle B(:,j) up by 1</code></pre>
+</section>
+
+<section>
+<h3>Cost of Cannon</h3>
+<ul>
+<li>Assume 2D torus topology</li>
+<li>Initial cyclic shifts: <span class="math inline">\(\leq s\)</span> messages each (<span class="math inline">\(\leq 2s\)</span> total)</li>
+<li>For each phase: <span class="math inline">\(2\)</span> messages each (<span class="math inline">\(2s\)</span> total)</li>
+<li>Each message is size <span class="math inline">\(n^2/s^2\)</span></li>
+<li>Communication cost: <span class="math inline">\(4s(\alpha + \beta n^2/s^2) = 4(\alpha s + \beta n^2/s)\)</span></li>
+<li>This communication cost is optimal!<br />
+... but SUMMA is simpler, more flexible, almost as good</li>
+</ul>
+</section>
+
+<section>
+<h3>Speedup and efficiency</h3>
+<p>Recall <span class="math display">\[\begin{aligned}
+    \mathrm{Speedup}    &amp; := t_{\mathrm{serial}} / t_{\mathrm{parallel}} \\
+    \mathrm{Efficiency} &amp; := \mathrm{Speedup}/p
+  \end{aligned}\]</span></p>
+<p>Assuming no overlap of communication and computation, efficiencies are</p>
+<table>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">1D layout</td>
+<td style="text-align: left;"><span class="math inline">\(\left( 1+O\left( \frac{p}{n} \right) \right)^{-1}\)</span></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">SUMMA</td>
+<td style="text-align: left;"><span class="math inline">\(\left( 1+O\left( \frac{\sqrt{p} \log p}{n} \right) \right)^{-1}\)</span></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Cannon</td>
+<td style="text-align: left;"><span class="math inline">\(\left (1+O\left( \frac{\sqrt{p}}{n} \right) \right)^{-1}\)</span></td>
+</tr>
+</tbody>
+</table>
+</section>
+
