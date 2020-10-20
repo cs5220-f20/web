@@ -16,7 +16,7 @@ audio: 2020-10-22-matmul
 
 <section>
 <h3>Matrix vector product</h3>
-<p>Simple <span class="math inline">\(y = Ax\)</span> involves two indices <span class="math display">\[y_i = \sum_{j} A_{ij} x_j\]</span> Can organize around either one:</p>
+<p>Organize <span class="math inline">\(y = Ax\)</span> around rows or columns:</p>
 <pre><code>% Row-oriented
 for i = 1:n
   y(i) = A(i,:)*x;
@@ -36,15 +36,15 @@ end</code></pre>
 <embed data-src="figs/lec12mv1.pdf" style="width:50.0%" /><figcaption>image</figcaption>
 </figure>
 <p>Receive broadcast <span class="math inline">\({\color{red} x_0}, {\color{blue} x_1}, {\color{green} x_2}\)</span> into local <span class="math inline">\(x_0\)</span>, <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span>; then <span class="math display">\[\begin{aligned}
-    \mbox{On {\color{red}P0:}\quad}
+    \mbox{On } {\color{red}P0:}\quad
     {\color{red} A_{00}} x_0 + 
     {\color{red} A_{01}} x_1 +
     {\color{red} A_{02}} x_2 &amp;= {\color{red} y_0} \\
-    \mbox{On {\color{blue}P1:}\quad}
+    \mbox{On } {\color{blue}P1:}\quad
     {\color{blue} A_{10}} x_0 +
     {\color{blue} A_{11}} x_1 +
     {\color{blue} A_{12}} x_2 &amp;= {\color{blue} y_1} \\
-    \mbox{On {\color{green}P2:}\quad}
+    \mbox{On }{\color{green}P2:}\quad
     {\color{green} A_{20}} x_0 +
     {\color{green} A_{21}} x_1 +
     {\color{green} A_{22}} x_2 &amp;= {\color{green} y_2}
@@ -56,22 +56,20 @@ end</code></pre>
 <figure>
 <embed data-src="figs/lec12mv2.pdf" style="width:50.0%" /><figcaption>image</figcaption>
 </figure>
-<p>Independently compute<br />
-</p>
+<p>Independently compute</p>
 <p><span class="math display">\[{\color{red}
         z^{(0)} =
         \begin{bmatrix} A_{00} \\ A_{10} \\ A_{20} \end{bmatrix} x_0
-      }\]</span></p>
-<p><span class="math display">\[{\color{blue}
+      },
+  {\color{blue}
         z^{(1)} = 
         \begin{bmatrix} A_{00} \\ A_{10} \\ A_{20} \end{bmatrix} x_1
-      }\]</span></p>
-<p><span class="math display">\[{\color{green}
+      },
+  {\color{green}
         z^{(2)} = 
         \begin{bmatrix} A_{00} \\ A_{10} \\ A_{20} \end{bmatrix} x_2
       }\]</span></p>
-
-<p>and perform reduction: <span class="math inline">\(y = {\color{red} z^{(0)}} + {\color{blue} z^{(1)}} + {\color{green} z^{(2)}}\)</span>.</p>
+<p>and reduce: <span class="math inline">\(y = {\color{red} z^{(0)}} + {\color{blue} z^{(1)}} + {\color{green} z^{(2)}}\)</span>.</p>
 </section>
 
 <section>
@@ -89,7 +87,7 @@ end</code></pre>
 <h3>Parallel matvec: 2D blocked</h3>
 <p>Broadcast <span class="math inline">\({\color{red} x_0}, {\color{yellow} x_1}\)</span> to local copies <span class="math inline">\(x_0, x_1\)</span> at P0 and P2<br />
 Broadcast <span class="math inline">\({\color{red} x_2}, {\color{yellow} x_3}\)</span> to local copies <span class="math inline">\(x_2, x_3\)</span> at P1 and P3<br />
-In parallel, compute <span class="math display">\[\begin{aligned}
+In parallel, compute <span class="math display">\[\begin{split}
       {\color{red}
       \begin{bmatrix}
         A_{00} &amp; A_{01} \\
@@ -141,9 +139,9 @@ In parallel, compute <span class="math display">\[\begin{aligned}
       \begin{bmatrix}
         z_2^{(3)} \\ z_3^{(3)}
       \end{bmatrix}}
-      \end{aligned}\]</span></p>
+      \end{split}\]</span></p>
 
-<p>Reduce across rows: <span class="math display">\[\begin{aligned}
+<p>Reduce across rows: <span class="math display">\[\begin{split}
   \begin{bmatrix}
     {\color{red} y_0} \\
     {\color{yellow} y_1}
@@ -172,7 +170,7 @@ In parallel, compute <span class="math display">\[\begin{aligned}
   \begin{bmatrix}
     z_2^{(3)} \\
     z_3^{(3)}
-  \end{bmatrix}}\end{aligned}\]</span></p>
+  \end{bmatrix}}\end{split}\]</span></p>
 </section>
 
 <section>
