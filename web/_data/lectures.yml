@@ -153,7 +153,7 @@
   date: 2020-10-20
   info: Dense linear algebra
   files:
-    - info: Intro to Dense LA (narration in progress)
+    - info: Intro to Dense LA
       file: lec/2020-10-20-intro.html
     - info: Project 2
       file: hw/proj2.html
