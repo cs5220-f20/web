@@ -47,7 +47,7 @@ end</code></pre>
 <section>
 <h3>Parallel matvec: 1D row-blocked</h3>
 <figure>
-<img data-src="figs/matvec-row.svg" alt="image" style="width:50.0%" /><figcaption>image</figcaption>
+<img data-src="figs/matvec-row.svg" alt="image" style="width:40.0%" /><figcaption>image</figcaption>
 </figure>
 <p>Broadcast <span class="math inline">\(x\)</span>, compute rows independently.</p>
 </section>
@@ -55,7 +55,7 @@ end</code></pre>
 <section>
 <h3>Parallel matvec: 1D row-blocked</h3>
 <figure>
-<img data-src="figs/matvec-row.svg" alt="image" style="width:50.0%" /><figcaption>image</figcaption>
+<img data-src="figs/matvec-row.svg" alt="image" style="width:40.0%" /><figcaption>image</figcaption>
 </figure>
 <pre><code>Allgather(xlocal, xall)
 ylocal = Alocal * xall</code></pre>
@@ -64,16 +64,14 @@ ylocal = Alocal * xall</code></pre>
 <section>
 <h3>Parallel matvec: 1D col-blocked</h3>
 <figure>
-<img data-src="figs/matvec-col.svg" alt="image" style="width:50.0%" /><figcaption>image</figcaption>
+<img data-src="figs/matvec-col.svg" alt="image" style="width:40.0%" /><figcaption>image</figcaption>
 </figure>
 <p>Compute partial matvecs and reduce.</p>
 </section>
 
 <section>
 <h3>Parallel matvec: 1D col-blocked</h3>
-<figure>
-<img data-src="figs/matvec-col.svg" alt="image" style="width:50.0%" /><figcaption>image</figcaption>
-</figure>
+<p><img data-src="figs/matvec-col.svg" style="width:40.0%" /></p>
 <pre><code>z = Alocal * xlocal
 for j = 1:p
     Reduce(z[i], ylocal at proc i)
@@ -82,9 +80,7 @@ end</code></pre>
 
 <section>
 <h3>Parallel matvec: 2D blocked</h3>
-<figure>
-<img data-src="figs/matvec-2d.svg" alt="image" style="width:50.0%" /><figcaption>image</figcaption>
-</figure>
+<p><img data-src="figs/matvec-2d.svg" style="width:40.0%" /></p>
 <ul>
 <li>Involves broadcast <em>and</em> reduction</li>
 <li>... but with subsets of processors</li>
@@ -103,9 +99,7 @@ end</code></pre>
 
 <section>
 <h3>1D layout</h3>
-<figure>
-<embed data-src="figs/lec12mm1.pdf" /><figcaption>image</figcaption>
-</figure>
+<p><embed data-src="figs/lec12mm1.pdf" /></p>
 <ul>
 <li>Block MATLAB notation: <span class="math inline">\(A(:,j)\)</span> means <span class="math inline">\(j\)</span>th block column</li>
 <li>Processor <span class="math inline">\(j\)</span> owns <span class="math inline">\(A(:,j)\)</span>, <span class="math inline">\(B(:,j)\)</span>, <span class="math inline">\(C(:,j)\)</span></li>
