@@ -46,36 +46,42 @@ end</code></pre>
 
 <section>
 <h3>Parallel matvec: 1D row-blocked</h3>
-<figure>
-<img data-src="figs/matvec-row.svg" alt="image" style="width:40.0%" /><figcaption>image</figcaption>
-</figure>
+<p><img data-src="figs/matvec-row.svg" title="Row-partitioned matrix and vectors" style="width:40.0%" /></p>
 <p>Broadcast <span class="math inline">\(x\)</span>, compute rows independently.</p>
+<aside class="notes">
+<p>Maybe the first parallel algorithm that would come to mind involves partitioning everything (A, x, and y) by rows. In this case, we need everyone to get all of x, and then the remainder of the computation can be done independently at each processor.</p>
+</aside>
 </section>
 
 <section>
 <h3>Parallel matvec: 1D row-blocked</h3>
-<figure>
-<img data-src="figs/matvec-row.svg" alt="image" style="width:40.0%" /><figcaption>image</figcaption>
-</figure>
+<p><img data-src="figs/matvec-row.svg" title="Row-partitioned matrix and vectors" style="width:40.0%" /></p>
 <pre><code>Allgather(xlocal, xall)
 ylocal = Alocal * xall</code></pre>
+<aside class="notes">
+<p>Here’s how we might express this in MPI-like pseudocode. The first stage is a vector all-gather, where each processor shares its local part of x on input and gets out the overall x vector on output. Then we compute the local part of y as the local part of A times all of x.</p>
+</aside>
 </section>
 
 <section>
 <h3>Parallel matvec: 1D col-blocked</h3>
-<figure>
-<img data-src="figs/matvec-col.svg" alt="image" style="width:40.0%" /><figcaption>image</figcaption>
-</figure>
+<p><img data-src="figs/matvec-col.svg" title="Col-partitioned matrix and vectors" style="width:40.0%" /></p>
 <p>Compute partial matvecs and reduce.</p>
+<aside class="notes">
+<p>Another way we might do things is to partition the matrix by columns. In this case, we start with independent matrix-vector products, where the columns owned by each processor are multiplied by that processor’s part of x. Then we do reductions in order to sum together all the contributions of these partial matvecs.</p>
+</aside>
 </section>
 
 <section>
 <h3>Parallel matvec: 1D col-blocked</h3>
-<p><img data-src="figs/matvec-col.svg" style="width:40.0%" /></p>
+<p><img data-src="figs/matvec-col.svg" title="Col-partitioned matrix and vectors" style="width:40.0%" /></p>
 <pre><code>z = Alocal * xlocal
 for j = 1:p
-    Reduce(z[i], ylocal at proc i)
+    Reduce(sum, z[i], ylocal at proc i)
 end</code></pre>
+<aside class="notes">
+<p>Here’s that same idea, expressed in MPI-like pseudocode. Start with a local matrix vector product, and then sum up all the contributions. Note that we have one reduction per processor, since each processor gets a piece of the output vector.</p>
+</aside>
 </section>
 
 <section>
@@ -85,6 +91,10 @@ end</code></pre>
 <li>Involves broadcast <em>and</em> reduction</li>
 <li>... but with subsets of processors</li>
 </ul>
+<aside class="notes">
+<p>It will not surprise you that we can mix and match these concepts! For example, consider a case where we partition the matrix as a block 2-by-2 matrix, where each of the four blocks belongs to a different processor. Then we have to do both some broadcasts to make sure that everyone gets the pieces of x that they need, and some reductions in order to accumulate the contributions to y.</p>
+<p>It’s maybe worth pausing here to think about the communication patterns needed. Not everyone needs all of x; and not everyone contributes to all of y. Book-keeping in this type of algorithm can be a bit fiddly!</p>
+</aside>
 </section>
 
 <section>
@@ -95,89 +105,50 @@ end</code></pre>
 <li>Goal: <span class="math inline">\(2n^3/p\)</span> flops per processor, minimal communication</li>
 <li>Two main contenders: SUMMA and Cannon</li>
 </ul>
+<aside class="notes">
+<p>Having warmed up with the matrix-vector product case, let’s move now to matrix-matrix products. Actually, we usually do a matrix-matrix product with addition; this is the operation known as DGEMM. We know that we are going to do 2n^3 flops overall; our goal is to evenly divide this work across processors, and do as little communication as possible.</p>
+<p>There are two main contendors for distributed memory matrix-matrix multiply: SUMMA and Cannon’s algorithm. But these are a little complicated, and maybe it’s worth first describing a simpler algorithm as a straw man.</p>
+</aside>
 </section>
 
 <section>
 <h3>1D layout</h3>
-<p><embed data-src="figs/lec12mm1.pdf" /></p>
+<p><img data-src="figs/matmul-1d.svg" title="Column partitioning of matrices for C += A*B" style="width:40.0%" /></p>
 <ul>
 <li>Block MATLAB notation: <span class="math inline">\(A(:,j)\)</span> means <span class="math inline">\(j\)</span>th block column</li>
 <li>Processor <span class="math inline">\(j\)</span> owns <span class="math inline">\(A(:,j)\)</span>, <span class="math inline">\(B(:,j)\)</span>, <span class="math inline">\(C(:,j)\)</span></li>
 <li><span class="math inline">\(C(:,j)\)</span> depends on <em>all</em> of <span class="math inline">\(A\)</span>, but only <span class="math inline">\(B(:,j)\)</span></li>
 <li>How do we communicate pieces of <span class="math inline">\(A\)</span>?</li>
 </ul>
-</section>
-
-<section>
-<h3>1D layout on bus (no broadcast)</h3>
-<figure>
-<embed data-src="figs/lec12mm1.pdf" style="width:80.0%" /><figcaption>image</figcaption>
-</figure>
-<ul>
-<li>Everyone computes local contributions first</li>
-<li>P0 sends <span class="math inline">\(A(:,0)\)</span> to each processor <span class="math inline">\(j\)</span> in turn;<br />
-processor <span class="math inline">\(j\)</span> receives, computes <span class="math inline">\(A(:,0) B(0,j)\)</span></li>
-<li>P1 sends <span class="math inline">\(A(:,1)\)</span> to each processor <span class="math inline">\(j\)</span> in turn;<br />
-processor <span class="math inline">\(j\)</span> receives, computes <span class="math inline">\(A(:,1) B(1,j)\)</span></li>
-<li>P2 sends <span class="math inline">\(A(:,2)\)</span> to each processor <span class="math inline">\(j\)</span> in turn;<br />
-processor <span class="math inline">\(j\)</span> receives, computes <span class="math inline">\(A(:,2) B(2,j)\)</span></li>
-</ul>
-</section>
-
-<section>
-<h3>1D layout on bus (no broadcast)</h3>
-<figure>
-<embed data-src="figs/lec12mm2.pdf" /><figcaption>image</figcaption>
-</figure>
-</section>
-
-<section>
-<h3>1D layout on bus (no broadcast)</h3>
-<pre><code>C(:,myproc) += A(:,myproc)*B(myproc,myproc)
-for i = 0:p-1
-  for j = 0:p-1
-    if (i == j)      continue;
-    if (myproc == i) i
-      send A(:,i) to processor j
-    if (myproc == j)
-      receive A(:,i) from i
-      C(:,myproc) += A(:,i)*B(i,myproc)
-    end
-  end
-end</code></pre>
-<p>Performance model?</p>
-</section>
-
-<section>
-<h3>1D layout on bus (no broadcast)</h3>
-<p>No overlapping communications, so in a simple <span class="math inline">\(\alpha-\beta\)</span> model:</p>
-<ul>
-<li><span class="math inline">\(p(p-1)\)</span> messages</li>
-<li>Each message involves <span class="math inline">\(n^2/p\)</span> data</li>
-<li>Communication cost: <span class="math inline">\(p(p-1) \alpha + (p-1) n^2 \beta\)</span></li>
-</ul>
+<aside class="notes">
+<p>So, let’s consider a 1D layout of the problem. We want to compute C += A*B, where each processor owns column stripes of A, B, and C. We’ll use pseudo-MATLAB notation to indicate blocks of the matrices. In this layout, to compute the jth block column of C, we only need the jth block column of B; but we need all of A! How do we make sure that everyone can get that column?</p>
+</aside>
 </section>
 
 <section>
 <h3>1D layout on ring</h3>
-<figure>
-<embed data-src="figs/lec12mm3.pdf" style="width:80.0%" /><figcaption>image</figcaption>
-</figure>
+<p><img data-src="figs/matmul-1d.svg" title="Column partitioning of matrices for C += A*B" style="width:40.0%" /></p>
 <ul>
 <li>Every process <span class="math inline">\(j\)</span> can send data to <span class="math inline">\(j+1\)</span> simultaneously</li>
 <li>Pass slices of <span class="math inline">\(A\)</span> around the ring until everyone sees the whole matrix (<span class="math inline">\(p-1\)</span> phases).</li>
 </ul>
+<aside class="notes">
+<p>Maybe the simplest thing we can do is to use the “pass it around” protocol that we discussed when talking about all-to-all communication. Each processor receives a piece of A from the previous processor in the ring and sends their current piece to the next processor in the ring. Ideally, these communications should overlap with the computation of the current piece of A.</p>
+</aside>
 </section>
 
 <section>
 <h3>1D layout on ring</h3>
-<pre><code>tmp = A(myproc)
+<pre><code>tmp = A(:,myproc)
 C(myproc) += tmp*B(myproc,myproc)
 for j = 1 to p-1
   sendrecv tmp to myproc+1 mod p, 
            from myproc-1 mod p
   C(myproc) += tmp*B(myproc-j mod p, myproc)</code></pre>
 <p>Performance model?</p>
+<aside class="notes">
+<p>Here’s that idea expressed in pseudocode. All right, the pseudocode isn’t exactly what I just said – when I spoke, I described overlapping communication and computation, and this pseudocode doesn’t do that yet. But it’s essentially the right idea.</p>
+</aside>
 </section>
 
 <section>
@@ -188,15 +159,26 @@ for j = 1 to p-1
 <li>Each message involves <span class="math inline">\(n^2/p\)</span> data</li>
 <li>Communication cost: <span class="math inline">\((p-1) \alpha + (1-1/p) n^2 \beta\)</span></li>
 </ul>
+<aside class="notes">
+<p>If we ignore the computational cost, how much time are we spending just communicating data in this algorithm? Let’s use a simple alpha-beta type of model. Each message is passing n^2/p data, and we assume all the messages in a phase can overlap. There are p-1 communication phases, so the total cost should be p-1 latencies plus p-1 times n^2/p over the bandwidth.</p>
+<p>Just paying attention to bandwidth, the total communication volume scales about like n^2. And the computation cost behaves like n^3/ p. So communication is proportional to p/n times the computation.</p>
+<p>How can we do better than this?</p>
+</aside>
 </section>
 
 <section>
 <h3>Outer product algorithm</h3>
-<p>Serial: Recall outer product organization:</p>
+<p>Recall outer product organization:</p>
 <pre><code>for k = 0:s-1
   C += A(:,k)*B(k,:);
 end</code></pre>
+<aside class="notes">
+<p>Recall that for matrix-matrix products, there are three nested loops, and we get different ways of thinking about the algorithm based on the loop order. The “outer product” algorithm shown here comes from thinking about the contraction index (the one that sits between A and B) as the outer algorithm. This is equivalent to saying that the matrix-matrix product is a sum of outer products between columns of A and the corresponding rows of B.</p>
+</aside>
+</section>
 
+<section>
+<h3>Outer product algorithm</h3>
 <p>Parallel: Assume <span class="math inline">\(p = s^2\)</span> processors, block <span class="math inline">\(s \times s\)</span> matrices.<br />
 For a <span class="math inline">\(2 \times 2\)</span> example: <span class="math display">\[\begin{bmatrix}
     C_{00} &amp; C_{01} \\
@@ -209,12 +191,16 @@ For a <span class="math inline">\(2 \times 2\)</span> example: <span class="math
   \begin{bmatrix}
     A_{01} B_{10} &amp; A_{01} B_{11} \\
     A_{11} B_{10} &amp; A_{11} B_{11} 
-  \end{bmatrix}\]</span></p>
+  \end{bmatrix}
+\]</span></p>
 <ul>
 <li>Processor for each <span class="math inline">\((i,j)\)</span> <span class="math inline">\(\implies\)</span> parallel work for each <span class="math inline">\(k\)</span>!</li>
 <li>Note everyone in row <span class="math inline">\(i\)</span> uses <span class="math inline">\(A(i,k)\)</span> at once,<br />
 and everyone in row <span class="math inline">\(j\)</span> uses <span class="math inline">\(B(k,j)\)</span> at once.</li>
 </ul>
+<aside class="notes">
+<p>All right, now let’s take this to the parallel setting. Suppose we partition A, B, and C as block s-by-s matrices. For concreteness, we’ll do an example with s = 2. The parallel outer product algorithm involves s phases, where in phase k everyone is using a piece of block column k of A, and a piece of block column k of B. And we can share the relevant pieces around by broadcasting them across rows and columns.</p>
+</aside>
 </section>
 
 <section>
@@ -226,27 +212,9 @@ and everyone in row <span class="math inline">\(j\)</span> uses <span class="mat
     broadcast A(k,j) to col
   On processor (i,j), C(i,j) += A(i,k)*B(k,j);
 end</code></pre>
-<p>If we have tree along each row/column, then</p>
-<ul>
-<li><span class="math inline">\(\log(s)\)</span> messages per broadcast</li>
-<li><span class="math inline">\(\alpha + \beta n^2/s^2\)</span> per message</li>
-<li><span class="math inline">\(2 \log(s) (\alpha s + \beta n^2/s)\)</span> total communication</li>
-<li>Compare to 1D ring: <span class="math inline">\((p-1) \alpha + (1-1/p) n^2 \beta\)</span></li>
-</ul>
-
-<p>Note: Same ideas work with block size <span class="math inline">\(b &lt; n/s\)</span></p>
-</section>
-
-<section>
-<h3>SUMMA</h3>
-</section>
-
-<section>
-<h3>SUMMA</h3>
-</section>
-
-<section>
-<h3>SUMMA</h3>
+<aside class="notes">
+<p>Here’s the pseudocode. At each phase, we have two sets of broadcasts: one to send pieces of column k of A across the rows in our processor grid, the other to send pieces of row k of B. Then each processor does a multiplication and accumulate of the piece that it received.</p>
+</aside>
 </section>
 
 <section>
@@ -256,9 +224,32 @@ end</code></pre>
 <li><span class="math inline">\(\log(s)\)</span> messages per broadcast</li>
 <li><span class="math inline">\(\alpha + \beta n^2/s^2\)</span> per message</li>
 <li><span class="math inline">\(2 \log(s) (\alpha s + \beta n^2/s)\)</span> total communication</li>
+<li>Compare to 1D ring: <span class="math inline">\((p-1) \alpha + (1-1/p) n^2 \beta\)</span></li>
 </ul>
+<p>Note: Same ideas work with block size <span class="math inline">\(b &lt; n/s\)</span></p>
+<aside class="notes">
+<p>How much does this cost? Well, we haven’t talked in detail about how broadcast is implemented in hardware, but it frequently ends up looking like point-to-point messages down a tree. If we do implement broadcast like this, there are log s messages per broadcast, each of which we might model with the usual alpha-beta approach. Adding up the message costs, we have something that involves 2 s log s latencies and a bandwidth cost proportional to n^2/s log s. Compare this to the bandwidth cost in the 1D case, which was proportional to n^2/p! So we’re apparently making better use of our network fabric.</p>
+<p>Of course, this type of communication model assumes a particular type of implementation for broadcast. It’s about right for a lot of implementations.</p>
+</aside>
+</section>
 
-<p>Assuming communication and computation can potentially overlap <em>completely</em>, what does the speedup curve look like?</p>
+<section>
+<h3>Cannon’s algorithm</h3>
+<p>SUMMA + “pass it around?”</p>
+<aside class="notes">
+<p>The one slightly annoying thing about SUMMA is that we are doing lots of broadcast operations. If we have a large number of processors, the log s multiplier on the number of point-to-point messages might be annoying. But there’s a clever way of rearranging the products that lets us keep the advantages of SUMMA and the broadcast-free “pass-it-around” communication pattern that we saw with the 1D layout. This is the heart of Cannon’s algorithm.</p>
+</aside>
+</section>
+
+<section>
+<h3>Cannon’s algorithm</h3>
+<p>Idea: Reindex products in block matrix multiply <span class="math display">\[\begin{aligned}
+    C(i,j) &amp;= \sum_{k = 0}^{p-1} A(i,k) B(k,j) \\
+          &amp;= \sum_{k = 0}^{p-1} A(i,\, k+i+j \mod p) \; B(k+i+j \mod p, j)
+\end{aligned}\]</span> For a fixed <span class="math inline">\(k\)</span>, a given block of <span class="math inline">\(A\)</span> (or <span class="math inline">\(B\)</span>) is needed for contribution to <em>exactly one</em> <span class="math inline">\(C(i,j)\)</span>.</p>
+<aside class="notes">
+<p>The idea of Cannon’s algorithm is to reindex things, so that instead of working on inner loop index k all at once, the processor at (i,j) works on inner loop index k + i + j (mod p). The processor will still see all the contributing blocks from row i of A and column j of B, but it will see them at different times from the other processors that need those blocks.</p>
+</aside>
 </section>
 
 <section>
@@ -275,11 +266,9 @@ end</code></pre>
     A_{01} B_{10} &amp; A_{00} B_{01} \\
     A_{10} B_{00} &amp; A_{11} B_{11}
   \end{bmatrix}\]</span></p>
-
-<p>Idea: Reindex products in block matrix multiply <span class="math display">\[\begin{aligned}
-    C(i,j) &amp;= \sum_{k = 0}^{p-1} A(i,k) B(k,j) \\
-          &amp;= \sum_{k = 0}^{p-1} A(i,\, k+i+j \mod p) \; B(k+i+j \mod p, j)
-  \end{aligned}\]</span> For a fixed <span class="math inline">\(k\)</span>, a given block of <span class="math inline">\(A\)</span> (or <span class="math inline">\(B\)</span>) is needed for contribution to <em>exactly one</em> <span class="math inline">\(C(i,j)\)</span>.</p>
+<aside class="notes">
+<p>It’s again useful to be concrete, so here’s the 2-by-2 version of Cannon’s. Note that the processor at index (0,1) starts with B_11 and ends with B_01, while the processor at index (1,1) starts with B_01 and ends with B_11.</p>
+</aside>
 </section>
 
 <section>
@@ -297,6 +286,9 @@ for k = 0 to s-1
     C(i,j) = C(i,j) + A(i,j)*B(i,j);
   cycle A(:,i) left by 1
   cycle B(:,j) up by 1</code></pre>
+<aside class="notes">
+<p>More generally, Cannon’s algorithm starts with a cyclic shift in each row of A (by the row index) and in each column of B (by the column index). After that, we do the “pass it around” protocol on rows and columns, and all the data gets to where it needs to go. Book-keeping!</p>
+</aside>
 </section>
 
 <section>
@@ -310,6 +302,9 @@ for k = 0 to s-1
 <li>This communication cost is optimal!<br />
 ... but SUMMA is simpler, more flexible, almost as good</li>
 </ul>
+<aside class="notes">
+<p>All right, what is the communication cost here? If we have something like a 2D torus topology, we can overlap almost all the messages in Cannon. Because we’re sending point-to-point messages instead of broadcasting, we get a log s factor improvement over SUMMA. This turns out to be optimal in some sense. But Cannon’s algorithm requires that the processors form a square grid, where SUMMA allows more flexible layout. And SUMMA is just simpler to think about! So often SUMMA gets used instead of Cannon.</p>
+</aside>
 </section>
 
 <section>
@@ -318,6 +313,9 @@ for k = 0 to s-1
     \mathrm{Speedup}    &amp; := t_{\mathrm{serial}} / t_{\mathrm{parallel}} \\
     \mathrm{Efficiency} &amp; := \mathrm{Speedup}/p
   \end{aligned}\]</span></p>
+<aside class="notes">
+<p>What’s the punchline of all this? Well, we are ultimately interested in the parallel speedup, which we can also express in terms of the efficiency of our code - perfect speedup corresponds to 100 percent efficiency.</p>
+</aside>
 </section>
 
 <section>
@@ -339,5 +337,11 @@ for k = 0 to s-1
 </tbody>
 </table>
 <p>Assuming no overlap of communication and computation.</p>
+<aside class="notes">
+<p>Assuming that we are not allowed to overlap communication and computation, and that we have big matrices relative to the number of processors, the efficiency of the 1D layout is 1/(1+O(p/n)). For SUMMA, we replace the p by sqrt(p) log p; and for Cannon, we replace the p by sqrt(p).</p>
+<p>Of course, these complexities should be taken with a big grain of salt. In particular, they assume something about the network topology. Nonetheless, the general idea is right.</p>
+<p>If I may end with a pun: to sum up, use SUMMA!</p>
+<p>Talk to you in another slide deck soon.</p>
+</aside>
 </section>
 
