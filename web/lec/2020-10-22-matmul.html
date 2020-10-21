@@ -16,6 +16,16 @@ audio: 2020-10-22-matmul
 
 <section>
 <h3>Matrix vector product</h3>
+<p>Simple <span class="math inline">\(y = Ax\)</span> involves two indices: <span class="math display">\[
+  y_i = \sum_{j} A_{ij} x_j
+\]</span> Sums can go in any order!</p>
+<aside class="notes">
+<p>All right. Let’s set the scene by considering how we might organize a dense matrix-vector product in a distributed memory setting. There are only two indices involved here, and one sum per row. But we can organize the computation of the terms, and their ultimate reduction across rows, in any way we want!</p>
+</aside>
+</section>
+
+<section>
+<h3>Matrix vector product</h3>
 <p>Organize <span class="math inline">\(y = Ax\)</span> around rows or columns:</p>
 <pre><code>% Row-oriented
 for i = 1:n
@@ -28,149 +38,57 @@ for j = 1:n
   y = y + A(:,j)*x(j);
 end</code></pre>
 <p>... or deal with index space in other ways!</p>
+<aside class="notes">
+<p>We typically think about matrix vector products in two different ways, depending on whether the outer loop is across rows or across columns. The first approach (the one oriented around rows) views the result of a matrix vector product as a series of dot products, one for each row. The second approach (The one oriented around columns) views the result as taking a linear combination of the columns of A.</p>
+<p>Of course, we can do more complicated things that are somewhere in between! You might even have some ideas how to do this based on your matrix multiply project experience. But first, let’s think through how the row-oriented or column-oriented view of matrix-vector products might play out in a distributed memory setting.</p>
+</aside>
 </section>
 
 <section>
 <h3>Parallel matvec: 1D row-blocked</h3>
 <figure>
-<embed data-src="figs/lec12mv1.pdf" style="width:50.0%" /><figcaption>image</figcaption>
+<img data-src="figs/matvec-row.svg" alt="image" style="width:50.0%" /><figcaption>image</figcaption>
 </figure>
-<p>Receive broadcast <span class="math inline">\({\color{red} x_0}, {\color{blue} x_1}, {\color{green} x_2}\)</span> into local <span class="math inline">\(x_0\)</span>, <span class="math inline">\(x_1\)</span>, <span class="math inline">\(x_2\)</span>; then <span class="math display">\[\begin{aligned}
-    \mbox{On } {\color{red}P0:}\quad
-    {\color{red} A_{00}} x_0 + 
-    {\color{red} A_{01}} x_1 +
-    {\color{red} A_{02}} x_2 &amp;= {\color{red} y_0} \\
-    \mbox{On } {\color{blue}P1:}\quad
-    {\color{blue} A_{10}} x_0 +
-    {\color{blue} A_{11}} x_1 +
-    {\color{blue} A_{12}} x_2 &amp;= {\color{blue} y_1} \\
-    \mbox{On }{\color{green}P2:}\quad
-    {\color{green} A_{20}} x_0 +
-    {\color{green} A_{21}} x_1 +
-    {\color{green} A_{22}} x_2 &amp;= {\color{green} y_2}
-  \end{aligned}\]</span></p>
+<p>Broadcast <span class="math inline">\(x\)</span>, compute rows independently.</p>
+</section>
+
+<section>
+<h3>Parallel matvec: 1D row-blocked</h3>
+<figure>
+<img data-src="figs/matvec-row.svg" alt="image" style="width:50.0%" /><figcaption>image</figcaption>
+</figure>
+<pre><code>Allgather(xlocal, xall)
+ylocal = Alocal * xall</code></pre>
 </section>
 
 <section>
 <h3>Parallel matvec: 1D col-blocked</h3>
 <figure>
-<embed data-src="figs/lec12mv2.pdf" style="width:50.0%" /><figcaption>image</figcaption>
+<img data-src="figs/matvec-col.svg" alt="image" style="width:50.0%" /><figcaption>image</figcaption>
 </figure>
-<p>Independently compute</p>
-<p><span class="math display">\[{\color{red}
-        z^{(0)} =
-        \begin{bmatrix} A_{00} \\ A_{10} \\ A_{20} \end{bmatrix} x_0
-      },
-  {\color{blue}
-        z^{(1)} = 
-        \begin{bmatrix} A_{00} \\ A_{10} \\ A_{20} \end{bmatrix} x_1
-      },
-  {\color{green}
-        z^{(2)} = 
-        \begin{bmatrix} A_{00} \\ A_{10} \\ A_{20} \end{bmatrix} x_2
-      }\]</span></p>
-<p>and reduce: <span class="math inline">\(y = {\color{red} z^{(0)}} + {\color{blue} z^{(1)}} + {\color{green} z^{(2)}}\)</span>.</p>
+<p>Compute partial matvecs and reduce.</p>
+</section>
+
+<section>
+<h3>Parallel matvec: 1D col-blocked</h3>
+<figure>
+<img data-src="figs/matvec-col.svg" alt="image" style="width:50.0%" /><figcaption>image</figcaption>
+</figure>
+<pre><code>z = Alocal * xlocal
+for j = 1:p
+    Reduce(z[i], ylocal at proc i)
+end</code></pre>
 </section>
 
 <section>
 <h3>Parallel matvec: 2D blocked</h3>
 <figure>
-<embed data-src="figs/lec12mv3.pdf" style="width:50.0%" /><figcaption>image</figcaption>
+<img data-src="figs/matvec-2d.svg" alt="image" style="width:50.0%" /><figcaption>image</figcaption>
 </figure>
 <ul>
 <li>Involves broadcast <em>and</em> reduction</li>
 <li>... but with subsets of processors</li>
 </ul>
-</section>
-
-<section>
-<h3>Parallel matvec: 2D blocked</h3>
-<p>Broadcast <span class="math inline">\({\color{red} x_0}, {\color{yellow} x_1}\)</span> to local copies <span class="math inline">\(x_0, x_1\)</span> at P0 and P2<br />
-Broadcast <span class="math inline">\({\color{red} x_2}, {\color{yellow} x_3}\)</span> to local copies <span class="math inline">\(x_2, x_3\)</span> at P1 and P3<br />
-In parallel, compute <span class="math display">\[\begin{split}
-      {\color{red}
-      \begin{bmatrix}
-        A_{00} &amp; A_{01} \\
-        A_{10} &amp; A_{11}
-      \end{bmatrix}}
-      \begin{bmatrix}
-        x_0 \\ x_1
-      \end{bmatrix} &amp;=
-      {\color{red}
-      \begin{bmatrix}
-        z_0^{(0)} \\ z_1^{(0)}
-      \end{bmatrix}}
-&amp;
-      {\color{yellow}
-      \begin{bmatrix}
-        A_{02} &amp; A_{03} \\
-        A_{12} &amp; A_{13}
-      \end{bmatrix}}
-      \begin{bmatrix}
-        x_2 \\ x_3
-      \end{bmatrix} &amp;=
-      {\color{yellow}
-      \begin{bmatrix}
-        z_0^{(1)} \\ z_1^{(1)}
-      \end{bmatrix}}
-\\
-      {\color{blue}
-      \begin{bmatrix}
-        A_{20} &amp; A_{21} \\
-        A_{30} &amp; A_{31}
-      \end{bmatrix}}
-      \begin{bmatrix}
-        x_0 \\ x_1
-      \end{bmatrix} &amp;=
-      {\color{blue}
-      \begin{bmatrix}
-        z_2^{(3)} \\ z_3^{(3)}
-      \end{bmatrix}}
-&amp;
-      {\color{green}
-      \begin{bmatrix}
-        A_{20} &amp; A_{21} \\
-        A_{30} &amp; A_{31}
-      \end{bmatrix}}
-      \begin{bmatrix}
-        x_0 \\ x_1
-      \end{bmatrix} &amp;=
-      {\color{green}
-      \begin{bmatrix}
-        z_2^{(3)} \\ z_3^{(3)}
-      \end{bmatrix}}
-      \end{split}\]</span></p>
-
-<p>Reduce across rows: <span class="math display">\[\begin{split}
-  \begin{bmatrix}
-    {\color{red} y_0} \\
-    {\color{yellow} y_1}
-  \end{bmatrix} &amp;=
-  {\color{red}
-  \begin{bmatrix}
-    z_0^{(0)} \\
-    z_1^{(0)}
-  \end{bmatrix}} +
-  {\color{yellow}
-  \begin{bmatrix}
-    z_0^{(1)} \\
-    z_1^{(1)}
-  \end{bmatrix}}
-&amp;
-  \begin{bmatrix}
-    {\color{blue} y_2} \\
-    {\color{green} y_3}
-  \end{bmatrix} &amp;=
-  {\color{blue}
-  \begin{bmatrix}
-    z_2^{(2)} \\
-    z_3^{(2)}
-  \end{bmatrix}} +
-  {\color{green}
-  \begin{bmatrix}
-    z_2^{(3)} \\
-    z_3^{(3)}
-  \end{bmatrix}}\end{split}\]</span></p>
 </section>
 
 <section>
@@ -406,7 +324,10 @@ for k = 0 to s-1
     \mathrm{Speedup}    &amp; := t_{\mathrm{serial}} / t_{\mathrm{parallel}} \\
     \mathrm{Efficiency} &amp; := \mathrm{Speedup}/p
   \end{aligned}\]</span></p>
-<p>Assuming no overlap of communication and computation, efficiencies are</p>
+</section>
+
+<section>
+<h3>Speedup and efficiency</h3>
 <table>
 <tbody>
 <tr class="odd">
@@ -423,5 +344,6 @@ for k = 0 to s-1
 </tr>
 </tbody>
 </table>
+<p>Assuming no overlap of communication and computation.</p>
 </section>
 
