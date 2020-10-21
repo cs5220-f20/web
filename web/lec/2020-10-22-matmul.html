@@ -228,7 +228,7 @@ end</code></pre>
 </ul>
 <p>Note: Same ideas work with block size <span class="math inline">\(b &lt; n/s\)</span></p>
 <aside class="notes">
-<p>How much does this cost? Well, we haven’t talked in detail about how broadcast is implemented in hardware, but it frequently ends up looking like point-to-point messages down a tree. If we do implement broadcast like this, there are log s messages per broadcast, each of which we might model with the usual alpha-beta approach. Adding up the message costs, we have something that involves 2 s log s latencies and a bandwidth cost proportional to n^2/s log s. Compare this to the bandwidth cost in the 1D case, which was proportional to n^2/p! So we’re apparently making better use of our network fabric.</p>
+<p>How much does this cost? Well, we haven’t talked in detail about how broadcast is implemented in hardware, but it frequently ends up looking like point-to-point messages down a tree. If we do implement broadcast like this, there are log s messages per broadcast, each of which we might model with the usual alpha-beta approach. Adding up the message costs, we have something that involves 2 s log s latencies and a bandwidth cost proportional to n^2/s log s. Compare this to the bandwidth cost in the 1D case, which was almost proportional to n^2! So we’re apparently making better use of our network fabric.</p>
 <p>Of course, this type of communication model assumes a particular type of implementation for broadcast. It’s about right for a lot of implementations.</p>
 </aside>
 </section>
