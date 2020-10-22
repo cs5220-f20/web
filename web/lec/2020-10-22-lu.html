@@ -51,10 +51,10 @@ audio: 2020-10-22-lu
 <li>Could have also delayed application of pivots</li>
 </ul></li>
 <li>Same idea with other one-sided factorizations (QR)</li>
-<li>Can get decent multi-core speedup with parallel BLAS!<br />
+<li>Decent multi-core speedup with parallel BLAS!<br />
 ... assuming <span class="math inline">\(n\)</span> sufficiently large.</li>
 </ul>
-<p>There are still some issues left over (block size? pivoting?)...</p>
+<p>Issues left over (block size? pivoting?)...</p>
 </section>
 
 <section>
@@ -63,14 +63,19 @@ audio: 2020-10-22-lu
 <ul>
 <li><em>Decompose</em> into work chunks</li>
 <li><em>Assign</em> work to threads in a balanced way</li>
-<li><em>Orchestrate</em> the communication and synchronization</li>
+<li><em>Orchestrate</em> communication + synchronization</li>
 <li><em>Map</em> which processors execute which threads</li>
 </ul>
 </section>
 
 <section>
 <h3>Possible matrix layouts</h3>
-<p>1D column blocked: bad load balance <span class="math display">\[\begin{bmatrix}
+<p>How should we share the matrix across ranks?</p>
+</section>
+
+<section>
+<h3>1D col blocked</h3>
+<p><span class="math display">\[\begin{bmatrix}
     0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 2 \\
     0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 2 \\
     0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 2 \\
@@ -81,11 +86,14 @@ audio: 2020-10-22-lu
     0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 2 \\
     0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 2 
   \end{bmatrix}\]</span></p>
+<aside class="notes">
+<p>1D column blocked: bad load balance</p>
+</aside>
 </section>
 
 <section>
-<h3>Possible matrix layouts</h3>
-<p>1D column cyclic: hard to use BLAS2/3 <span class="math display">\[\begin{bmatrix}
+<h3>1D col cyclic</h3>
+<p><span class="math display">\[\begin{bmatrix}
     0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2 \\
     0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2 \\
     0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2 \\
@@ -96,11 +104,14 @@ audio: 2020-10-22-lu
     0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2 \\
     0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2 
   \end{bmatrix}\]</span></p>
+<aside class="notes">
+<p>1D column cyclic: hard to use BLAS2/3</p>
+</aside>
 </section>
 
 <section>
-<h3>Possible matrix layouts</h3>
-<p>1D column block cyclic: block column factorization a bottleneck <span class="math display">\[\begin{bmatrix}
+<h3>1D col block cyclic</h3>
+<p><span class="math display">\[\begin{bmatrix}
     0 &amp; 0 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 0 &amp; 0 &amp; 1 &amp; 1 \\
     0 &amp; 0 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 0 &amp; 0 &amp; 1 &amp; 1 \\
     0 &amp; 0 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 0 &amp; 0 &amp; 1 &amp; 1 \\
@@ -112,11 +123,14 @@ audio: 2020-10-22-lu
     0 &amp; 0 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 0 &amp; 0 &amp; 1 &amp; 1 \\
     0 &amp; 0 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 0 &amp; 0 &amp; 1 &amp; 1
   \end{bmatrix}\]</span></p>
+<aside class="notes">
+<p>1D column block cyclic: block column factorization a bottleneck</p>
+</aside>
 </section>
 
 <section>
-<h3>Possible matrix layouts</h3>
-<p>Block skewed: indexing gets messy <span class="math display">\[\begin{bmatrix}
+<h3>Block skewed</h3>
+<p><span class="math display">\[\begin{bmatrix}
     0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 2 \\
     0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 2 \\
     0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 2 \\
@@ -127,11 +141,14 @@ audio: 2020-10-22-lu
     1 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 2 &amp; 0 &amp; 0 &amp; 0 \\
     1 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 2 &amp; 0 &amp; 0 &amp; 0 
   \end{bmatrix}\]</span></p>
+<aside class="notes">
+<p>Block skewed: indexing gets messy</p>
+</aside>
 </section>
 
 <section>
-<h3>Possible matrix layouts</h3>
-<p>2D block cyclic: <span class="math display">\[\begin{bmatrix}
+<h3>2D block cyclic</h3>
+<p><span class="math display">\[\begin{bmatrix}
     0 &amp; 0 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 1 &amp; 1 \\
     0 &amp; 0 &amp; 1 &amp; 1 &amp; 0 &amp; 0 &amp; 1 &amp; 1 \\
     2 &amp; 2 &amp; 3 &amp; 3 &amp; 2 &amp; 2 &amp; 3 &amp; 3 \\
@@ -146,12 +163,12 @@ audio: 2020-10-22-lu
 <section>
 <h3>Possible matrix layouts</h3>
 <ul>
-<li>1D column blocked: bad load balance</li>
-<li>1D column cyclic: hard to use BLAS2/3</li>
-<li>1D column block cyclic: factoring column is a bottleneck</li>
+<li>1D col blocked: bad load balance</li>
+<li>1D col cyclic: hard to use BLAS2/3</li>
+<li>1D col block cyclic: factoring col a bottleneck</li>
 <li>Block skewed (a la Cannon): just complicated</li>
-<li>2D row/column block: bad load balance</li>
-<li>2D row/column block cyclic: win!</li>
+<li>2D row/col block: bad load balance</li>
+<li>2D row/col block cyclic: win!</li>
 </ul>
 </section>
 
@@ -226,15 +243,15 @@ audio: 2020-10-22-lu
 <li><span class="math inline">\(O(n \log p)\)</span> messages</li>
 <li>Problem: reduction to find pivot in each column</li>
 </ul></li>
-<li>Recent research on stable variants without partial pivoting</li>
+<li>Tournaments for stability without partial pivoting</li>
 </ul>
-<p>What if you don’t care about dense Gaussian elimination?<br />
+<p>If you don’t care about dense LU?<br />
 Let’s review some ideas in a different setting...</p>
 </section>
 
 <section>
 <h3>Floyd-Warshall</h3>
-<p>Goal: Find shortest path lengths between all node pairs.<br />
+<p>Goal: All pairs shortest path lengths.<br />
 Idea: Dynamic programming! Define <span class="math display">\[d_{ij}^{(k)} =
     \mbox{shortest path $i$ to $j$ with intermediates in $\{1, \ldots, k\}$}.\]</span> Then <span class="math display">\[d_{ij}^{(k)} = 
     \min\left( d_{ij}^{(k-1)}, d_{ik}^{(k-1)} + d_{kj}^{(k-1)} \right)\]</span> and <span class="math inline">\(d_{ij}^{(n)}\)</span> is the desired shortest path length.</p>
@@ -276,10 +293,10 @@ Idea: Dynamic programming! Define <span class="math display">\[d_{ij}^{(k)} =
 
 <section>
 <h3>How far can we get?</h3>
-<p>How would we</p>
+<p>How would we write</p>
 <ul>
-<li>Write a cache-efficient (blocked) <em>serial</em> implementation?</li>
-<li>Write a message-passing <em>parallel</em> implementation?</li>
+<li>Cache-efficient (blocked) <em>serial</em> implementation?</li>
+<li>Message-passing <em>parallel</em> implementation?</li>
 </ul>
 <p>The full picture could make a fun class project...</p>
 </section>
