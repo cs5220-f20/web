@@ -218,7 +218,7 @@ end</code></pre>
   L_{11} U_{11} &amp;= A_{11} \\
   U_{12} &amp;= L_{11}^{-1} A_{12} \\
   L_{21} &amp;= A_{21} U_{11}^{-1} \\
-  L_{22} U_{22} = A_{22} - L_{21} U_{12}
+  L_{22} U_{22} &amp;= A_{22} - L_{21} U_{12}
 \end{aligned}\]</span></p>
 <aside class="notes">
 <p>Ordering the equations in the previous slide from top left to bottom right gives us a block algorithm for computing the LU factorization. First, do LU factorization of the leading submatrix A11. Then do triangular solves with L11 in order to get the leading block row of U, and with U11 in order to get the leading block column of L. Finally, subtract the outer product of that leading block column and block row from the trailing submatrix; this is sometimes called the Schur complement update. Finally, recursively do LU factorization (possibly with blocking) on the Schur complement.</p>
