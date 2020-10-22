@@ -16,31 +16,262 @@ audio: 2020-10-22-lu
 
 <section>
 <h3>Reminder: Evolution of LU</h3>
-<p>On board...</p>
+<p>On board... or not.</p>
+<aside class="notes">
+<p>Normally, I go through how LU factorization on the board. It slows me down and keeps me honest. If you ask, I will do the same this time during our meetings. Alas, this style of slides doesn’t encourage boardwork, so let’s also try sketching our way through this in slides.</p>
+</aside>
+</section>
+
+<section>
+<h3>LU by example</h3>
+<p><span class="math display">\[
+\begin{bmatrix}
+  1 &amp; 2 &amp; 3 \\
+  4 &amp; 5 &amp; 6 \\
+  7 &amp; 8 &amp; 10
+\end{bmatrix}
+\begin{bmatrix} x \\ y \\ z \end{bmatrix} =
+\begin{bmatrix} 4 \\ 13 \\ 22 \end{bmatrix}
+\]</span></p>
+<aside class="notes">
+<p>We’ll start with a three-by-three linear system. That is, we are writing three equations in three unknowns, using matrix notation. When you first saw this, you were talked an algorithm for solving such systems: Gaussian elimination. Let’s go through the elimination algorithm with maybe a slightly different notation from the one you are used to.</p>
+</aside>
+</section>
+
+<section>
+<h3>LU by example</h3>
+<p><span class="math display">\[
+\begin{bmatrix}
+  1 &amp; 0 &amp; 0 \\
+  -4 &amp; 1 &amp; 0 \\
+  -7 &amp; 0 &amp; 1
+\end{bmatrix}
+\left(
+\begin{bmatrix}
+  1 &amp; 2 &amp; 3 \\
+  4 &amp; 5 &amp; 6 \\
+  7 &amp; 8 &amp; 10
+\end{bmatrix}
+\begin{bmatrix} x \\ y \\ z \end{bmatrix} =
+\begin{bmatrix} 4 \\ 13 \\ 22 \end{bmatrix}
+\right)
+\]</span></p>
+<aside class="notes">
+<p>The first step of Gaussian elimination is subtracting multiples of the first row from rows two and three in order to introduce zeros in the first column. We have to apply this operation to both the matrix rows and to the right hand side vector. We’ve written the operation here in matrix form: we leave the first row alone, replace the second row with itself minus four times the first row, and replace the third row with itself minus seven times the third row. The numbers 4 = 4/1 and 7 = 7/1 are the <em>multipliers</em> in the algorithm.</p>
+</aside>
+</section>
+
+<section>
+<h3>LU by example</h3>
+<p><span class="math display">\[
+\begin{bmatrix}
+  1 &amp; 2 &amp; 3 \\
+  0 &amp; -3 &amp; -6 \\
+  0 &amp; -6 &amp; -11
+\end{bmatrix}
+\begin{bmatrix} x \\ y \\ z \end{bmatrix} =
+\begin{bmatrix} 4 \\ -3 \\ -6 \end{bmatrix}
+\]</span></p>
+<aside class="notes">
+<p>After we apply the transformation, we are left with this linear system. Now we have zeros below the first diagonal, but there is still a nonzero in the (3, 2) position that we need to clear.</p>
+</aside>
+</section>
+
+<section>
+<h3>LU by example</h3>
+<p><span class="math display">\[
+\begin{bmatrix}
+1 &amp; 0 &amp; 0 \\
+0 &amp; 1 &amp; 0 \\
+0 &amp; -2 &amp; 1 \\
+\end{bmatrix}
+\left(
+\begin{bmatrix}
+  1 &amp; 2 &amp; 3 \\
+  0 &amp; -3 &amp; -6 \\
+  0 &amp; -6 &amp; -11
+\end{bmatrix}
+\begin{bmatrix} x \\ y \\ z \end{bmatrix} =
+\begin{bmatrix} 4 \\ -3 \\ -6 \end{bmatrix}
+\right)
+\]</span></p>
+<aside class="notes">
+<p>So, we apply another transformation, subtracting twice the second row off the third row. 2 = -6/-3 is the multiplier in this case.</p>
+</aside>
+</section>
+
+<section>
+<h3>LU by example</h3>
+<p><span class="math display">\[
+\begin{bmatrix}
+  1 &amp; 2 &amp; 3 \\
+  0 &amp; -3 &amp; -6 \\
+  0 &amp; 0  &amp; 1
+\end{bmatrix}
+\begin{bmatrix} x \\ y \\ z \end{bmatrix} =
+\begin{bmatrix} 4 \\ -3 \\ 0 \end{bmatrix}
+\]</span></p>
+<aside class="notes">
+<p>After this second step, we have an upper triangular linear system, which we can solve by back-substitution. The solution is z = 0, then y = 1, and then x = 2.</p>
+</aside>
+</section>
+
+<section>
+<h3>LU by example</h3>
+<p><span class="math display">\[
+\begin{bmatrix}
+1 &amp; 0 &amp; 0 \\
+4 &amp; 1 &amp; 0 \\
+7 &amp; 2 &amp; 1
+\end{bmatrix}
+\begin{bmatrix}
+  1 &amp; 2 &amp; 3 \\
+  0 &amp; -3 &amp; -6 \\
+  0 &amp; 0  &amp; 1
+\end{bmatrix} = 
+\begin{bmatrix}
+  1 &amp; 2 &amp; 3 \\
+  4 &amp; 5 &amp; 6 \\
+  7 &amp; 8 &amp; 10
+\end{bmatrix}
+\]</span></p>
+<aside class="notes">
+<p>We could get from our upper triangular matrix back to the original matrix by “undoing” the operations that occurred during elimination. We got the third row of U by taking the last row of A and subtracting seven times the first row in the first step, and twice the second row in the second step. To recover the last row of A, we take the last row of U and add back twice the second row of U and seven times the first row of U. Et voila! Similarly, we can reconstruct the second row of A from the first two rows of U; and the first row of A is the same as the first row of U.</p>
+<p>What we have just said in words is that Gaussian elimination can really be seen as factoring A into a unit lower triangular matrix L containing the multipliers in the algorithm (remember, this means lower triangular with ones on the main diagonal) times an upper triangular matrix U. This is the so-called LU decomposition.</p>
+</aside>
+</section>
+
+<section>
+<h3>Simple LU</h3>
+<p>Overwrite <span class="math inline">\(A\)</span> with <span class="math inline">\(L\)</span> and <span class="math inline">\(U\)</span></p>
+<pre><code>for j = 1:n-1
+  for i = j+1:n
+    A(i,j) = A(i,j) / A(j,j);    % Compute multiplier
+    for k = j+1:n
+      A(i,k) -= A(i,j) * A(j,k); % Update row
+    end
+  end
+end</code></pre>
+<aside class="notes">
+<p>We can write the LU decomposition as three nested loops, incrementally overwriting the matrix A with the multipliers in L and the upper triangular matrix U. This is basically the reduction to upper triangular form, we’re just using the structural zeros that we introduce as spaces where we can stash the associated multipliers.</p>
+<p>This whole business with three nested loop is pretty common in dense linear algebra, by the way. It’s a business where almost everything costs n^3 time. But it’s with n^2 data, and we know by now that this is a promising sign!</p>
+</aside>
+</section>
+
+<section>
+<h3>Simple LU</h3>
+<p>Overwrite <span class="math inline">\(A\)</span> with <span class="math inline">\(L\)</span> and <span class="math inline">\(U\)</span></p>
+<pre><code>for j = 1:n-1
+  A(j+1:n,j) = A(j+1:n,j)/A(j,j);              % Compute multipliers
+  A(j+1:n,j+1:n) -= A(j+1:n,j) * A(j, j+1:n);  % Trailing update
+end</code></pre>
+<aside class="notes">
+<p>We can write the LU decomposition more compactly using MATLAB notation for slices of matrices. This says we store the multipliers in rows j+1 through n of column j of A, and then update the trailing submatrix in rows and columns j+1 through n by subtracting off the multipliers times row j.</p>
+</aside>
+</section>
+
+<section>
+<h3>Pivoting</h3>
+<p>Stability is a problem! Compute <span class="math inline">\(PA = LU\)</span></p>
+<pre><code>p = 1:n;
+for j = 1:n-1
+  [~,jpiv] = max(abs(A(j+1:n,j)));             % Find pivot
+  A([j, j+jpiv-1],:) = A([j+jpiv-1, j]);       % Swap pivot row
+  p([j, j+jpiv-1],:) = p([j+jpiv-1, j]);       % Save pivot info
+  A(j+1:n,j) = A(j+1:n,j)/A(j,j);              % Compute multipliers
+  A(j+1:n,j+1:n) -= A(j+1:n,j) * A(j, j+1:n);  % Trailing update
+end</code></pre>
+<aside class="notes">
+<p>You may recall that Gaussian elimination needs a tweak when we hit a zero pivot. That’s in exact arithmetic; it turns out that even close-to-zero pivots are a problem in floating point. So we usually do Gaussian elimination with partial pivoting; that means that at each step, before subtracting multiples of one row from another to introduce zeros in column j, we permute the rows in order to move the biggest entry in column j up to the diagonal. This ensures all the multipliers are less than one in magnitude, and helps a lot with stabilizing the method.</p>
+</aside>
+</section>
+
+<section>
+<h3>Blocking</h3>
+<p>Think in a way that uses level 3 BLAS <span class="math display">\[
+  \begin{bmatrix} A_{11} &amp; A_{12} \\ A_{21} &amp; A_{22} \end{bmatrix} =
+  \begin{bmatrix} L_{11} &amp; 0 \\ L_{21} &amp; L_{22} \end{bmatrix}
+  \begin{bmatrix} U_{11} &amp; U_{12} \\ 0 &amp; U_{22} \end{bmatrix}
+\]</span></p>
+<aside class="notes">
+<p>Let’s put aside pivoting for a moment to bring in one final idea, that of blocking. This is essentially the same concept we saw when we were talking about matrix-matrix multiply. It’s easiest to show how it works by writing out the equations that a block 2-by-2 version of LU factorization should satisfy.</p>
+</aside>
+</section>
+
+<section>
+<h3>Blocking</h3>
+<p>Think in a way that uses level 3 BLAS <span class="math display">\[
+  \begin{bmatrix} A_{11} &amp; A_{12} \\ A_{21} &amp; A_{22} \end{bmatrix} =
+  \begin{bmatrix} 
+    L_{11} U_{11} &amp; L_{11} U_{12} \\
+    L_{21} U_{11} &amp; L_{21} U_{12} + L_{22} U_{22}
+  \end{bmatrix}
+\]</span></p>
+<aside class="notes">
+<p>Now we explicitly multiply out the two triangular matrices, and we get equations that match submatrices of A with products of pieces of L and U.</p>
+</aside>
+</section>
+
+<section>
+<h3>Blocking</h3>
+<p>Think in a way that uses level 3 BLAS <span class="math display">\[\begin{aligned}
+  L_{11} U_{11} &amp;= A_{11} \\
+  U_{12} &amp;= L_{11}^{-1} A_{12} \\
+  L_{21} &amp;= A_{21} U_{11}^{-1} \\
+  L_{22} U_{22} = A_{22} - L_{21} U_{12}
+\end{aligned}\]</span></p>
+<aside class="notes">
+<p>Ordering the equations in the previous slide from top left to bottom right gives us a block algorithm for computing the LU factorization. First, do LU factorization of the leading submatrix A11. Then do triangular solves with L11 in order to get the leading block row of U, and with U11 in order to get the leading block column of L. Finally, subtract the outer product of that leading block column and block row from the trailing submatrix; this is sometimes called the Schur complement update. Finally, recursively do LU factorization (possibly with blocking) on the Schur complement.</p>
+</aside>
+</section>
+
+<section>
+<h3>Enter pictures</h3>
+<ul>
+<li>Still haven’t showed how to do pivoting!</li>
+<li>Easier to draw diagrams from here</li>
+<li>Take 6210 or 4220 if you want more on LU!</li>
+</ul>
+<aside class="notes">
+<p>That’s the lightning version of Gaussian elimination with partial pivoting, also known as GEPP, also known as pivoted LU factorization. Of course, I haven’t really written out the code to do both pivoting and blocking simultaneously, but this isn’t really the class for that. If you want to see me write something like this out in detail, wait for a semester when I’m teaching CS 6210 or CS 4220!</p>
+<p>I’d like to tell you know how to do Gaussian elimination fast, both on a single core or shared memory machine and in a distributed memory environment. But rather than trying to write details from here, let me draw pictures and wave my hands. Of course, you can’t see me wave my hands, so I’d better add that to the narration script. Wave, wave. Wave, wave.</p>
+</aside>
 </section>
 
 <section>
 <h3>Blocked GEPP</h3>
 <p><img data-src="figs/gepp-find-piv.svg" title="Sketch of data accessed for pivot search" style="width:40.0%" /></p>
 <p>Find pivot</p>
+<aside class="notes">
+<p>So suppose we’ve gotten partway through Gaussian elimination, and are handling a step somewhere in the middle. What do we do? The first thing we have to do is search the current column for a pivot.</p>
+</aside>
 </section>
 
 <section>
 <h3>Blocked GEPP</h3>
 <p><img data-src="figs/gepp-swap-piv.svg" title="Sketch of data accessed for pivot" style="width:40.0%" /></p>
 <p>Swap pivot row</p>
+<aside class="notes">
+<p>Once we have found the largest entry in the column, we swap it for the current row.</p>
+</aside>
 </section>
 
 <section>
 <h3>Blocked GEPP</h3>
 <p><img data-src="figs/gepp-update-col.svg" title="Sketch of block column update" style="width:40.0%" /></p>
 <p>Update within block column</p>
+<aside class="notes">
+<p>Now we’re set to do an update, subtracting multiples of the current row from the remaining rows. Here, though, we’re going to do something a little different from the simple codes we wrote out explicitly. Rather than applying the updates all the way across the matrix, we will just update within the block column that we are currently processing – which involves touching less memory.</p>
+</aside>
 </section>
 
 <section>
 <h3>Blocked GEPP</h3>
 <p><img data-src="figs/gepp-update-delay.svg" title="Sketch of delayed update" style="width:40.0%" /></p>
 <p>Delayed update (at end of block)</p>
+<aside class="notes">
+<p>Of course, we can’t put off the full updates for ever. Once we get to the end of the block, we will apply them all at once. This is a level 3 BLAS routine, since most of the work is going into multiplying a block of L by a block of U. And we know how to make matrix multiply fast!</p>
+</aside>
 </section>
 
 <section>
@@ -54,7 +285,10 @@ audio: 2020-10-22-lu
 <li>Decent multi-core speedup with parallel BLAS!<br />
 ... assuming <span class="math inline">\(n\)</span> sufficiently large.</li>
 </ul>
-<p>Issues left over (block size? pivoting?)...</p>
+<p>Issues left over (block size?)...</p>
+<aside class="notes">
+<p>The delayed update strategy is fantastic for letting us accelerate LU factorization. In the algorithm I’ve sketched out, we don’t delay the application of the row exchanges for pivoting, but we could certainly do that as well. Something like this strategy works with other so-called “one-sided” factorizations as well, though we need additional ideas to tackle eigenvalue computations.</p>
+</aside>
 </section>
 
 <section>
@@ -66,11 +300,18 @@ audio: 2020-10-22-lu
 <li><em>Orchestrate</em> communication + synchronization</li>
 <li><em>Map</em> which processors execute which threads</li>
 </ul>
+<aside class="notes">
+<p>So far, we’ve drawn pictures where we might get parallelism through the BLAS, but otherwise the process is basically sequential. What should we do to explicitly parallelize the algorithm? The answer is we have to figure out how to break the problem into chunks, assign those chunks to different processors in a work-balanced way, and orchestrate the whole process with communication between the processors and any necessary synchronization.</p>
+<p>We’ll start with how we decompose the problem.</p>
+</aside>
 </section>
 
 <section>
 <h3>Possible matrix layouts</h3>
 <p>How should we share the matrix across ranks?</p>
+<aside class="notes">
+<p>Or, rather, we’ll start with how to decompose the matrix data! Data layout is itself not such a simple thing.</p>
+</aside>
 </section>
 
 <section>
@@ -87,7 +328,7 @@ audio: 2020-10-22-lu
     0 &amp; 0 &amp; 0 &amp; 1 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 2 
   \end{bmatrix}\]</span></p>
 <aside class="notes">
-<p>1D column blocked: bad load balance</p>
+<p>Maybe the simplest data layout is 1D column blocked. We saw this layout in our initial straw-man for how to do matrix-matrix multiply. It wasn’t a great idea there, and it is even worse for Gaussian elimination. The problem is that it has terrible load balance: when we are updating within a column panel, all the work may be falling on one processor; and when we are doing the Schur complement update, we will generally only engage a subset of the processors, leaving the early processors idle as soon as we have eliminated all the variables associated with their columns.</p>
 </aside>
 </section>
 
@@ -105,7 +346,7 @@ audio: 2020-10-22-lu
     0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2 &amp; 0 &amp; 1 &amp; 2 
   \end{bmatrix}\]</span></p>
 <aside class="notes">
-<p>1D column cyclic: hard to use BLAS2/3</p>
+<p>In a 1D cyclic layout, we assign column j to processor j mod p. A 1D cyclic layout gets rid of some of the load balance issues, but it causes new issues. Remember how we wanted to deal with a block of columns at a time for effective cache use? That’s hard with 1D cyclic layouts! It’s hard to use even BLAS 2 with this layout, let alone BLAS 3.</p>
 </aside>
 </section>
 
@@ -124,7 +365,7 @@ audio: 2020-10-22-lu
     0 &amp; 0 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 0 &amp; 0 &amp; 1 &amp; 1
   \end{bmatrix}\]</span></p>
 <aside class="notes">
-<p>1D column block cyclic: block column factorization a bottleneck</p>
+<p>1D column block cyclic: block column factorization a bottleneck A 1D column block cyclic layout has some of the advantages of a column block layout, and some of the advantages of the block cyclic layout. It’s still not perfect, though, as the block column factorization becomes a serial bottleneck.</p>
 </aside>
 </section>
 
@@ -142,7 +383,7 @@ audio: 2020-10-22-lu
     1 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 2 &amp; 0 &amp; 0 &amp; 0 
   \end{bmatrix}\]</span></p>
 <aside class="notes">
-<p>Block skewed: indexing gets messy</p>
+<p>We could also do something with block skewed indexing. This is a 2D layout where blocks on the same diagonal are assigned to the same processor. It’s effectively the layout we have after doing the cyclic permutations in Cannon’s matrix multiply algorithm. Unfortunately, as we mentioned in our discussion of Cannon’s algorithm, it’s a little restrictive and the indexing gets quite messy.</p>
 </aside>
 </section>
 
@@ -158,6 +399,9 @@ audio: 2020-10-22-lu
     2 &amp; 2 &amp; 3 &amp; 3 &amp; 2 &amp; 2 &amp; 3 &amp; 3 \\
     2 &amp; 2 &amp; 3 &amp; 3 &amp; 2 &amp; 2 &amp; 3 &amp; 3 \\
   \end{bmatrix}\]</span></p>
+<aside class="notes">
+<p>A simpler thing to do is a 2D block cyclic layout. This is like the 1D block cyclic layout, except that we cycle assignment of row blocks as well as of column blocks.</p>
+</aside>
 </section>
 
 <section>
@@ -170,66 +414,101 @@ audio: 2020-10-22-lu
 <li>2D row/col block: bad load balance</li>
 <li>2D row/col block cyclic: win!</li>
 </ul>
+<aside class="notes">
+<p>And, indeed, ScaLAPACK uses a 2D block cyclic layout for matrices. And I assume SLATE will do the same!</p>
+<p>So, supposing we’ve used a 2D block cyclic layout to partition our matrix A across processors, how should we think about Gaussian elimination?</p>
+</aside>
 </section>
 
 <section>
 <h3>Distributed GEPP</h3>
 <p><img data-src="figs/dgepp-find-piv.svg" title="Sketch of data accessed for pivot search" style="width:40.0%" /></p>
 <p>Find pivot (column broadcast)</p>
+<aside class="notes">
+<p>If we’re going to do partial pivoting, the first step for eliminating column j remains the pivot search. This involves communicating across all processors involved in column j. I’ve written broadcast here, but really I should have probably said “reduction,” since finding the max of a set of elements is a type of reduction operation.</p>
+</aside>
 </section>
 
 <section>
 <h3>Distributed GEPP</h3>
 <p><img data-src="figs/dgepp-swap-piv.svg" title="Sketch of data for pivot swap" style="width:40.0%" /></p>
 <p>Swap pivot row within block column + broadcast pivot</p>
+<aside class="notes">
+<p>Once we’ve found the pivot row, we apply a swap, at least within the block column. We’re going to want that pivot row for the update step, so this really is a broadcast operation, not just a point-to-point between the processor that owns row j and the one that owns the pivot row.</p>
+</aside>
 </section>
 
 <section>
 <h3>Distributed GEPP</h3>
 <p><img data-src="figs/dgepp-update-col.svg" title="Sketch of block column update" style="width:40.0%" /></p>
 <p>Update within block column</p>
+<aside class="notes">
+<p>With pivot in hand, everyone can independently update their piece of the current block column.</p>
+</aside>
 </section>
 
 <section>
 <h3>Distributed GEPP</h3>
 <p><img data-src="figs/dgepp-swaps-bcast.svg" title="Sketch of swap broadcast" style="width:40.0%" /></p>
 <p>At end of block, broadcast swap info along rows</p>
+<aside class="notes">
+<p>When we get to the end of a block, we broadcast the set of swaps that we’ve made to be applied across the rest of the rows involved - that is, we basically always delay the pivot application in the distributed memory case, even if we might not bother in the single-core case.</p>
+</aside>
 </section>
 
 <section>
 <h3>Distributed GEPP</h3>
 <p><img data-src="figs/dgepp-swaps-apply.svg" title="Sketch of swap application" style="width:40.0%" /></p>
 <p>Apply all row swaps to other columns</p>
+<aside class="notes">
+<p>Once everyone knows what row swaps have to be made, we do whatever communication is needed to actually apply them.</p>
+</aside>
 </section>
 
 <section>
 <h3>Distributed GEPP</h3>
 <p><img data-src="figs/dgepp-L-bcast.svg" title="Sketch of L block broadcast" style="width:40.0%" /></p>
 <p>Broadcast block <span class="math inline">\(L_{II}\)</span> right</p>
+<aside class="notes">
+<p>Now we want to compute a block row of U. To do this, all the processors that own the corresponding block row of A need to get the lower triangular block that we just computed.</p>
+</aside>
 </section>
 
 <section>
 <h3>Distributed GEPP</h3>
 <p><img data-src="figs/dgepp-row-update.svg" title="Sketch of row update" style="width:40.0%" /></p>
 <p>Update remainder of block row</p>
+<aside class="notes">
+<p>Once we have the diagonal block of L, everyone can compute their part of the block row of U without further communication.</p>
+<p>This finishes the computation of the block row of U and block column of L; the next step is the Schur complement update.</p>
+</aside>
 </section>
 
 <section>
 <h3>Distributed GEPP</h3>
 <p><img data-src="figs/dgepp-row-bcast.svg" title="Sketch of block row broadcast" style="width:40.0%" /></p>
 <p>Broadcast rest of block row down</p>
+<aside class="notes">
+<p>We start the Schur complement computation by broadcasting the row of U down to the processors that own the trailing submatrix.</p>
+</aside>
 </section>
 
 <section>
 <h3>Distributed GEPP</h3>
 <p><img data-src="figs/dgepp-col-bcast.svg" title="Sketch of block col broadcast" style="width:40.0%" /></p>
 <p>Broadcast rest of block col right</p>
+<aside class="notes">
+<p>Then we broadcast the column of L to the processors that own the trailing submatrix.</p>
+</aside>
 </section>
 
 <section>
 <h3>Distributed GEPP</h3>
 <p><img data-src="figs/dgepp-schur.svg" title="Sketch of Schur complement update" style="width:40.0%" /></p>
 <p>Update of trailing submatrix</p>
+<aside class="notes">
+<p>And, finally, everyone has the data they need to apply the update without further communication.</p>
+</aside>
 </section>
 
 <section>
@@ -247,6 +526,10 @@ audio: 2020-10-22-lu
 </ul>
 <p>If you don’t care about dense LU?<br />
 Let’s review some ideas in a different setting...</p>
+<aside class="notes">
+<p>The algorithm that we just described is within a log factor of optimal in the amount of data sent, but it ends up sending a lot of messages. Part of the reason for the number of messages is that at every step, we have to apply a collective op in order to find the pivot row! Alternate pivoting strategies have been developed that involve less communication, using tournaments to find a “good enough” pivot at each step; but I’m not going to go into that now.</p>
+<p>Some of you may be asking at this point “why have I just listened to this many slides about dense Gaussian elimination?” You may feel that you don’t care that much about linear algebra, sad as it makes me to admit such a possibility. But maybe you still care about this computational pattern, because it shows up in other places, too.</p>
+</aside>
 </section>
 
 <section>
@@ -255,6 +538,10 @@ Let’s review some ideas in a different setting...</p>
 Idea: Dynamic programming! Define <span class="math display">\[d_{ij}^{(k)} =
     \mbox{shortest path $i$ to $j$ with intermediates in $\{1, \ldots, k\}$}.\]</span> Then <span class="math display">\[d_{ij}^{(k)} = 
     \min\left( d_{ij}^{(k-1)}, d_{ik}^{(k-1)} + d_{kj}^{(k-1)} \right)\]</span> and <span class="math inline">\(d_{ij}^{(n)}\)</span> is the desired shortest path length.</p>
+<aside class="notes">
+<p>Let’s consider a problem that looks completely different: that of finding the shortest distances between every pair of vertices in a graph. One of the standard methods for this problem is the Floyd-Warshall algorithm. Floyd-Warshall is a dynamic programming approach that involves a recurrence on shortest paths that involve only nodes 1 through k for increasing values of k.</p>
+<p>It’s OK if you want to stare at this slide for a moment. Or if you want to look at the Wikipedia page for Floyd-Warshall. I’ll wait.</p>
+</aside>
 </section>
 
 <section>
@@ -271,6 +558,10 @@ Idea: Dynamic programming! Define <span class="math display">\[d_{ij}^{(k)} =
     A(i,k) = A(i,k) / A(k,k);
     for j = k+1:n
       A(i,j) = A(i,j)-A(i,k)*A(k,j);</code></pre>
+<aside class="notes">
+<p>Let’s compare these two unrelated-looking algorithms: Floyd-Warshall and unpivoted Gaussian elimination.</p>
+<p>You may notice that there are a lot of similarities!</p>
+</aside>
 </section>
 
 <section>
@@ -289,6 +580,9 @@ Idea: Dynamic programming! Define <span class="math display">\[d_{ij}^{(k)} =
 </ul></li>
 <li>Different: Update to full matrix vs trailing submatrix</li>
 </ul>
+<aside class="notes">
+<p>What is the same? Both algorithms are n^2 time and n^2 space. Both involve an inner loop that can’t be moved without some care, because of data dependencies – this is different from the case of matrix multiplication, for example. The basic pattern of the updates is the same, too. The main difference is really that Floyd-Warshall updates the full matrix where Gaussian elimination only updates a trailing submatrix.</p>
+</aside>
 </section>
 
 <section>
@@ -299,10 +593,17 @@ Idea: Dynamic programming! Define <span class="math display">\[d_{ij}^{(k)} =
 <li>Message-passing <em>parallel</em> implementation?</li>
 </ul>
 <p>The full picture could make a fun class project...</p>
+<aside class="notes">
+<p>In fact, we could take almost all of the tricks that we just described for blocking and parallelization of Gaussian elimination and apply them to Floyd-Warshall! I have done exactly that as a project for this class in the past; you are welcome to play with it for a final project if you are still looking.</p>
+</aside>
 </section>
 
 <section>
 <h3>Onward!</h3>
 <p>Next up: Sparse linear algebra and iterative solvers!</p>
+<aside class="notes">
+<p>There is a great deal more that I could say about dense linear algebra. Indeed, I teach a graduate course that is almost entirely dense linear algebra, and without the HPC angle! But 5220 is not that class, and I’ve used the time that I planned to use to talk about dense matrix computations. We still have a week to talk about sparse linear algebra, though, and we will take that topic up next.</p>
+<p>Until next time!</p>
+</aside>
 </section>
 
