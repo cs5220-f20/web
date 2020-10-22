@@ -167,6 +167,8 @@
   files:
     - info: Parallel matrix-matrix multiply
       file: lec/2020-10-22-matmul.html
+    - info: Parallel LU
+      file: lec/2020-10-22-lu.html
 # =================
 # Week 7
 #
