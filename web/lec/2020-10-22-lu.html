@@ -365,7 +365,7 @@ end</code></pre>
     0 &amp; 0 &amp; 1 &amp; 1 &amp; 2 &amp; 2 &amp; 0 &amp; 0 &amp; 1 &amp; 1
   \end{bmatrix}\]</span></p>
 <aside class="notes">
-<p>1D column block cyclic: block column factorization a bottleneck A 1D column block cyclic layout has some of the advantages of a column block layout, and some of the advantages of the block cyclic layout. It’s still not perfect, though, as the block column factorization becomes a serial bottleneck.</p>
+<p>A 1D column block cyclic layout has some of the advantages of a column block layout, and some of the advantages of the block cyclic layout. It’s still not perfect, though, as the block column factorization becomes a serial bottleneck.</p>
 </aside>
 </section>
 
@@ -581,7 +581,7 @@ Idea: Dynamic programming! Define <span class="math display">\[d_{ij}^{(k)} =
 <li>Different: Update to full matrix vs trailing submatrix</li>
 </ul>
 <aside class="notes">
-<p>What is the same? Both algorithms are n^2 time and n^2 space. Both involve an inner loop that can’t be moved without some care, because of data dependencies – this is different from the case of matrix multiplication, for example. The basic pattern of the updates is the same, too. The main difference is really that Floyd-Warshall updates the full matrix where Gaussian elimination only updates a trailing submatrix.</p>
+<p>What is the same? Both algorithms are n^3 time and n^2 space. Both involve an inner loop that can’t be moved without some care, because of data dependencies – this is different from the case of matrix multiplication, for example. The basic pattern of the updates is the same, too. The main difference is really that Floyd-Warshall updates the full matrix where Gaussian elimination only updates a trailing submatrix.</p>
 </aside>
 </section>
 
