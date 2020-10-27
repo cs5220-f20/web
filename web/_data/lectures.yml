@@ -175,6 +175,11 @@
 -
   date: 2020-10-27
   info: Sparse linear algebra
+  files:
+    - info: Intro to Sparse LA
+      file: lec/2020-10-27-intro.html
+    - info: Stationary iterations
+      file: lec/2020-10-27-stationary.html
 -
   date: 2020-10-29
   info: Sparse linear algebra
