@@ -16,7 +16,7 @@ audio: 2020-10-27-stationary
 
 <section>
 <h3>Fixed Point Iteration</h3>
-<p><img data-src="figs/fixedp.svg" title="Fixed point iteration" style="width:80.0%" /></p>
+<p><img data-src="figs/fixedp.svg" title="Fixed point iteration" style="width:100.0%" /></p>
 <p><span class="math inline">\(x_{k+1} = f(x_k) \rightarrow x_* = f(x_*)\)</span></p>
 </section>
 
@@ -38,6 +38,12 @@ audio: 2020-10-27-stationary
 <li>Convergence if <span class="math inline">\(\rho(M^{-1} K) &lt; 1\)</span></li>
 <li>Best case for convergence: <span class="math inline">\(M = A\)</span></li>
 <li>Cheapest case: <span class="math inline">\(M = I\)</span></li>
+</ul>
+</section>
+
+<section>
+<h3>Stationary Iterations</h3>
+<ul>
 <li><p>Realistic: choose something between<br />
 </p>
 <table>
@@ -57,7 +63,7 @@ audio: 2020-10-27-stationary
 
 <section>
 <h3>Reminder: Discretized 2D Poisson Problem</h3>
-<p><img data-src="figs/poisson2d-stencil.svg" title="Second-order finite difference stencil for 2D Poisson" style="width:80.0%" /></p>
+<p><img data-src="figs/poisson2d-stencil.svg" title="Second-order finite difference stencil for 2D Poisson" style="width:40.0%" /></p>
 <p><span class="math inline">\((Lu)_{i,j} = h^{-2} \left( 4u_{i,j}-u_{i-1,j}-u_{i+1,j}-u_{i,j-1}-u_{i,j+1} \right)\)</span></p>
 </section>
 
@@ -82,7 +88,7 @@ end</code></pre>
 
 <section>
 <h3>Parallel version (5 point stencil)</h3>
-<p><img data-src="figs/poisson2d-5pt-block.svg" title="Sketch of data dependencies in a 2D Poisson scheme with 5-point stencil" style="width:50.0%" /></p>
+<p><img data-src="figs/poisson2d-5pt-block.svg" title="Sketch of data dependencies in a 2D Poisson scheme with 5-point stencil" style="width:30.0%" /></p>
 <table>
 <tbody>
 <tr class="odd">
@@ -103,7 +109,7 @@ end</code></pre>
 
 <section>
 <h3>Parallel version (9 point stencil)</h3>
-<p><img data-src="figs/poisson2d-9pt-block.svg" title="Sketch of data dependencies in a 2D Poisson scheme with 5-point stencil" style="width:50.0%" /></p>
+<p><img data-src="figs/poisson2d-9pt-block.svg" title="Sketch of data dependencies in a 2D Poisson scheme with 5-point stencil" style="width:30.0%" /></p>
 <table>
 <tbody>
 <tr class="odd">
@@ -124,19 +130,19 @@ end</code></pre>
 
 <section>
 <h3>Parallel version (5 point stencil)</h3>
-<p><img data-src="figs/poisson2d-swap5.svg" title="Communication pattern for 5 point stencil" style="width:60.0%" /></p>
+<p><img data-src="figs/poisson2d-swap5.svg" title="Communication pattern for 5 point stencil" style="width:30.0%" /></p>
 <p>Communicate ghost cells before each step.</p>
 </section>
 
 <section>
 <h3>Parallel version (9 point stencil)</h3>
-<p><img data-src="figs/poisson2d-swap9ew.svg" title="Communication pattern for 9 point stencil" style="width:60.0%" /></p>
+<p><img data-src="figs/poisson2d-swap9ew.svg" title="Communication pattern for 9 point stencil" style="width:30.0%" /></p>
 <p>Communicate in two phases (<span class="alert">EW</span>, NS) to get corners.</p>
 </section>
 
 <section>
 <h3>Parallel version (9 point stencil)</h3>
-<p><img data-src="figs/poisson2d-swap9ns.svg" title="Communication pattern for 9 point stencil" style="width:60.0%" /></p>
+<p><img data-src="figs/poisson2d-swap9ns.svg" title="Communication pattern for 9 point stencil" style="width:30.0%" /></p>
 <p>Communicate in two phases (EW, <span class="alert">NS</span>) to get corners.</p>
 </section>
 
@@ -159,7 +165,7 @@ end</code></pre>
 
 <section>
 <h3>Red-Black Gauss-Seidel</h3>
-<p><img data-src="figs/checker6x6.svg" title="Checkerboard pattern for red-black Gauss-Seidel" style="width:60.0%" /></p>
+<p><img data-src="figs/checker6x6.svg" title="Checkerboard pattern for red-black Gauss-Seidel" style="width:30.0%" /></p>
 <p>Red depends only on black, and vice-versa.<br />
 Generalization: multi-color orderings</p>
 </section>
@@ -196,14 +202,14 @@ Generalization: multi-color orderings</p>
 <section>
 <h3>More Sophistication</h3>
 <ul>
-<li>Successive over-relaxation (SOR): extrapolate Gauss-Seidel direction</li>
-<li>Block Jacobi: let <span class="math inline">\(M\)</span> be a block diagonal matrix from <span class="math inline">\(A\)</span>
+<li>Successive over-relaxation (SOR): extrapolate G-S ste[</li>
+<li>Block Jacobi: <span class="math inline">\(M\)</span> a block diagonal matrix from <span class="math inline">\(A\)</span>
 <ul>
 <li>Other block variants similar</li>
 </ul></li>
 <li>Alternating Direction Implicit (ADI): alternately solve on vertical lines and horizontal lines</li>
 <li>Multigrid</li>
 </ul>
-<p>These are mostly just the opening act for Krylov methods</p>
+<p>Mostly the opening act for <em>Krylov methods</em>.</p>
 </section>
 
