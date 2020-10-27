@@ -35,8 +35,10 @@ x = U\(L\b);</code></pre>
 <li>Direct representation of matrices with simple data structures (no need for indexing data structure)</li>
 <li>Mostly <span class="math inline">\(O(n^3)\)</span> factorization algorithms</li>
 </ul>
-<p>::: Before we sketch the new, though, let’s sketch the old.</p>
-<p>Dense linear algebra is all about dealing with matrices where we have to store almost every entry explicitly, and we use simple data structures to do so. The typical algorithms in this space involve factoring matrices into products of simpler matrices. For example, we saw last week that we can write the Gaussian elimination method for solving linear systems as LU factorization, or factorization of the coefficient matrices into a permutation, a lower triangular matrix, and an upper triangular matrix. Then we can solve linear systems via forward and backward substitution (also known as lower and upper triangular system solves). Gaussian elimination is an O(n^3) algorithm, and this is true for most of the algorithms in this area – cubic work and quadratic data, which is pretty good for caches. :::</p>
+<aside class="notes">
+<p>Before we sketch the new, though, let’s sketch the old.</p>
+<p>Dense linear algebra is all about dealing with matrices where we have to store almost every entry explicitly, and we use simple data structures to do so. The typical algorithms in this space involve factoring matrices into products of simpler matrices. For example, we saw last week that we can write the Gaussian elimination method for solving linear systems as LU factorization, or factorization of the coefficient matrices into a permutation, a lower triangular matrix, and an upper triangular matrix. Then we can solve linear systems via forward and backward substitution (also known as lower and upper triangular system solves). Gaussian elimination is an O(n^3) algorithm, and this is true for most of the algorithms in this area – cubic work and quadratic data, which is pretty good for caches.</p>
+</aside>
 </section>
 
 <section>
@@ -73,7 +75,7 @@ x = Q*(U\(L\(P*b)));</code></pre>
 </section>
 
 <section>
-<h3>Software Strategies: Sparse Direct Case</h3>
+<h3>Sparse Direct Strategies</h3>
 <p>Assuming you want to use (vs develop) sparse LA code</p>
 <ul>
 <li>Identify right algorithm (mainly Cholesky vs LU)</li>
@@ -113,7 +115,7 @@ x = pcg(A,b,tol,maxit,R&#39;,R);</code></pre>
 </section>
 
 <section>
-<h3>Linear Algebra Software: the Wider World</h3>
+<h3>LA Software: the Wider World</h3>
 <ul>
 <li>Dense: LAPACK, ScaLAPACK, PLAPACK, PLASMA, MAGMA</li>
 <li><a href="https://portal.nersc.gov/project/sparse/superlu/SparseDirectSurvey.pdf">Sparse direct</a>: UMFPACK, TAUCS, SuperLU, MUMPS, Pardiso, SPOOLES, ...</li>
