@@ -32,28 +32,30 @@ About all you can do is keep multiplying! <span class="math display">\[
 
 <section>
 <h3>Example: Conjugate Gradients</h3>
-<p>If <span class="math inline">\(A\)</span> is symmetric and positive definite, <span class="math inline">\(Ax = b\)</span> solves a minimization: <span class="math display">\[\begin{aligned}
+<p>If <span class="math inline">\(A\)</span> is symmetric and positive definite,<br />
+<span class="math inline">\(Ax = b\)</span> solves a minimization: <span class="math display">\[\begin{aligned}
     \phi(x) &amp;= \frac{1}{2} x^T A x - x^T  b\\
     \nabla \phi(x) &amp;= Ax - b.
-  \end{aligned}\]</span> Idea: Minimize <span class="math inline">\(\phi(x)\)</span> over <span class="math inline">\(\mathcal{K}_k(A,b)\)</span>.<br />
+\end{aligned}\]</span> Idea: Minimize <span class="math inline">\(\phi(x)\)</span> over <span class="math inline">\(\mathcal{K}_k(A,b)\)</span>.<br />
 Basis for the <em>method of conjugate gradients</em></p>
 </section>
 
 <section>
 <h3>Example: GMRES</h3>
 <p>Idea: Minimize <span class="math inline">\(\|Ax-b\|^2\)</span> over <span class="math inline">\(\mathcal{K}_k(A,b)\)</span>.<br />
-Yields <em>Generalized Minimum RESidual</em> (GMRES) method.</p>
+Yields <em>Generalized Minimum RESidual</em> (GMRES)</p>
 </section>
 
 <section>
 <h3>Convergence of Krylov Subspace Methods</h3>
 <ul>
-<li>KSPs are <em>not</em> stationary (no constant fixed-point iteration)</li>
+<li>KSPs are <em>not</em> stationary<br />
+(no constant fixed-point iteration)</li>
 <li>Convergence is surprisingly subtle!</li>
 <li>CG convergence upper bound via <em>condition number</em>
 <ul>
-<li>Large condition number iff form <span class="math inline">\(\phi(x)\)</span> has long narrow bowl</li>
-<li>Usually happens for Poisson and related problems</li>
+<li>Large condition number iff <span class="math inline">\(\phi(x)\)</span> is narrow</li>
+<li>True for Poisson and co</li>
 </ul></li>
 </ul>
 </section>
@@ -61,7 +63,7 @@ Yields <em>Generalized Minimum RESidual</em> (GMRES) method.</p>
 <section>
 <h3>Convergence of Krylov Subspace Methods</h3>
 <ul>
-<li><em>Preconditioned</em> problem <span class="math inline">\(M^{-1} A x = M^{-1} b\)</span> converges faster?</li>
+<li><em>Preconditioned</em> problem <span class="math inline">\(M^{-1} A x = M^{-1} b\)</span></li>
 <li>Whence <span class="math inline">\(M\)</span>?
 <ul>
 <li>From a stationary method?</li>
@@ -135,7 +137,7 @@ end</code></pre>
 <li>Cheaper to do two multiplies/solves at once...
 <ul>
 <li>Can’t exploit in obvious way — lose stability</li>
-<li>Variants allow multiple products — Hoemmen’s thesis</li>
+<li>Variants allow multiple products (CA-Krylov)</li>
 </ul></li>
 <li>Lots of fiddling possible with <span class="math inline">\(M\)</span>; matvec with <span class="math inline">\(A\)</span>?</li>
 </ul>
@@ -144,7 +146,7 @@ end</code></pre>
 <section>
 <h3>Thinking on (basic) CG convergence</h3>
 <p><img data-src="figs/cg-propagate.svg" title="Sketch of information propagation" style="width:30.0%" /></p>
-<p>Consider 2D Poisson with 5-point stencil on an <span class="math inline">\(n \times n\)</span> mesh.</p>
+<p>Consider 5-point stencil on an <span class="math inline">\(n \times n\)</span> mesh.</p>
 <ul>
 <li>Information moves one grid cell per matvec.</li>
 <li>Cost per matvec is <span class="math inline">\(O(n^2)\)</span>.</li>
@@ -153,9 +155,9 @@ end</code></pre>
 </section>
 
 <section>
-<h3>CG convergence: a counting approach</h3>
+<h3>Convergence by counting</h3>
 <ul>
-<li>Time to converge <span class="math inline">\(\geq\)</span> time to propagate info across mesh</li>
+<li>Time to converge <span class="math inline">\(\geq\)</span> time to move info across</li>
 <li>For a 2D mesh: <span class="math inline">\(O(n)\)</span> matvecs, <span class="math inline">\(O(n^3) = O(N^{3/2})\)</span> cost</li>
 <li>For a 3D mesh: <span class="math inline">\(O(n)\)</span> matvecs, <span class="math inline">\(O(n^4) = O(N^{4/3})\)</span> cost</li>
 <li>“Long” meshes yield slow convergence</li>
@@ -163,7 +165,7 @@ end</code></pre>
 </section>
 
 <section>
-<h3>CG convergence: a counting approach</h3>
+<h3>Convergence by counting</h3>
 <p>3D beats 2D because everything is closer!</p>
 <ul>
 <li>Advice: sparse direct for 2D, CG for 3D.</li>
@@ -172,12 +174,12 @@ end</code></pre>
 </section>
 
 <section>
-<h3>CG convergence: an eigenvalue approach</h3>
+<h3>Eigenvalue approach</h3>
 <p>Define the <em>condition number</em> for <span class="math inline">\(\kappa(L)\)</span> s.p.d: <span class="math display">\[\kappa(L) = \frac{\lambda_{\max}(L)}{\lambda_{\min}(L)}\]</span> Describes how elongated the level surfaces of <span class="math inline">\(\phi\)</span> are.</p>
 </section>
 
 <section>
-<h3>CG convergence: an eigenvalue approach</h3>
+<h3>Eigenvalue approach</h3>
 <ul>
 <li>For Poisson, <span class="math inline">\(\kappa(L) = O(h^{-2})\)</span></li>
 <li>Steps to halve error: <span class="math inline">\(O(\sqrt{\kappa}) = O(h^{-1})\)</span>.</li>
@@ -186,15 +188,15 @@ end</code></pre>
 </section>
 
 <section>
-<h3>CG convergence: a frequency-domain approach</h3>
+<h3>Frequency-domain approach</h3>
 <table>
 <tbody>
 <tr class="odd">
-<td style="text-align: center;"><embed data-src="figs/cg1init.pdf\ng" style="width:48.0%" /></td>
-<td style="text-align: left;"><img data-src="figs/cg1swept.png" style="width:48.0%" /></td>
+<td style="text-align: right;"><img data-src="figs/cg1init.png" style="width:48.0%" /> [](</td>
+<td style="text-align: left;">figs/cg1swept.png){width=“48%”}</td>
 </tr>
 <tr class="even">
-<td style="text-align: center;">FFT of <span class="math inline">\(e_0\)</span></td>
+<td style="text-align: right;">FFT of <span class="math inline">\(e_0\)</span></td>
 <td style="text-align: left;">FFT of <span class="math inline">\(e_{10}\)</span></td>
 </tr>
 </tbody>
@@ -203,7 +205,7 @@ end</code></pre>
 </section>
 
 <section>
-<h3>Choosing preconditioners for 2D Poisson</h3>
+<h3>Preconditioning Poisson</h3>
 <ul>
 <li>CG already handles high-frequency error</li>
 <li>Want something to deal with lower frequency!</li>
@@ -215,7 +217,7 @@ end</code></pre>
 </section>
 
 <section>
-<h3>Choosing preconditioners for 2D Poisson</h3>
+<h3>Preconditioning Poisson</h3>
 <p>Better idea: block Jacobi?</p>
 <ul>
 <li>Q: How should things split up?</li>
@@ -226,7 +228,7 @@ end</code></pre>
 
 <section>
 <h3>Multiplicative Schwartz</h3>
-<p><img data-src="figs/schwarz2.svg" style="width:40.0%" /> <img data-src="figs/schwarz2.svg" style="width:40.0%" /></p>
+<p><img data-src="figs/schwarz1.svg" style="width:40.0%" /> <img data-src="figs/schwarz2.svg" style="width:40.0%" /></p>
 <p>Generalizes block Gauss-Seidel</p>
 </section>
 
@@ -244,7 +246,7 @@ end</code></pre>
 <section>
 <h3>Multilevel Ideas</h3>
 <ul>
-<li>RAS propogates information by one processor per step</li>
+<li>RAS moves info one processor per step</li>
 <li>For scalability, still need to get around this!</li>
 <li>Basic idea: use multiple grids
 <ul>
