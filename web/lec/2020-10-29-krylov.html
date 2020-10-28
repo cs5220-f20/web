@@ -1,0 +1,322 @@
+---
+title: Krylov subspace methods
+layout: slides
+audio: 2020-10-29-krylov
+---
+
+<section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <h3>Krylov subspace methods</h3>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
+  </p>
+  <p>Please click the play button below.</p>
+</section>
+
+<section>
+<h3>Goal</h3>
+<p>Solve <span class="math display">\[
+  Ax = b,
+\]</span> where <span class="math inline">\(A\)</span> is sparse (or data sparse).</p>
+</section>
+
+<section>
+<h3>Krylov Subspace Methods</h3>
+<p>What if we only know how to multiply by <span class="math inline">\(A\)</span>?<br />
+About all you can do is keep multiplying! <span class="math display">\[
+  \mathcal{K}_k(A,b) = \operatorname{span}\left\{ 
+      b, A b, A^2 b, \ldots, A^{k-1} b \right\}.
+\]</span> Gives surprisingly useful information!</p>
+</section>
+
+<section>
+<h3>Example: Conjugate Gradients</h3>
+<p>If <span class="math inline">\(A\)</span> is symmetric and positive definite, <span class="math inline">\(Ax = b\)</span> solves a minimization: <span class="math display">\[\begin{aligned}
+    \phi(x) &amp;= \frac{1}{2} x^T A x - x^T  b\\
+    \nabla \phi(x) &amp;= Ax - b.
+  \end{aligned}\]</span> Idea: Minimize <span class="math inline">\(\phi(x)\)</span> over <span class="math inline">\(\mathcal{K}_k(A,b)\)</span>.<br />
+Basis for the <em>method of conjugate gradients</em></p>
+</section>
+
+<section>
+<h3>Example: GMRES</h3>
+<p>Idea: Minimize <span class="math inline">\(\|Ax-b\|^2\)</span> over <span class="math inline">\(\mathcal{K}_k(A,b)\)</span>.<br />
+Yields <em>Generalized Minimum RESidual</em> (GMRES) method.</p>
+</section>
+
+<section>
+<h3>Convergence of Krylov Subspace Methods</h3>
+<ul>
+<li>KSPs are <em>not</em> stationary (no constant fixed-point iteration)</li>
+<li>Convergence is surprisingly subtle!</li>
+<li>CG convergence upper bound via <em>condition number</em>
+<ul>
+<li>Large condition number iff form <span class="math inline">\(\phi(x)\)</span> has long narrow bowl</li>
+<li>Usually happens for Poisson and related problems</li>
+</ul></li>
+</ul>
+</section>
+
+<section>
+<h3>Convergence of Krylov Subspace Methods</h3>
+<ul>
+<li><em>Preconditioned</em> problem <span class="math inline">\(M^{-1} A x = M^{-1} b\)</span> converges faster?</li>
+<li>Whence <span class="math inline">\(M\)</span>?
+<ul>
+<li>From a stationary method?</li>
+<li>From a simpler/coarser discretization?</li>
+<li>From approximate factorization?</li>
+</ul></li>
+</ul>
+</section>
+
+<section>
+<h3>PCG</h3>
+<pre><code>r = b-A*x;
+for i=1:nsteps
+    z = Msolve(r);
+    rho(i) = dot(r, z);
+    if i == 1
+        p = z;
+    else
+        beta = rho(i)/rho(i-1);
+        p = z + beta*p;
+    end
+    q = A*p;
+    alpha = rho(i) / dot(p, q);
+    x += alpha*p;
+    r -= alpha*q;
+end</code></pre>
+</section>
+
+<section>
+<h3>PCG parallel work</h3>
+<ul>
+<li>Solve with <span class="math inline">\(M\)</span></li>
+<li>Product with <span class="math inline">\(A\)</span></li>
+<li>Dot products and axpys</li>
+</ul>
+</section>
+
+<section>
+<h3>Pushing PCG</h3>
+<ul>
+<li>Rearrange if <span class="math inline">\(M = LL^T\)</span> is available</li>
+<li>Or build around “powers kernel”
+<ul>
+<li>Old “s-step” approach of Chronopoulos and Gear</li>
+<li>CA-Krylov of Hoemmen and Demmel</li>
+<li>Hard to keep stable</li>
+</ul></li>
+</ul>
+</section>
+
+<section>
+<h3>Pushing PCG</h3>
+<p>Two real application levers:</p>
+<ul>
+<li>Better preconditioning</li>
+<li>Faster matvecs</li>
+</ul>
+</section>
+
+<section>
+<h3>PCG bottlenecks</h3>
+<p>Key: fast solve with <span class="math inline">\(M\)</span>, product with <span class="math inline">\(A\)</span></p>
+<ul>
+<li>Some preconditioners parallelize better!<br />
+(Jacobi vs Gauss-Seidel)</li>
+<li>Balance speed with performance.
+<ul>
+<li>Speed for set up of <span class="math inline">\(M\)</span>?</li>
+<li>Speed to apply <span class="math inline">\(M\)</span> after setup?</li>
+</ul></li>
+<li>Cheaper to do two multiplies/solves at once...
+<ul>
+<li>Can’t exploit in obvious way — lose stability</li>
+<li>Variants allow multiple products — Hoemmen’s thesis</li>
+</ul></li>
+<li>Lots of fiddling possible with <span class="math inline">\(M\)</span>; matvec with <span class="math inline">\(A\)</span>?</li>
+</ul>
+</section>
+
+<section>
+<h3>Thinking on (basic) CG convergence</h3>
+<p><img data-src="figs/cg-propagate.svg" title="Sketch of information propagation" style="width:30.0%" /></p>
+<p>Consider 2D Poisson with 5-point stencil on an <span class="math inline">\(n \times n\)</span> mesh.</p>
+<ul>
+<li>Information moves one grid cell per matvec.</li>
+<li>Cost per matvec is <span class="math inline">\(O(n^2)\)</span>.</li>
+<li>At least <span class="math inline">\(O(n^3)\)</span> work to get information across mesh!</li>
+</ul>
+</section>
+
+<section>
+<h3>CG convergence: a counting approach</h3>
+<ul>
+<li>Time to converge <span class="math inline">\(\geq\)</span> time to propagate info across mesh</li>
+<li>For a 2D mesh: <span class="math inline">\(O(n)\)</span> matvecs, <span class="math inline">\(O(n^3) = O(N^{3/2})\)</span> cost</li>
+<li>For a 3D mesh: <span class="math inline">\(O(n)\)</span> matvecs, <span class="math inline">\(O(n^4) = O(N^{4/3})\)</span> cost</li>
+<li>“Long” meshes yield slow convergence</li>
+</ul>
+</section>
+
+<section>
+<h3>CG convergence: a counting approach</h3>
+<p>3D beats 2D because everything is closer!</p>
+<ul>
+<li>Advice: sparse direct for 2D, CG for 3D.</li>
+<li>Better advice: use a preconditioner!</li>
+</ul>
+</section>
+
+<section>
+<h3>CG convergence: an eigenvalue approach</h3>
+<p>Define the <em>condition number</em> for <span class="math inline">\(\kappa(L)\)</span> s.p.d: <span class="math display">\[\kappa(L) = \frac{\lambda_{\max}(L)}{\lambda_{\min}(L)}\]</span> Describes how elongated the level surfaces of <span class="math inline">\(\phi\)</span> are.</p>
+</section>
+
+<section>
+<h3>CG convergence: an eigenvalue approach</h3>
+<ul>
+<li>For Poisson, <span class="math inline">\(\kappa(L) = O(h^{-2})\)</span></li>
+<li>Steps to halve error: <span class="math inline">\(O(\sqrt{\kappa}) = O(h^{-1})\)</span>.</li>
+</ul>
+<p>Similar back-of-the-envelope estimates for some other PDEs. But these are not always that useful... can be pessimistic if there are only a few extreme eigenvalues.</p>
+</section>
+
+<section>
+<h3>CG convergence: a frequency-domain approach</h3>
+<table>
+<tbody>
+<tr class="odd">
+<td style="text-align: center;"><embed data-src="figs/cg1init.pdf\ng" style="width:48.0%" /></td>
+<td style="text-align: left;"><img data-src="figs/cg1swept.png" style="width:48.0%" /></td>
+</tr>
+<tr class="even">
+<td style="text-align: center;">FFT of <span class="math inline">\(e_0\)</span></td>
+<td style="text-align: left;">FFT of <span class="math inline">\(e_{10}\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>Error <span class="math inline">\(e_k\)</span> after <span class="math inline">\(k\)</span> steps of CG gets smoother!</p>
+</section>
+
+<section>
+<h3>Choosing preconditioners for 2D Poisson</h3>
+<ul>
+<li>CG already handles high-frequency error</li>
+<li>Want something to deal with lower frequency!</li>
+<li>Jacobi useless
+<ul>
+<li>Doesn’t even change Krylov subspace!</li>
+</ul></li>
+</ul>
+</section>
+
+<section>
+<h3>Choosing preconditioners for 2D Poisson</h3>
+<p>Better idea: block Jacobi?</p>
+<ul>
+<li>Q: How should things split up?</li>
+<li>A: Minimize blocks across domain.</li>
+<li>Compatible with minimizing communication!</li>
+</ul>
+</section>
+
+<section>
+<h3>Multiplicative Schwartz</h3>
+<p><img data-src="figs/schwarz2.svg" style="width:40.0%" /> <img data-src="figs/schwarz2.svg" style="width:40.0%" /></p>
+<p>Generalizes block Gauss-Seidel</p>
+</section>
+
+<section>
+<h3>Restrictive Additive Schwartz (RAS)</h3>
+<p><img data-src="figs/ras.svg" title="Dependency for RAS" style="width:30.0%" /></p>
+<ul>
+<li>Get ghost cell data (green)</li>
+<li>Solve <em>everything</em> local (including neighbor data)</li>
+<li>Update local values for next step (local)</li>
+<li>Default strategy in PETSc</li>
+</ul>
+</section>
+
+<section>
+<h3>Multilevel Ideas</h3>
+<ul>
+<li>RAS propogates information by one processor per step</li>
+<li>For scalability, still need to get around this!</li>
+<li>Basic idea: use multiple grids
+<ul>
+<li>Fine grid gives lots of work, kills high-freq error</li>
+<li>Coarse grid cheaply gets info across mesh, kills low freq</li>
+</ul></li>
+</ul>
+</section>
+
+<section>
+<h3>Tuning matmul</h3>
+<p>Can also tune matrix multiply</p>
+<ul>
+<li>Represented implicitly (regular grids)</li>
+<li>Or explicitly (e.g. compressed sparse column)</li>
+</ul>
+<p>Or further rearrange algorithm (Hoemmen, Demmel).</p>
+</section>
+
+<section>
+<h3>Tuning sparse matvec</h3>
+<ul>
+<li>Sparse matrix blocking and reordering (Im, Vuduc, Yelick)
+<ul>
+<li>Packages: Sparsity (Im), OSKI (Vuduc)</li>
+<li>Available as PETSc extension</li>
+</ul></li>
+<li>Optimizing stencil operations (Datta)</li>
+</ul>
+</section>
+
+<section>
+<h3>Reminder: Compressed sparse row storage</h3>
+<pre><code>for i = 1:n
+  y[i] = 0;
+  for jj = ptr[i] to ptr[i+1]-1
+    y[i] += A[jj]*x[col[j]];
+  end
+end</code></pre>
+<p>Problem: y[i] += A[jj]*x[<strong>col[j]</strong>];</p>
+</section>
+
+<section>
+<h3>Memory traffic in CSR multiply</h3>
+<p>Memory access patterns:</p>
+<ul>
+<li>Elements of <span class="math inline">\(y\)</span> accessed sequentially</li>
+<li>Elements of <span class="math inline">\(A\)</span> accessed sequentially</li>
+<li>Access to <span class="math inline">\(x\)</span> are all over!</li>
+</ul>
+<p>Can help by switching to block CSR.<br />
+Switching to single precision, short indices can help memory traffic, too!</p>
+</section>
+
+<section>
+<h3>Parallelizing matvec</h3>
+<ul>
+<li>Each processor gets a piece</li>
+<li>Many partitioning strategies</li>
+<li>Idea: re-order so one of these strategies is “good”</li>
+</ul>
+</section>
+
+<section>
+<h3>Reordering for matvec</h3>
+<p>SpMV performance goals:</p>
+<ul>
+<li>Balance load?</li>
+<li>Balance storage?</li>
+<li>Minimize communication?</li>
+<li>Good cache re-use?</li>
+</ul>
+<p>Reordering also comes up for GE!</p>
+</section>
+
