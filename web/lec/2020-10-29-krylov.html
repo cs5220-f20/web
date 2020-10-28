@@ -189,18 +189,7 @@ end</code></pre>
 
 <section>
 <h3>Frequency-domain approach</h3>
-<table>
-<tbody>
-<tr class="odd">
-<td style="text-align: right;"><img data-src="figs/cg1init.png" style="width:48.0%" /> [](</td>
-<td style="text-align: left;">figs/cg1swept.png){width=“48%”}</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">FFT of <span class="math inline">\(e_0\)</span></td>
-<td style="text-align: left;">FFT of <span class="math inline">\(e_{10}\)</span></td>
-</tr>
-</tbody>
-</table>
+<p><img data-src="figs/cg1init.png" title="FFT of CG error, step 1" alt="FFT of e_0" style="width:48.0%" /> <img data-src="figs/cg1swept.png" title="FFT of CG error, step 10" alt="FFT of e_{10}" style="width:48.0%" /></p>
 <p>Error <span class="math inline">\(e_k\)</span> after <span class="math inline">\(k\)</span> steps of CG gets smoother!</p>
 </section>
 
@@ -279,13 +268,12 @@ end</code></pre>
 </section>
 
 <section>
-<h3>Reminder: Compressed sparse row storage</h3>
-<pre><code>for i = 1:n
+<h3>Reminder: Compressed sparse row</h3>
+<pre><code>for (int i = 0; i &lt; n; ++i) {
   y[i] = 0;
-  for jj = ptr[i] to ptr[i+1]-1
+  for (int jj = ptr[i]; jj &lt; ptr[i+1]; ++jj)
     y[i] += A[jj]*x[col[j]];
-  end
-end</code></pre>
+}</code></pre>
 <p>Problem: y[i] += A[jj]*x[<strong>col[j]</strong>];</p>
 </section>
 
