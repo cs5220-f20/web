@@ -76,19 +76,19 @@ Yields <em>Generalized Minimum RESidual</em> (GMRES)</p>
 <section>
 <h3>PCG</h3>
 <pre><code>r = b-A*x;
+p = 0; beta = 0;
+z = Msolve(r);
+rho = dot(r, z);
 for i=1:nsteps
-    z = Msolve(r);
-    rho(i) = dot(r, z);
-    if i == 1
-        p = z;
-    else
-        beta = rho(i)/rho(i-1);
-        p = z + beta*p;
-    end
+    p = z + beta*p;
     q = A*p;
     alpha = rho(i) / dot(p, q);
     x += alpha*p;
     r -= alpha*q;
+    if norm(r) &lt; tol, break; end
+    rho_prev = rho;
+    rho = dot(r, w);
+    beta = rho/rho_prev;
 end</code></pre>
 </section>
 
