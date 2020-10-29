@@ -19,6 +19,10 @@ audio: 2020-10-29-krylov
 <p>Solve <span class="math display">\[
   Ax = b,
 \]</span> where <span class="math inline">\(A\)</span> is sparse (or data sparse).</p>
+<aside class="notes">
+<p>Our goal for both of today’s lectures will be solving the linear system Ax = b where A is assumed to be sparse or data sparse. Really, the only thing that we need to assume for most of this slide deck is that we can do fast matrix-vector products with A.</p>
+<p>There’s a lot in this deck, and I always go through slides faster in narration than I would in an ordinary lecture. Do take frequent breaks to stare at the slides and think a bit.</p>
+</aside>
 </section>
 
 <section>
@@ -28,6 +32,10 @@ About all you can do is keep multiplying! <span class="math display">\[
   \mathcal{K}_k(A,b) = \operatorname{span}\left\{ 
       b, A b, A^2 b, \ldots, A^{k-1} b \right\}.
 \]</span> Gives surprisingly useful information!</p>
+<aside class="notes">
+<p>If the only thing we assume is that we can multiply by A, and we want to solve Ax = b, what can we do? We take b and start multiplying by A, because there isn’t much else to do! This lets us build up a so-called Krylov subspace spanned by powers of A times b. Another way to think of this is that we’re computing the space of all possible products p(A) b for polynomials p that with degree less than k. This looks like a somewhat contrived space the first time you see it, but it contains surprisingly useful information!</p>
+<p>Once we have a Krylov subspace, our goal is to find an approximate solution in that space.</p>
+</aside>
 </section>
 
 <section>
@@ -38,12 +46,19 @@ About all you can do is keep multiplying! <span class="math display">\[
     \nabla \phi(x) &amp;= Ax - b.
 \end{aligned}\]</span> Idea: Minimize <span class="math inline">\(\phi(x)\)</span> over <span class="math inline">\(\mathcal{K}_k(A,b)\)</span>.<br />
 Basis for the <em>method of conjugate gradients</em></p>
+<aside class="notes">
+<p>Recall that a matrix A is symmetric and positive definite if A = A^T and if x^T A x &gt; 0 whenever x is nonzero. If A is symmetric and positive definite, then we can write the solution to Ax = b as the location of the minimizer for a quadratic function phi(x) = x^T A x/2 - x^T b.</p>
+<p>The idea behind the conjugate gradient method is to minimize phi over a Krylov subspace. At least, this is one way of phrasing the method! There are other ways to approach it as well. For more details, I recommend to you my course notes from the last time I taught CS 6210 (Matrix Computations).</p>
+</aside>
 </section>
 
 <section>
 <h3>Example: GMRES</h3>
 <p>Idea: Minimize <span class="math inline">\(\|Ax-b\|^2\)</span> over <span class="math inline">\(\mathcal{K}_k(A,b)\)</span>.<br />
 Yields <em>Generalized Minimum RESidual</em> (GMRES)</p>
+<aside class="notes">
+<p>Not every system is symmetric and positive definite. For general linear systems, the method of choice is usually GMRES, which minimizes a least squared error over the Krylov subspace. At the level we’re discussing things, though, many of the issues are the same between CG and GMRES.</p>
+</aside>
 </section>
 
 <section>
@@ -55,9 +70,13 @@ Yields <em>Generalized Minimum RESidual</em> (GMRES)</p>
 <li>CG convergence upper bound via <em>condition number</em>
 <ul>
 <li>Large condition number iff <span class="math inline">\(\phi(x)\)</span> is narrow</li>
-<li>True for Poisson and co</li>
+<li>True for Poisson and company</li>
 </ul></li>
 </ul>
+<aside class="notes">
+<p>The convergence of Krylov subspace methods is surprisingly subtle. These aren’t fixed point iterations, and so we can’t use that theory. Moreover, iterations like CG converge to the true solution in a finite number of steps — in exact arithmetic, at least, the behavior differs in floating point — and so asymptotic statements have to be treated with some care.</p>
+<p>The usual way we talk about convergence of methods like CG is via the condition number of the problem: the ratio of the largest to the smallest eigenvalue problem. In the optimization formulation, having a large condition number corresponds to finding the bottom of an elongated bowl rather than a round one. Problems like our model Poisson problem tend to be ill-conditioned, and the conditioning actually gets worse for larger discretizations. But this isn’t necessarily the most intuitive approach to reasoning about convergence in this case, so we’ll talk about a couple ways that we can think about these concepts.</p>
+</aside>
 </section>
 
 <section>
@@ -71,6 +90,11 @@ Yields <em>Generalized Minimum RESidual</em> (GMRES)</p>
 <li>From approximate factorization?</li>
 </ul></li>
 </ul>
+<aside class="notes">
+<p>Part of the reason we care about the convergence theory for methods like CG is that it helps us think through ways that we could transform the problem in order to get faster convergence. This type of transformation is called preconditioning.</p>
+<p>A good preconditioner involves a matrix M for which we can do linear solves quickly, such that inv(M)*A is “close to” an identity. Examples of preconditioning strategies include sweeps of stationary methods like Jacobi, Gauss-Seidel, SOR, or their block variants; coarser discretizations of a PDE in question (if A comes from a fine discretization); approximate LU or Cholesky factorizations; and so forth. The best preconditioners often rely on knowledge of the “physics” of the problem. For example, you might drop some terms in a complicated PDE that correspond to physical effects that are nontrivial, but also don’t dominate. Of you might precondition by solving the problem on a geometrically simpler domain where you can apply transform methods.</p>
+<p>Preconditioning is usually the single most important thing that you, as a user of iterative methods, can do to get the methods to converge fast. It’s also one of the things that requires the most insight and experimentation to get right.</p>
+</aside>
 </section>
 
 <section>
@@ -82,14 +106,21 @@ rho = dot(r, z);
 for i=1:nsteps
     p = z + beta*p;
     q = A*p;
-    alpha = rho(i) / dot(p, q);
+    alpha = rho/dot(p, q);
     x += alpha*p;
     r -= alpha*q;
     if norm(r) &lt; tol, break; end
+    z = Msolve(r);
     rho_prev = rho;
-    rho = dot(r, w);
+    rho = dot(r, z);
     beta = rho/rho_prev;
 end</code></pre>
+<aside class="notes">
+<p>So far, we’ve been talking about Krylov subspace methods in the abstract. Let’s make it a little more concrete now.</p>
+<p>This is the code for the preconditioned conjugate gradient method. Unless you’ve seen it before, it is probably utterly non-obvious how this minimizes a quadratic over a Krylov subspace! But it does.</p>
+<p>At each step, we apply the preconditioner solve to the residual b-Ax. The resulting vector z is combined with the previous step direction in order to get a new step direction p. Then we move in the p direction from the current point until we get to the minimum along that ray; that’s alpha times p. Finally, we update the residual and check whether it’s small enough that we’re willing to declare convergence.</p>
+<p>Feel free to stop and stare at this for a moment before moving on. One of the things to notice is the data dependencies in the code. There are several things that could be run concurrently or in a pipelined fashion, but there are at least two synchronization points per step (in the computation of alpha and the computation of rho, both involving dot products, both of which must be complete before we can do much else).</p>
+</aside>
 </section>
 
 <section>
@@ -99,6 +130,9 @@ end</code></pre>
 <li>Product with <span class="math inline">\(A\)</span></li>
 <li>Dot products and axpys</li>
 </ul>
+<aside class="notes">
+<p>So where do we have opportunities for parallel work in this code? The big opportunities are in the preconditioner solve and the matrix-vector product. We can also get some parallelism from the dot products and the scale-and-sum operations&gt; But those don’t involve all that much work.</p>
+</aside>
 </section>
 
 <section>
@@ -112,6 +146,11 @@ end</code></pre>
 <li>Hard to keep stable</li>
 </ul></li>
 </ul>
+<aside class="notes">
+<p>What I wrote down is a standard way of writing PCG. There’s an equivalent rearrangement if we have a factorization of M available (e.g. if there is a Cholesky factorization) that gives us a little more room per step for parallelism, which you can look up in the Templates book or similar resources. But these types of tricks at best may get us down to a single synchronization per step.</p>
+<p>There are potentially more impressive opportunities that come from overlapping several steps of the method with each other. This is an old idea, but tricky to get right, as rearrangements that look equivalent in exact arithmetic can nonetheless behave differently in floating point. Unfortunately, those differences are huge when it comes to Krylov methods. Chronopoulos and Gear were pioneers in this idea, but Mark Hoemmen (my academic younger brother) helped push things further in his thesis work by using a different basis for the Krylov subspace. Needless to say, there’s some subtlety here.</p>
+<p>Apart from the subtlety around their error behavior, one of the problems with the communication-avoiding Krylov ideas is that they aren’t easy to precondition.</p>
+</aside>
 </section>
 
 <section>
@@ -121,6 +160,10 @@ end</code></pre>
 <li>Better preconditioning</li>
 <li>Faster matvecs</li>
 </ul>
+<aside class="notes">
+<p>So, if you use the standard preconditioned CG approach rather than a communication-avoiding version — and there are still good reasons why you might not use the communication-avoiding variants — you have two real levers. You can either use a better preconditioner, where better might mean “more amenable to parallelism” or “better tuned” or just “better at making the iteration converge”; or you can speed up the matrix-vector products.</p>
+<p>But the biggest wins typically come through the preconditioner.</p>
+</aside>
 </section>
 
 <section>
@@ -141,6 +184,10 @@ end</code></pre>
 </ul></li>
 <li>Lots of fiddling possible with <span class="math inline">\(M\)</span>; matvec with <span class="math inline">\(A\)</span>?</li>
 </ul>
+<aside class="notes">
+<p>When we think about the speed of an algorithm like CG, there are two distinct effects that come into play: the cost per step, and the number of steps to convergence. Preconditioning affects both of these. Moreover, preconditioners often have a fixed setup cost that may be significant, particularly for the preconditioners that work best.</p>
+<p>Needless to say, a lot of fiddling with preconditioners is possible. But to understand what preconditioners might be useful, and why, we need to understand a little about the convergence of the iteration without preconditioning.</p>
+</aside>
 </section>
 
 <section>
@@ -152,6 +199,9 @@ end</code></pre>
 <li>Cost per matvec is <span class="math inline">\(O(n^2)\)</span>.</li>
 <li>At least <span class="math inline">\(O(n^3)\)</span> work to get information across mesh!</li>
 </ul>
+<aside class="notes">
+<p>Our first approach to CG convergence involves thinking about information propagation. Suppose I wanted to solve a Poisson problem using the five point stencil, where the right hand side is one at the corner and zero everywhere else. The solution to the problem is nonzero on the whole domain. What about the approximations from CG? After one step, all vectors in the space are nonzero outside a ball of radius 1 (in the Manhattan distance) from the corner. So there might be nonzeros at the locations in black and light blue, but not elsewhere. One step later, the nonzeros get to the green line, and so forth. So on an n-by-n mesh, it takes 2n steps before we get vectors that are nonzero everywhere. Each step takes n^2 time, so we’re talking about O(n^3) time before we can even get any signal from one end of the mesh to the other!</p>
+</aside>
 </section>
 
 <section>
@@ -162,6 +212,9 @@ end</code></pre>
 <li>For a 3D mesh: <span class="math inline">\(O(n)\)</span> matvecs, <span class="math inline">\(O(n^4) = O(N^{4/3})\)</span> cost</li>
 <li>“Long” meshes yield slow convergence</li>
 </ul>
+<aside class="notes">
+<p>It’s pretty intuitive that we’d need at least as long to converge as we need to move information across the mesh. For this particular problem, the converse also turns out to be true: we can cut the error by a constant factor in time proportional to the time it takes to move information across the mesh. For a 2D mesh, that means that it takes O(N^1.5) time to reduce the error by a constant factor on a box; in 3D, it is O(N^(4/3)). Of course, not every domain is shaped like a box! Convergence is worse for long skinny meshes than it is for box-like meshes.</p>
+</aside>
 </section>
 
 <section>
@@ -171,11 +224,17 @@ end</code></pre>
 <li>Advice: sparse direct for 2D, CG for 3D.</li>
 <li>Better advice: use a preconditioner!</li>
 </ul>
+<aside class="notes">
+<p>You could take from the argument that I just made that it’s better to use CG in 3D and sparse direct methods in 2D, just because that’s what the connectivity favors. But really, we should say that in either 2D or 3D, we want preconditioners that can move data globally across the domain, or this type of “count the steps to cross” argument will put a lower bound on the time needed to converge.</p>
+</aside>
 </section>
 
 <section>
 <h3>Eigenvalue approach</h3>
 <p>Define the <em>condition number</em> for <span class="math inline">\(\kappa(L)\)</span> s.p.d: <span class="math display">\[\kappa(L) = \frac{\lambda_{\max}(L)}{\lambda_{\min}(L)}\]</span> Describes how elongated the level surfaces of <span class="math inline">\(\phi\)</span> are.</p>
+<aside class="notes">
+<p>Another way to reason about convergence, and the way we usually do it in a numerical linear algebra class, is to talk about the condition number of the problem — the ratio between the largest and smallest eigenvalues of the matrix.</p>
+</aside>
 </section>
 
 <section>
@@ -185,12 +244,19 @@ end</code></pre>
 <li>Steps to halve error: <span class="math inline">\(O(\sqrt{\kappa}) = O(h^{-1})\)</span>.</li>
 </ul>
 <p>Similar back-of-the-envelope estimates for some other PDEs. But these are not always that useful... can be pessimistic if there are only a few extreme eigenvalues.</p>
+<aside class="notes">
+<p>It turns out that we can reason out how the condition number scales as a function of mesh density for many PDE discretizations. For Poisson, the condition number scales like 1/h^2 where h is the mesh spacing. The number of steps to halve the error is bounded on the order of the square root of the condition number, which gives us something proportional to n = 1/h steps — the same estimate we got before from counting the steps to move information across the mesh.</p>
+<p>However, this type of argument based on the condition number can be pessimistic.</p>
+</aside>
 </section>
 
 <section>
 <h3>Frequency-domain approach</h3>
 <p><img data-src="figs/cg1init.png" title="FFT of CG error, step 1" alt="FFT of e_0" style="width:48.0%" /> <img data-src="figs/cg1swept.png" title="FFT of CG error, step 10" alt="FFT of e_{10}" style="width:48.0%" /></p>
 <p>Error <span class="math inline">\(e_k\)</span> after <span class="math inline">\(k\)</span> steps of CG gets smoother!</p>
+<aside class="notes">
+<p>It turns out that there’s a very distinct pattern to how CG gets rid of the error, which we can see if we look at the Fourier transform of the error step by step. It turns out that the “high frequency” components of the error are suppressed very quickly; it is the low-frequency part of the error that takes longer for us to kill off. This sort of fits our intuition from the information-propagation arguments.</p>
+</aside>
 </section>
 
 <section>
@@ -203,6 +269,10 @@ end</code></pre>
 <li>Doesn’t even change Krylov subspace!</li>
 </ul></li>
 </ul>
+<aside class="notes">
+<p>All right. Given these different ways of thinking about convergence of CG on the Poisson problem, what should we do to effectively precondition the iteration? What we really want is something to move information long distances across the mesh, or to deal with the smooth part of the air — different views of the same thing, really.</p>
+<p>It turns out that Jacobi, and even Gauss-Seidel, are also most effective at reducing the smooth part of the air, so they aren’t particularly effective preconditioners. Jacobi is particularly useless; for the 5-point stencil, the diagonal part of the matrix is constant, and so Jacobi preconditioning literally does nothing to the sequence of iterates chosen by CG!</p>
+</aside>
 </section>
 
 <section>
@@ -213,12 +283,20 @@ end</code></pre>
 <li>A: Minimize blocks across domain.</li>
 <li>Compatible with minimizing communication!</li>
 </ul>
+<aside class="notes">
+<p>A better idea is to use block Jacobi. Then we could at least hope to move information across the width of a block. The question, of course, is what the blocks should look like. A natural thing to do in a distributed-memory setting is to have each block correspond to the part of the vector (or the part of the domain) owned by one processor. If the time to convergence is bounded by the number of block steps across the domain, we’d like to minimize the diameter of the blocked graph. It turns out that this is very compatible with our goal of cutting things up in a way that minimizes the amount of communication we need to do at processor boundaries!</p>
+</aside>
 </section>
 
 <section>
 <h3>Multiplicative Schwartz</h3>
 <p><img data-src="figs/schwarz1.svg" style="width:40.0%" /> <img data-src="figs/schwarz2.svg" style="width:40.0%" /></p>
 <p>Generalizes block Gauss-Seidel</p>
+<aside class="notes">
+<p>Block Jacobi — or block Gauss-Seidel — are OK starting points for preconditioning this problem and related problems. But it turns out that there is a tweak that we can make that can often do much better than block Jacobi or block Gauss-Seidel.</p>
+<p>The idea here goes back to Schwarz, who was motivated by theoretical questions about PDEs. Consider something like Poisson equation on a domain described by a union of simple shapes, like the rectangle and the circle here. We know how to solve the PDE on a rectangle or a circle using separation of variables, but what about the combination? Schwarz proposed an iterative approach to getting a solution: solve the PDE on the rectangular part with fake data on the interior part of the boundary; then solve on the circle part, taking boundary data from the solve on the rectangle; then solve on the rectangle again, taking boundary data from the solve on the circle. Iterating back and forth between these two domains converges fairly quickly.</p>
+<p>Schwarz wasn’t doing this as a numerical method, but the same idea works well numerically. Instead of solving on disjoint subsets of variables, block by block, we can solve on overlapping subsets of variables! The Gauss-Seidel like iteration described above, where we solve on one subset of variables, then the next, then the next, is known as multiplicative Schwarz. There is also a Jacobi-like iteration where we solve on each subdomain independently and then add up all the corrections; this is known as additive Schwarz.</p>
+</aside>
 </section>
 
 <section>
@@ -230,6 +308,11 @@ end</code></pre>
 <li>Update local values for next step (local)</li>
 <li>Default strategy in PETSc</li>
 </ul>
+<aside class="notes">
+<p>On the face of it, additive Schwarz sounds a bit stupid. Why make more than one independently-computed correction to the same set of variables within an overlap region? It turns out that computing the corrections based on overlapping regions but then only applying one correction to any single unknown works rather better. This is known as restrictive additive Schwarz.</p>
+<p>Funny story: restrictive additive Schwarz was supposedly invented because of a programming error in an implementation of additive Schwarz! Remember that as you’re grumbling about the errors in your project work…</p>
+<p>As a brief aside: restrictive additive Schwarz is not a symmetric and positive definite preconditioner, so it cannot be used with CG. It works fine with GMRES, though.</p>
+</aside>
 </section>
 
 <section>
@@ -243,28 +326,32 @@ end</code></pre>
 <li>Coarse grid cheaply gets info across mesh, kills low freq</li>
 </ul></li>
 </ul>
+<aside class="notes">
+<p>Methods like restrictive additive Schwarz move information faster than one grid cell per step, but it still is limited to moving by one block per step. When we have many processors, that can still be an issue. For scalability, we really need to be able to move data by multiple processors at a time. We usually would do this by using RAS together with a “coarse grid solve.” The idea is that RAS on the fine grid kills off the high-frequency error, and the coarse grid solve kills off the smooth part of the error.</p>
+<p>Of course, there’s no need to stop with just a fine grid and a coarse grid. We could have grids at multiple resolutions, which is the key idea behind multigrid methods.</p>
+</aside>
 </section>
 
 <section>
 <h3>Tuning matmul</h3>
 <p>Can also tune matrix multiply</p>
 <ul>
-<li>Represented implicitly (regular grids)</li>
-<li>Or explicitly (e.g. compressed sparse column)</li>
-</ul>
-<p>Or further rearrange algorithm (Hoemmen, Demmel).</p>
-</section>
-
-<section>
-<h3>Tuning sparse matvec</h3>
+<li>Represented implicitly (regular grids)
 <ul>
-<li>Sparse matrix blocking and reordering (Im, Vuduc, Yelick)
+<li>Example: Optimizing stencil operations (Datta)</li>
+</ul></li>
+<li>Or explicitly (e.g. compressed sparse column)
 <ul>
+<li>Sparse matrix blocking and reordering</li>
 <li>Packages: Sparsity (Im), OSKI (Vuduc)</li>
 <li>Available as PETSc extension</li>
 </ul></li>
-<li>Optimizing stencil operations (Datta)</li>
 </ul>
+<p>Or further rearrange algorithm (Hoemmen, Demmel).</p>
+<aside class="notes">
+<p>We’ve focused for a few slides on the preconditioner. What about making the matrix-vector product run fast? After all, that’s the other big part of the work in CG.</p>
+<p>Making sparse matrix-vector products fast is actually pretty hard. There has been work on it, of course. For problems like 2D Poisson, where the computation is very regular and we don’t need to explicitly store the matrix, Kaushik Datta worked on tuned algorithms as part of his PhD thesis work. And for explicitly-represented sparse matrices, there are other packages that block and re-order matrix representations in order to get better cache performance.</p>
+</aside>
 </section>
 
 <section>
@@ -272,9 +359,12 @@ end</code></pre>
 <pre><code>for (int i = 0; i &lt; n; ++i) {
   y[i] = 0;
   for (int jj = ptr[i]; jj &lt; ptr[i+1]; ++jj)
-    y[i] += A[jj]*x[col[j]];
+    y[i] += A[jj]*x[col[jj]];
 }</code></pre>
-<p>Problem: y[i] += A[jj]*x[<strong>col[j]</strong>];</p>
+<p>Problem: y[i] += A[jj]*x[<strong>col[jj]</strong>];</p>
+<aside class="notes">
+<p>So why do I say that optimizing this type of operation is hard? Well, let’s consider matrix-vector products implemented in compressed sparse row format. It’s a pretty simple algorithm with two nested loops, shown here. Unfortunately, the only place where we might hope to get any cache re-use is in the accesses to x. And the access to the x array is not regularly strided; it’s all over the place! So what can we do?</p>
+</aside>
 </section>
 
 <section>
@@ -287,6 +377,9 @@ end</code></pre>
 </ul>
 <p>Can help by switching to block CSR.<br />
 Switching to single precision, short indices can help memory traffic, too!</p>
+<aside class="notes">
+<p>Well, mostly we can change the data structure. We might switch to a blocked representation that keeps dense submatrices; then we can fetch several entries of x in sequence and work on all of them together. Of we could switch to shorter integers to represent the indices, thus taking less memory traffic to read in the indexing data. But given that we have to at least read an element of A at every step, we’re limited in the amount of cache re-use we can hope to get.</p>
+</aside>
 </section>
 
 <section>
@@ -296,6 +389,9 @@ Switching to single precision, short indices can help memory traffic, too!</p>
 <li>Many partitioning strategies</li>
 <li>Idea: re-order so one of these strategies is “good”</li>
 </ul>
+<aside class="notes">
+<p>What if we want to parallelize the matvec? A natural idea is to partition the rows of A, giving each processor a piece. There are a number of possible partitioning strategies, and the key idea is to re-order things so that one of these strategies is “good.”</p>
+</aside>
 </section>
 
 <section>
@@ -308,5 +404,9 @@ Switching to single precision, short indices can help memory traffic, too!</p>
 <li>Good cache re-use?</li>
 </ul>
 <p>Reordering also comes up for GE!</p>
+<aside class="notes">
+<p>What do we mean by good? Maybe we mean that each processor should require the same amount of computation per matvec, or use the same amount of storage. Maybe we’d like to minimize interprocessor communication, or strive for good cache re-use. It turns out that all these things are fairly complementary.</p>
+<p>It also turns out that this type of re-ordering is critical to sparse Gaussian elimination, which is the subject of our next slide deck. So we’ll pick up with this topic next time!</p>
+</aside>
 </section>
 
