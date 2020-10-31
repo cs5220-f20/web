@@ -270,8 +270,8 @@ end</code></pre>
 </ul></li>
 </ul>
 <aside class="notes">
-<p>All right. Given these different ways of thinking about convergence of CG on the Poisson problem, what should we do to effectively precondition the iteration? What we really want is something to move information long distances across the mesh, or to deal with the smooth part of the air — different views of the same thing, really.</p>
-<p>It turns out that Jacobi, and even Gauss-Seidel, are also most effective at reducing the smooth part of the air, so they aren’t particularly effective preconditioners. Jacobi is particularly useless; for the 5-point stencil, the diagonal part of the matrix is constant, and so Jacobi preconditioning literally does nothing to the sequence of iterates chosen by CG!</p>
+<p>All right. Given these different ways of thinking about convergence of CG on the Poisson problem, what should we do to effectively precondition the iteration? What we really want is something to move information long distances across the mesh, or to deal with the smooth part of the error — different views of the same thing, really.</p>
+<p>It turns out that Jacobi, and even Gauss-Seidel, are also most effective at reducing the smooth part of the error, so they aren’t particularly effective preconditioners. Jacobi is particularly useless; for the 5-point stencil, the diagonal part of the matrix is constant, and so Jacobi preconditioning literally does nothing to the sequence of iterates chosen by CG!</p>
 </aside>
 </section>
 
