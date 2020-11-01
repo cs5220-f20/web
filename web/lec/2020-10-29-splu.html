@@ -43,7 +43,7 @@ audio: 2020-10-29-splu
 
 <section>
 <h3>Reordering for bandedness</h3>
-<p><img data-src="figs/laplace2d-spy.png" alt="Natural order" style="width:42.0%" /> <img data-src="figs/laplace2d-spy-rcm.png" alt="RCM order" style="width:42.0%" /></p>
+<p><img data-src="figs/laplace2d-spy.png" alt="Natural order" style="width:30.0%" /> <img data-src="figs/laplace2d-spy-rcm.png" alt="RCM order" style="width:30.0%" /></p>
 <p>Reverse Cuthill-McKee</p>
 <ul>
 <li>Select “peripheral” vertex <span class="math inline">\(v\)</span></li>
@@ -76,7 +76,7 @@ audio: 2020-10-29-splu
 <h3>Skylines and profiles</h3>
 <ul>
 <li><em>Profile</em> solvers generalize band solvers</li>
-<li>Skyline storage for storing lower triangle: for each row <span class="math inline">\(i\)</span>,
+<li>Skyline storage for lower triangle: for each row <span class="math inline">\(i\)</span>,
 <ul>
 <li>Start and end of storage for nonzeros in row.</li>
 <li><em>Contiguous</em> nonzero list up to main diagonal.</li>
@@ -307,7 +307,7 @@ Nonstationary methods work, too.</p>
 <ul>
 <li>Sparse direct for 2D problems</li>
 <li>Gets more expensive for 3D problems</li>
-<li>Approximate direct solves make good preconditionres</li>
+<li>Approximate direct solves make good preconditioners</li>
 </ul>
 <aside class="notes">
 <p>Let me wrap up the discussion of sparse linear algebra with a bit of advice. Unless you want to be an expert in the area, you probably don’t want to build your own sparse direct solvers. But there are good options out there of sparse direct codes that other people have written. You might be able to find iterations that are more asymptotically efficient than these direct solvers for 2D problems, but asymptotics aren’t everything — the constants for the sparse direct solvers are pretty good, because of their reliance on level 3 BLAS.</p>
