@@ -36,7 +36,7 @@ audio: 2020-10-29-splu
 </ul>
 <p>Matrices that are “almost” diagonal are good?</p>
 <aside class="notes">
-<p>When we think about reordering operations, we almost invariably think about the graphs that are associated with the matrices. We’re thinking about square matrices, so we have the same number of rows and columns. The idea is that for each row or column, we have a node in the graph; and we include an edge from node i to node j whenever A_ij is nonzero. For today, we’ll deal with the (structurally) nonsymmetric case, which gives us undirected graphs.</p>
+<p>When we think about reordering operations, we almost invariably think about the graphs that are associated with the matrices. We’re thinking about square matrices, so we have the same number of rows and columns. The idea is that for each row or column, we have a node in the graph; and we include an edge from node i to node j whenever A_ij is nonzero. For today, we’ll deal with the (structurally) symmetric case, which gives us undirected graphs.</p>
 <p>Closely related to the problem of reordering is the problem of partitioning a graph into blocks that are about the same size, but with few edges between them. Then we can assign those blocks to different processors, and have minimal communication between processors for either matrix multiplication or (ideally) for Gaussian elimination. The simplest version of this is reordering matrices to be almost diagonal, a structure that is good for both sparse matrix-vector products and for Gaussian elimination.</p>
 </aside>
 </section>
