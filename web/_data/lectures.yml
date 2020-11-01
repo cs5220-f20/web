@@ -186,6 +186,8 @@
   files:
     - info: Krylov subspace methods
       file: lec/2020-10-29-krylov.html
+    - info: Sparse direct methods
+      file: lec/2020-10-29-splu.html
 # =================
 # Week 8
 #
@@ -194,7 +196,7 @@
   break: Election day
 -
   date: 2020-11-05
-  info: Transforms and data sparsity
+  info: UPC and PGAS languages
 # =================
 # Week 9
 #
