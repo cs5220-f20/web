@@ -1,0 +1,678 @@
+---
+title: Beyond MPI and OpenMP
+layout: slides
+audio: 2020-11-05-pgas
+---
+
+<section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <h3>Beyond MPI and OpenMP</h3>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
+  </p>
+  <p>Please click the play button below.</p>
+</section>
+
+<section>
+<h3>A programmatic note</h3>
+<ul>
+<li>Lots of programming systems!</li>
+<li>Playing with one can be a good project</li>
+<li>Key: model, measure, tune performance!</li>
+</ul>
+<aside class="notes">
+<p>This slide deck is not exactly when and where I planned things at the start of the semester, in two ways. First, I originally planned to talk about transform methods in this slot; I only thought better of it as I started thinking about what to say about the final project. And second, I originally planned to finish recording and posting by Thursday, not by the end of the following weekend! What can I say, it has been an eventful week.</p>
+<p>I’m going to spend the bulk of this lecture talking about parallel global address space (PGAS) languages generally, and UPC and UPC++ in particular. But before that, I want to take a step back and talk about the broader parallel programming picture. Indeed, there are a lot of parallel programming languages and frameworks out there! And I want to point to a few of them, because playing with one of these can make the basis for a fine class project. The key, though, should you choose to follow this path, is that you should do your playing with an eye to performance. Model, tune, and measure!</p>
+</aside>
+</section>
+
+<section>
+<h3>Parallel programming</h3>
+<p>Where we stand</p>
+<ul>
+<li>MPI (shared-nothing, message passing)</li>
+<li>OpenMP (shared memory, thread based)</li>
+</ul>
+<aside class="notes">
+<p>Before we talk about the big picture, let’s talk about where we are. We’ve spent some time on the two biggest modern programming environments for high-performance parallel computing: MPI and OpenMP. Both of these systems have been around since the 1990s, so over 20 years. I don’t think we’ve done them full credit – there are books worth of stuff on both systems. But we’ve at least gotten started. We’ve also spent a lot of time talking about how to think about performance and parallelism more generally, which I think is useful independent of the specific programming environment in question.</p>
+<p>With that said, what else should we be talking about when it comes to the landscape of parallel programming environments?</p>
+</aside>
+</section>
+
+<section>
+<h3>Beyond MPI and OpenMP</h3>
+<ul>
+<li>Heterogeneity and accelerators?</li>
+<li>Data analytics systems (Spark, Hadoop, …)?</li>
+<li>ML systems (TensorFlow, PyTorch, Keras, …)?</li>
+<li>Other parallel languages for sci comp?</li>
+<li>Mixing and matching?</li>
+</ul>
+<aside class="notes">
+<p>There are a couple things that you might think are obvious holes. First, we haven’t said anything about accelerator programming, even though that’s a pretty giant part of the HPC landscape right now; the dominant programming systems there are CUDA and OpenCL, though there are lots of competitors (including OpenMP, which I think we mentioned in passing).</p>
+<p>Second, I’ve said nothing about any of the big parallel systems enjoying wide use for data analytics and machine learning. No Spark, no Hadoop, no TensorFlow or PyTorch or Keras or anything like that. This is mostly a matter of scope: if I was doing a course on systems for ML, I might talk about all these things (and maybe Chris De Sa does talk about these things in his ML systems course!). But this course is deliberately oriented toward the HPC side of the world.</p>
+<p>Third, parallel scientific computing has been a concern for as long as I’ve been alive – literally – and yet I’ve said very little about the many other parallel systems that have been explored. That’s partly because of something you’ve doubtless already noticed: high-performance programming is an enormous amount of work, and getting the best performance puts a lot of pressure on compiler writers. There are only so many cycles the world is willing to spend on producing (or learning) production-grade HPC tools, and lots of ideas never really make it to launch, or never really catch on once they are out in the world. Ideally, the ideas get taken up by existing systems, though. And there are some good ideas that are worth talking about that aren’t yet all that well handled by the MPI + OpenMP combination, and we’ll talk about a few of those shortly.</p>
+<p>Fourth, I haven’t said that much about how to mix-and-match different types of programming models, and that definitely is worth a few words.</p>
+</aside>
+</section>
+
+<section>
+<h3>Plan for today</h3>
+<ul>
+<li>Accelerator programming</li>
+<li>MPI + X</li>
+<li>Libraries and frameworks</li>
+<li>Special-use languages</li>
+<li>PGAS languages, UPC and UPC++</li>
+</ul>
+<aside class="notes">
+<p>So here’s the plan for today. First, we’ll say a few words about accelerator programming; not enough to really tell you how to program a GPU, but enough to tell you where to get started in reading or looking around. Second, we’ll talk about the “MPI + X” pattern of MPI between nodes and something else on node. Finally, we’ll talk about some libraries and frameworks that are out there that provide parallel abstractions for common tasks – these tend to focus on linear algebra and tensor types of operations. Then, we’ll talk about the parallel global address space languages UPC and UPC++.</p>
+</aside>
+</section>
+
+<section>
+<h3>Accelerator programming</h3>
+<ul>
+<li>GPUs and manycore devices
+<ul>
+<li>Early: shaders for general LA</li>
+<li>NVidia: CUDA for beyond graphics (esp ML)</li>
+<li>Other attempts: Xeon Phi, FPGA, etc</li>
+</ul></li>
+<li>No Magic Bullets
+<ul>
+<li>Be thoughtful when comparing!</li>
+<li>Use libraries when possible!</li>
+</ul></li>
+</ul>
+<aside class="notes">
+<p>OK. Let’s start with accelerators, by which I typically mean GPUs and related many-core devices.</p>
+<p>The predecessor to modern accelerator programming was known as “general-purpose graphics processing unit” (GPGPU) programming. Graphics cards do lots of linear-algebra-flavored operations, and so people started with using shaders – usually used for producing pixels – to instead encode general linear algebra problems. The general style is very reminiscent of the old vector machines – single instruction on multiple threads (SIMT).</p>
+<p>NVidia introduced CUDA in 2007 as a way to make their graphics cards “easy” for general-purpose programming. Needless to say, it caught on, and I think it’s fair to say that the introduction of GPU and other accelerators has been one of the big enablers of a lot of the big ML efforts, particularly those involving deep learning. GPUs are not the only type of accelerator out there, either. Intel introduced the Xeon Phi accelerators as a competitor toward the GPUs coming out of NVidia and AMD, for example, though the path for these chips has been rocky. And there are Google’s Tensor Processing Units (or TPUs) and various FPGA-based accelerators out there in the wild now, too.</p>
+<p>Accelerators are a huge part of the current landscape. But it’s important to think about them carefully. GPUs aren’t magic. They are highly parallel, but there’s also a lot of parallelism available in a high-end CPU with a bunch of cores. Naive code on a GPU is going to be slow, just as naive code on a CPU is going to be slow; and there have been a lot of bad takes over time from people who carefully tuned a GPU implementation of a code that was originally somewhat naively written for a CPU, and hence got an exaggerated notion of the raw performance difference.</p>
+<p>Anyhow, if you want to do standard types of things, the advice is the same for CPU and for GPU systems: use someone else’s library! Fortunately, a lot of linear algebra libraries (for example) now include accelerator support, so you can benefit from having a GPU or other accelerator without writing any new GPU code.</p>
+</aside>
+</section>
+
+<section>
+<h3>CUDA, OpenCL, OpenACC, OpenMP</h3>
+<ul>
+<li>CUDA: the grandfather of them all (2007)</li>
+<li>OpenCL: open standard, multiple devices (2009)</li>
+<li>OpenACC: OpenMP-style directives (2012)</li>
+<li>OpenMP: added accel directives in 4.0 (2013)</li>
+</ul>
+<aside class="notes">
+<p>NVidia introduced CUDA in 2007. CUDA started life as a C/C++-like language for GPU “kernels” that would be compiled to a low-level VM code called PTX (Parallel Thread Execution). Then the graphics driver converts the PTX code into something the GPU can run. I always think of “CUDA” as referring to the first part of this pipeline – converting from high-level code in C/C++ (or Fortran, now) down to PTX code. But there are now a lot of other systems with PTX backends, including Python’s Numba and the GPU support system in Julia.</p>
+<p>CUDA is an NVidia-specific thing, but NVidia was never the sole manufacturer of graphics cards, and there were a number of competitors to the CUDA programming system. OpenCL came out of AMD at first, but it’s an open standard run by the Khronos Group. OpenCL shares some ideas in common with CUDA.</p>
+<p>OpenACC was designed to be an OpenMP-like system of compiler pragmas for compiling with accelerators. But it had hardly gotten off the ground before OpenMP also added accelerator support with version 4.0. There are enough differences between OpenMP and OpenACC that both will doubtless continue for a while, though Cray (one of the original developers of the OpenACC standards) has apparently announced that they aren’t going to support it in their compilers going forward. My guess is that OpenMP is where we’re going to go for directive-based accelerator programming in the next few years.</p>
+</aside>
+</section>
+
+<section>
+<h3>Kokkos, SYCL, DPC++, oneAPI</h3>
+<ul>
+<li>Kokkos: Portable (?) many-core performance</li>
+<li>SYCL: Higher-level programming on top of OpenCL</li>
+<li>DPC++ and oneAPI: Intel’s SYCL versions</li>
+</ul>
+<aside class="notes">
+<p>CUDA and OpenCL are pretty low-level. Kokkos and SYCL are attempts to gain higher-level, more portable performance in C++.</p>
+<p>Unlike CUDA and OpenCL, Kokkos is fundamentally based on standard C++, and offers benefits even if you aren’t doing GPU programming. Kokkos has the notion of separation of parallel patterns (loop, scan, reduction, etc), memory spaces where the data resides, execution spaces where functions execute, and – of course – the actual functions that are involved. Kokkos came out of Sandia’s Trilinos project, but now has a life of its own, and continues to be developed and supported.</p>
+<p>SYCL is the new thing out of the Khronos group, the same group that manages OpenCL, though it can now run on top of substrates other than OpenCL. It’s also standard C++, with simple syntax for some common parallel patterns. Like Kokkos, SYCL provides some advantages even for running on CPU architectures. Intel has thrown their considerable weight behind SYCL with their data-parallel C++ (DPC++) and oneAPI initiatives, and it will be interesting to see how this evolves.</p>
+<p>Unlike CUDA and OpenCL, which have bindings into other languages, the Kokkos and SYCL systems are very closely tied to C++, and it’s hard to see how we would have PyKokkos or SYCL Fortran any time soon.</p>
+</aside>
+</section>
+
+<section>
+<h3>DO CONCURRENT? pSTL?</h3>
+<ul>
+<li>Fortran 2008 DO CONCURRENT: Loop iterations with no interdependencies</li>
+<li>Parallel STL: Parallel algorithms in C++</li>
+</ul>
+<aside class="notes">
+<p>Over time, some of the standard parallel constructs are getting support in core language standards. We’ll talk about one such extension (co-arrays in Fortran) in a few slides, but for now I want to mention language features relevant to multi-core and potentially to heterogeneous computing. Specifically: Fortran 2008 added a “do concurrent” loop, basically a version of the do loop (a for loop in C) in which the programmer promises there are no dependencies between loop iterations. And in the C++ 2017 standard, there are a bunch of parallel algorithms that were added to the standard template library. At the moment, I don’t know of any compilers that attempt to target accelerators with these constructs, but at least we’re starting to acknowledge in our language designs that we’re living in a parallel world!</p>
+</aside>
+</section>
+
+<section>
+<h3>Simit, Halide, and company</h3>
+<p>Idea: mini-language for LA and tensor ops</p>
+<ul>
+<li>Standalone mini-languages (Simit)</li>
+<li>Embedded in another language (Halide, Numba, Jax)</li>
+</ul>
+<aside class="notes">
+<p>Of course, there are other languages beyond Fortran and C++, and it’s interesting to see what role they increasingly play in accelerator programming. There are now a number of systems that effectively introduce small, special-purpose languages for certain classes of accelerator programs. Simit is one that has its own syntax and compiler, and produces remarkably fast simulation code (either for multicore or GPUs). Other systems effectively embed little expression languages inside of another language, like C++ or Python. Halide does this for C++, while Numba and Jax do this in Python. None of these is a complete general-purpose programming language, but that’s part of the appeal; by restricting the scope, it’s easier to figure out how to compile to something fast without worrying about all the things that a C++ or Fortran compiler has to worry about (e.g. aliasing).</p>
+</aside>
+</section>
+
+<section>
+<h3>MPI+X?</h3>
+<p>MPI for inter-node plus</p>
+<ul>
+<li>MPI-3 RMA locally?</li>
+<li>OpenMP locally?
+<ul>
+<li>Have to coordinate with MPI</li>
+</ul></li>
+<li>Some other thread system locally?</li>
+<li>Accelerator integration?</li>
+</ul>
+<aside class="notes">
+<p>When people talk about heterogeneous programming languages and frameworks in 2020, they still mostly seem to mean languages and frameworks for codes that run within the confines of a single box, though maybe one with a bunch of chips and boards in it. For cross-node communication, the standard answer remains “use MPI.”</p>
+<p>Of course, you can program a single box using MPI! At least, you can program everything but accelerator boards that way. If you use MPI-3, you can even get shared-memory style programming while on-node, though maybe this isn’t the most common approach. More common is something like MPI + OpenMP, though it’s not so common that building and running the code is completely painless. One also has to think a bit about how the two parallel systems interact. One possibility is to only call MPI from outside an OpenMP region, but there is also special support for multi-threaded MPI processes (you need to declare whether you’re going to only let the master thread call MPI, or only let one thread at a time call, or let all the threads call).</p>
+<p>And… there is no pure MPI way of doing most accelerator programming. Moreover, a pure MPI code that involves one MPI rank per core is going to require some coordination in the common case that all those cores are in a box with a couple GPUs. So despite the pain points, there are some advantages to the MPI-plus-OpenMP combination, maybe together with something else for accelerators or maybe with the OpenMP 4 offload directives.</p>
+</aside>
+</section>
+
+<section>
+<h3>Trilinos and PETSc</h3>
+<ul>
+<li>Trilinos: C++ framework for parallel scientific codes (Sandia)</li>
+<li>PETSc: Portable Extensible Toolkit for Scientific Computing (Argonne)</li>
+</ul>
+<aside class="notes">
+<p>There are two giant parallel scientific computing libraries out of the national labs that support distributed representations of vectors, matrices, and the like. The PETSc system out of Argonne is based on object-oriented C, and is completely MPI-centric (no threads), though it does have some GPU support (in the master branch, not the current release). Trilinos has native support for MPI + something heterogeneous on the local node, based on Kokkos and the TPetra vector library; the Trilinos developers have a thing for Greek names, I suppose, and petra (rock) is the foundation on which a lot of the system is built. TPetra is the templated version of the vector library.</p>
+</aside>
+</section>
+
+<section>
+<h3>FENICs and domain-specific</h3>
+<p>FEniCS: High-level finite element codes in Python</p>
+<aside class="notes">
+<p>There are a number of libraries that sit atop libraries like PETSc and Trilinos, like the FEniCS finite element system. The idea in FEniCS is that you declaratively specify your equations and all the things that go into a finite element code (the element types, the geometry, etc), and the system generates a high-performance code for you. And part of the bargain is that you get interfaces to the solver packages in PETSc! At least, you do if you’ve built the code with PETSc support and figured out how to run everything.</p>
+<p>The point of all this is that sometimes writing a high-performance numerical code doesn’t involve diving down to the lowest levels of the stack and writing a bunch of things with MPI and OpenMP and CUDA. You can do good work living off higher-level library interfaces, too, though understanding performance (and understanding how to run the code) usually involves understanding what’s going on at the lower layers of the stack even in this case.</p>
+</aside>
+</section>
+
+<section>
+<h3>PGAS languages</h3>
+<p>Partitioned Global Address Space</p>
+<ul>
+<li><em>Local</em> addresses on local proc</li>
+<li><em>Remote</em> addresses on other procs</li>
+<li>May also have <em>private</em> space</li>
+<li>Programmer controls placement</li>
+</ul>
+<aside class="notes">
+<p>All right. Let’s talk now about one of the dominant multi-node competitors to MPI-style message-passing programming: the Parallel Global Address Space idea. The idea with the PGAS languages and libraries is that in addition to private data, we may have shared data structures (arrays being the simplest) that are spread across the memory on everal processors. Programmers read and write to these objects in a similar way to how they would in shared memory programs, with one exception: there is an explicit notion of who owns what part of memory, and programmers control data placement.</p>
+</aside>
+</section>
+
+<section>
+<h3>PGAS languages</h3>
+<ul>
+<li>Fortran 2008</li>
+<li>UPC</li>
+<li>Chapel</li>
+<li>UPC++</li>
+<li>Many library-based systems</li>
+</ul>
+<aside class="notes">
+<p>There are a number of partitioned global address space systems out there.</p>
+<p>The most established is probably the co-array feature in Fortran, which began as part of a dedicated language (co-array Fortran) and then entered the Fortran standard in 2008. A close runner-up, though, may be Unified Parallel C, which grew out of a number of earlier parallel C variants (e.g. Active C, Split-C, PCP). The Chapel programming language was introduced by Cray during a DARPA project on “High Productivity Computing Systems”; unlike other languages from that effort, such as X10 and Fortress, Chapel continues to have a life well after that project. Of more recent vintage is UPC++, a PGAS system out of Berkeley based on modern standard C++ (and not an extended language as in UPC). And there are a number of library-based systems as well.</p>
+<p>I have never actually written anything in UPC++, and we’ve mostly stuck to C for this course anyhow. So for today I will stick with telling you about UPC.</p>
+</aside>
+</section>
+
+<section>
+<h3>UPC</h3>
+<ul>
+<li>Explicit parallel extension to ANSI C</li>
+<li>A PGAS language</li>
+<li>C philosophy: concise, low level, …
+<ul>
+<li>And “enough rope to hang yourself!”</li>
+</ul></li>
+</ul>
+<aside class="notes">
+<p>UPC is C plus a little bit. That little bit gives you the partitioned global address space approach. The philosophy is very C-like – you have a lot of low-level control, and the system does very little to protect you from your worst impulses.</p>
+</aside>
+</section>
+
+<section>
+<h3>Execution model</h3>
+<ul>
+<li><code>THREADS</code> parallel threads, <code>MYTHREAD</code> local index</li>
+<li>Thread count specified at compile or run time</li>
+<li>Synchronization primitives (barriers, locks)</li>
+<li>Parallel iteration (forall)</li>
+<li>Parallel memory access/mgmt</li>
+<li>Parallel library routines</li>
+</ul>
+<aside class="notes">
+<p>The parallel execution model for UPC is a lot like MPI in that it is single program, multiple data (SPMD). You can’t change the number of threads during the execution, but you can either freeze it in at compile time or choose it at run time. There are global variables on each processor to specify the total number of threads and the local thread index in a linear ordering. And then there are all the amenities surrounding parallel work partitioning and remote memory access and synchronization, which we’ll spend most of the remainder of the deck on.</p>
+</aside>
+</section>
+
+<section>
+<h3>Hello world</h3>
+<pre><code>#include &lt;upc.h&gt;
+#include &lt;stdio.h&gt;
+
+int main()
+{
+    printf(&quot;Hello from %d of %d\n&quot;,
+           MYTHREAD, THREADS);
+}</code></pre>
+<aside class="notes">
+<p>Here’s our “hello world code” in UPC. Note the first line that includes upc.h; this is needed for any of the UPC extensions. The only other thing here that is specific to UPC is the use of MYTHREAD and THREADS in the print statement.</p>
+</aside>
+</section>
+
+<section>
+<h3>Shared variables</h3>
+<pre><code>shared int ours;
+int mine;</code></pre>
+<aside class="notes">
+<p>We have two types of variables in UPC: shared and local. Normal variables are completely thread local, and behave like you’d expect in any other C program. Shared variables, though, are more interesting.</p>
+</aside>
+</section>
+
+<section>
+<h3>Shared variables</h3>
+<pre><code>shared int ours;</code></pre>
+<ul>
+<li>Allocated once on thread 0</li>
+<li>Cannot have dynamic lifetime</li>
+<li>More expensive to access</li>
+</ul>
+<aside class="notes">
+<p>By default, a shared variable will be allocated once, on thread 0. It is remote to all other threads. And it cannot have dynamic lifetime – it lives for the entire duration of the program, like a variable in the global segment in a normal C program.</p>
+<p>Shared variables are more expensive to access than local variables, even when the variables are local to the processor that wants to access them.</p>
+</aside>
+</section>
+
+<section>
+<h3>Shared arrays</h3>
+<pre><code>shared int x[THREADS];      /* 1 per thread */
+shared double y[3*THREADS]; /* 3 per thread */
+shared int z[10];           /* Varies */</code></pre>
+<ul>
+<li>Elements have <em>affinity</em></li>
+<li>Default cyclic layout</li>
+</ul>
+<aside class="notes">
+<p>In addition to shared scalar variables, we have support for shared arrays. These can have size that depends on the number of threads (or not). Different elements have different “affinities,” or places where they live. The default is cyclic: that is, variable x[i] has affinity to thread i mod THREADS.</p>
+</aside>
+</section>
+
+<section>
+<h3>Piece of pi</h3>
+<p>Write <span class="math display">\[
+  \pi = 4 (\mbox{area of unit circle quadrant})
+\]</span> If <span class="math inline">\((X,Y)\)</span> are uniform on <span class="math inline">\([0,1]^2\)</span> then <span class="math display">\[
+  \pi = 4 P\{X^2 + Y^2 &lt; 1}.
+\]</span> MC: Sample square, compute fraction inside circle.</p>
+<aside class="notes">
+<p>Let’s do something a little more complex than hello world, and do a Monte Carlo code for computing pi. The idea is that we will sample the unit square, and the probability of any given sample falling inside the unit circle is pi/4. This is Monte Carlo, so pleasingly parallel.</p>
+</aside>
+</section>
+
+<section>
+<h3>pi in C</h3>
+<pre><code>int main()
+{
+    int i, hits = 0, trials = 1000000;
+    srand(17);
+    for (i = 0; i &lt; trials; ++i)
+        hits += trials_in_disk();
+    printf(&quot;Pi approx %y\n&quot;, 4.0*hits/trials);
+    return 0;
+}</code></pre>
+<aside class="notes">
+<p>Here’s the Monte Carlo computation in code, based on a million trials. The trial_in_disk function (not shown) checks whether a random X, Y pair drawn uniformly from the square will actually lie inside the disk.</p>
+</aside>
+</section>
+
+<section>
+<h3>pi in UPC, v1</h3>
+<pre><code>shared int all_hits[THREADS];
+int main() {
+    int i, hits = 0, trials = 1000000;
+    srand(1+MYTHREAD*17);
+    for (i = 0; i &lt; trials; ++i)
+        hits += trials_in_disk();
+    all_hits[MYTHREAD] = hits;
+    upc_barrier;
+    if (MYTHREAD == 0) {
+        hits = 0;
+        for (i = 0; i &lt; THREADS; ++i)
+            hits += all+hits[i];
+        printf(&quot;Pi approx %y\n&quot;, 4.0*hits/trials/THREADS);
+    }
+    return 0;
+}</code></pre>
+<aside class="notes">
+<p>Here’s an initial UPC version. We give each thread a different random seed, and then have them all do Monte Carlo trials in parallel. After completing the trials, they write into their piece of a shared array, and then there’s a barrier. After the barrier, thread 0 tallies the final sum and prints the estimate for pi.</p>
+</aside>
+</section>
+
+<section>
+<h3>Synchronization</h3>
+<ul>
+<li>Barriers
+<ul>
+<li>Normal: <code>upc_barrier</code></li>
+<li>Split-phase: <code>upc_notify</code> and <code>upc_wait</code></li>
+</ul></li>
+<li>Locks (protect critical sections)</li>
+</ul>
+<aside class="notes">
+<p>The barrier construct in UPC is interesting. In addition to the basic barrier that we used in the previous slide, one can also have “split-phase” barriers consisting of a notify that starts the barrier and a wait that ends the barrier. In between the notify and wait, the threads can do independent work that doesn’t do anything with the shared data structures.</p>
+<p>We also have low-level locks, used to protect critical sections. Nothing like the OpenMP support for lexically-scoped critical sections, alas, so I suppose I should say how the locks work.</p>
+</aside>
+</section>
+
+<section>
+<h3>Locks</h3>
+<pre><code>upc_lock_t* lock = upc_all_lock_alloc();
+upc_lock(lock);      /* Get lock */
+upc_unlock(lock);    /* Release lock */
+upc_lock_free(lock); /* Free */</code></pre>
+<aside class="notes">
+<p>Locks are dynamically allocated objects. Everyone has to call the <code>upc_all_lock_alloc</code> function to set them up, but only one thread needs to free the lock at the end. Calls to the upc lock and unlock routines grab and release the lock.</p>
+</aside>
+</section>
+
+<section>
+<h3>pi in UPC, take 2</h3>
+<pre><code>shared int tot = 0;
+int main() {
+    int i, hits = 0, trials = 1000000;
+    upc_lock_t* tot_lock = upc_all_lock_alloc();
+    srand(1+MYTHREAD*17);
+    for (i = 0; i &lt; trials; ++i)
+        hits += trials_in_disk();
+    upc_lock(tot_lock)
+    tot += hits;
+    upc_unlock(tot_lock);
+    upc_barrier;
+    if (MYTHREAD == 0) {
+        upc_lock_free(tot_lock);
+        printf(&quot;Pi approx %g\n&quot;, 4.0*tot/trials/THREADS);
+    }
+    return 0;
+}</code></pre>
+<aside class="notes">
+<p>Here’s our lock-based version of the pi code. The basic picture is the same as before, but rather than having each processor write to a shared array, we have each processor increment a total counter, with a lock used to protect access. Note again: everyone allocates the lock, but only one thread needs to free it.</p>
+</aside>
+</section>
+
+<section>
+<h3>Collectives</h3>
+<pre><code>#include &lt;upc.h&gt;
+#include &lt;bupc_collective.h&gt;
+int main() {
+    int i, hits = 0, trials = 1000000;
+    srand(1 + MYHREAD*17);
+    for (i = 0; i &lt; trials; ++i)
+        hits += trial_in_disk();
+    hits = bupc_allv_reduce(int, hits, 0, UPC_ADD);
+    if (MYTHREAD == 0)
+        printf(&quot;Pi approx %g\n&quot;, 4.0*tot/trials/THREADS);
+    return 0;
+}</code></pre>
+<aside class="notes">
+<p>UPC also supports a typical list of collective operations. Here’s an example of using a library reduction operation to accumulate the hits in our pi example. Note that we need another header file for this.</p>
+</aside>
+</section>
+
+<section>
+<h3>Forall loops</h3>
+<pre><code>upc_forall (init; test; update; affinity)
+    statement;</code></pre>
+<ul>
+<li>Assume independent iterations</li>
+<li>Just run iters that match affinity expr
+<ul>
+<li>Integer: <code>affinity % THREADS == MYTHREAD</code></li>
+<li>Pointer: <code>upc_threadof(affinity) == MYTHREAD</code></li>
+</ul></li>
+<li>Syntactic sugar (could use <code>for</code>)</li>
+</ul>
+<aside class="notes">
+<p>UPC has a parallel for loop construct, just like OpenMP. The main difference is that upc_forall has a fourth clause to specify affinity; each iteration only runs on the thread with which it has affinity.</p>
+</aside>
+</section>
+
+<section>
+<h3>Example</h3>
+<pre><code>shared double x[N], y[N], z[N];
+int main() {
+    int i;
+    upc_forall (i = 0; i &lt; N; ++i; i)
+        z[i] = x[i] + y[i];
+}</code></pre>
+<aside class="notes">
+<p>Here’s an example of a UPC parallel loop with the affinity clause set up so that no communication is required – each processor takes care of the pieces of x, y, and z that are stored locally.</p>
+</aside>
+</section>
+
+<section>
+<h3>Array layouts</h3>
+<ul>
+<li><em>Layout specifiers</em> allow block cyclic</li>
+<li>Block exprs must be compile constant</li>
+<li>Element <code>i</code> affinity with <code>(i / blocksize) % THREADS</code></li>
+<li>Higher-dim: affinity by linearized index</li>
+</ul>
+<aside class="notes">
+<p>Sometimes, of course, we don’t want cyclic layout. For example, think of advancing a PDE with a nearest-neighbor finite difference stencil. A cyclic layout would be disastrous in this case! For this reason, UPC also supports block cyclic layouts. The block size has to be compile constant, except that it can depend on the THREADS variable, and we rotate affinity through the threads in chunks of the specified size. And there is specialized support for higher-dim arrays.</p>
+</aside>
+</section>
+
+<section>
+<h3>Array layouts</h3>
+<pre><code>shared double a[N];                 /* Block cyclic */
+shared[*] double a[N];              /* Blocks of N/THREADS */
+shared[] double a[N];               /* All elements on thread 0 */
+shared[M] double a[N];              /* Block cyclic, block size M */
+shared[M1][M2] double a[N][M1][M2]; /* Blocks of M1*M2 */</code></pre>
+<aside class="notes">
+<p>Here are some examples of different array layouts. The first one we’ve seen – this is simple block cyclic. If we put a star in brackets after the shared declaration, we get big blocks of size N/THREADS. Just brackets after the shared means that we want all the data to live at thread 0. Then we can specify fixed block sizes inside a 1D array or a multi-dimensional array by putting various constants in brackets after the shared keyword.</p>
+</aside>
+</section>
+
+<section>
+<h3>1D Jacobi Poisson example</h3>
+<pre><code>shared[*] double u_old[N], u[N], f[N];
+void jacobi_sweeps(int nsweeps) {
+    upc_barrier;
+    for (int it = 0; it &lt; nsweeps; ++it) {
+        upc_forall(int i = 1; i &lt; N-1; ++i; &amp;(u[i]))
+            u[i] = (u_old[i-1] + u_old[+1] - h*h*f[i])/2;
+        upc_barrier;
+        upc_forall(int i = 1; i &lt; N-1; ++i; &amp;(u[i]))
+            u_old[i] = u[i];
+        upc_barrier;
+}</code></pre>
+<aside class="notes">
+<p>Here’s a UPC version of a Jacobi iteration for a 1D Poisson equation. As in some of our other codes, we do a double-step, going from the old mesh to the new and then back again. In each piece, the forall loop with the affinity clause, together with the blocked layout, results in minimal traffic across the interfaces, and everything gets synced up at the barriers.</p>
+<p>The good thing about this is that it fits in one slide, and the block layout minimizes communication. But shared array access is relatively slow. And we are doing two barriers per step.</p>
+</aside>
+</section>
+
+<section>
+<h3>Jacobi take 2</h3>
+<pre><code>shared double ubound[2][THREADS]; /* Ghost cells */
+double uold[N_PER+2], uloc[N_PER+2], floc[N_PER+2];
+void jacobi_sweep(double h2) {
+    if (MYTHREAD&gt;0)       ubound[1][MYTHREAD-1]=uold[1];
+    if (MYTHREAD&lt;THREADS) ubound[0][MYTHREAD+1]=uold[N_PER];
+    upc_barrier;
+    uold[0]       = ubound[0][MYTHREAD];
+    uold[N_PER+1] = ubound[1][MYTHREAD];
+    for (int i = 1; i &lt; N_PER+1; ++i)
+        uloc[i] = (uold[i-1]+uold[i+1] - h2*floc[i])/2;
+    for (int i = 1; i &lt; N_PER; ++i)
+        uold[i] = uloc[i];
+}</code></pre>
+<aside class="notes">
+<p>Here’s a more efficient version of one step. This is more MPI-like in that most of the data is completely local; we only keep a little data for exchange of boundary information.</p>
+</aside>
+</section>
+
+<section>
+<h3>Jacobi take 3</h3>
+<pre><code>void jacobi_sweep(double h2) {
+    if (MYTHREAD&gt;0)       ubound[1][MYTHREAD-1]=uold[1];
+    if (MYTHREAD&lt;THREADS) ubound[0][MYTHREAD+1]=uold[N_PER];
+    upc_notify;
+    for (int i = 2; i &lt; N_PER; ++i)
+        uloc[i] = (uold[i-1]+uold[i+1] - h2*floc[i])/2;
+    upc_wait;
+    uold[0]       = ubound[0][MYTHREAD];
+    uold[N_PER+1] = ubound[1][MYTHREAD];
+    for (int i = 1; i &lt; N_PER+1; i += N_PER)
+        uloc[i] = (uold[i-1]+uold[i+1] - h2*floc[i])/2;
+    for (int i = 1; i &lt; N_PER; ++i)
+        uold[i] = uloc[i];
+}</code></pre>
+<aside class="notes">
+<p>We can be a little more efficient still by updating the interior nodes at the same time that we are doing the data transfer. The split phase barrier gives us something like what we would get with the non-blocking sends and receives in MPI.</p>
+</aside>
+</section>
+
+<section>
+<h3>Sharing pointers</h3>
+<pre><code>int* p;                /* Ordinary pointer */
+shared int* p;         /* Local pointer to shared data */
+shared int* shared p;  /* Shared pointer to shared data */
+int* shared p;         /* Legal, but bad idea */</code></pre>
+<p>Pointers to shared are larger, slower than standard.</p>
+<aside class="notes">
+<p>In addition to static shared arrays, we can also have pointers to shared objects. Either the pointer itself or the data it points to might be shared. A shared pointer is bigger than a standard pointer, and access via a shared pointer are slower than access via a local pointer (even when retrieving data stored on the local thread’s memory).</p>
+</aside>
+</section>
+
+<section>
+<h3>UPC pointers</h3>
+<p>Three fields in shared pointer</p>
+<ul>
+<li>Thread number</li>
+<li>Local address of block</li>
+<li>Phase (position in block)</li>
+</ul>
+<p>Access with <code>upc_threadof</code> and <code>upc_phaseof</code>; go to start with <code>upc_resetphase</code></p>
+<aside class="notes">
+<p>Digging in a bit more, a pointer to a shared object has three fields: the thread number, the local address of the block, and the phase (or position in the block).</p>
+</aside>
+</section>
+
+<section>
+<h3>Global allocation</h3>
+<pre><code>shared void*
+upc_global_alloc(size_t nblocks, size_t nbytes);</code></pre>
+<ul>
+<li>Non-collective</li>
+<li>Layout is <code>shared [nybtes] char[nblocks * nbytes]</code></li>
+</ul>
+<aside class="notes">
+<p>To allocate data in the shared space from a single thread, we call upc_global_alloc. This stripes a given number of blocks across threads, where each block has the given size nbytes.</p>
+</aside>
+</section>
+
+<section>
+<h3>Global allocation</h3>
+<pre><code>shared void*
+upc_all_alloc(size_t nblocks, size_t nbytes);</code></pre>
+<ul>
+<li>Collective - all call, all get same pointer</li>
+<li>Layout is <code>shared [nbytes] char[nblocks * nbytes]</code></li>
+</ul>
+<aside class="notes">
+<p>We can also do a collective allocation call with upc_all_alloc. Everyone must call the function at the same time, and everyone gets a pointer to the same shared data object. The layout is the same as in the previous slide.</p>
+</aside>
+</section>
+
+<section>
+<h3>Free</h3>
+<pre><code>void upc_free(shared void* p);</code></pre>
+<aside class="notes">
+<p>The upc_free call frees dynamically allocated shared memory. It is not collective – just like with locks, only one thread should upc_free a given allocation.</p>
+</aside>
+</section>
+
+<section>
+<h3>Example: Shared integer stack</h3>
+<pre><code>typedef struct list_t {
+    int x;
+    shared struct list_t* next;
+} list_t;
+
+shared struct list_t* shared head;
+upc_lock_t* list_lock;</code></pre>
+<aside class="notes">
+<p>Let’s do a slightly more elaborate example, a shared linked-list representation of a stack. All data will be kept at thread 0.</p>
+</aside>
+</section>
+
+<section>
+<h3>Example: Shared integer stack</h3>
+<pre><code>void push(int x) {
+    shared list_t* item =
+        upc_global_alloc(1, sizeof(list_t));
+    upc_lock(list_lock);
+    item-&gt;x = x;
+    item-&gt;next = head;
+    head = item;
+    upc_unlock(list_lock);
+}</code></pre>
+<aside class="notes">
+<p>When we push a data item, we allocate it in the global space, grab a lock, push it onto the list, and release the lock. We need the locking in case someone else wanted to push at the same time. Actually, it’s a little more complex than that, as UPC does not guarantee a strongly sequentially consistent view of memory in general; we need the lock as well to make sure that we are not seeing a stale version of the head pointer, for whatever reason.</p>
+</aside>
+</section>
+
+<section>
+<h3>Example: Shared integer stack</h3>
+<pre><code>int pop(int* x) {
+    shared list_t* item;
+    upc_lock(list_lock);
+    if (head == NULL) {
+        upc_unlock(list_lock);
+        return -1;
+    }
+    item = head
+    head = head-&gt;next;
+    *x = item-&gt;x;
+    upc_free(item);
+    upc_unlock(list_lock);
+    return 0;
+}</code></pre>
+<aside class="notes">
+<p>Now let’s look at poping the stack. First, we grab the list lock and check if there’s anything on the stack; if not, we release the lock and return an indicator flag. Bad things would happen if we forgot to release the lock before returning! This is one of the disadvantages of explicit locking protocols. If there is something in the list, though, we pull it off, update the head pointer, free the link, and release the lock before returning an “all OK” flag.</p>
+</aside>
+</section>
+
+<section>
+<h3>Memory consistency</h3>
+<p>UPC access:</p>
+<ul>
+<li>Strict (sequential consistency)</li>
+<li>Relaxed (may appear out of order to other threads)</li>
+</ul>
+<p>Via <code>&lt;upc_relaxed.h&gt;</code>, <code>strict</code> or <code>relaxed</code> type qualifiers, or <code>pragma</code>s.</p>
+<p>The <code>upc_fence</code> is a strict null reference.</p>
+<aside class="notes">
+<p>The UPC memory model can either be strictly sequentially consistent or relaxed. There are several ways to choose: via including a header file, via type qualifiers, or via pragmas. If we are being relaxed, we can include shared memory fence operations with <code>upc_fence</code>.</p>
+</aside>
+</section>
+
+<section>
+<h3>Performance</h3>
+<p>Won’t be used if it’s too slow! So:</p>
+<ul>
+<li>Maximize single-node perf</li>
+<li>Fast comm (GASNet for Berkeley UPC)</li>
+<li>Manage details intelligently</li>
+</ul>
+<p>Performance tuning is nontrivial – no magic bullets!</p>
+<aside class="notes">
+<p>All right. So far, we’ve talked about how to express things, but what about performance? The good news is that it’s basically C, and so we know the things that we need to do in order to maximize single-node performance: use the right compiler flags, call tuned libraries, etc. For communication, there is a layer called GASNet that is pretty fast and is used for several PGAS language implementations – or we could do MPI RMA operations from MPI 3. And, of course, we have to be intelligent about how we set up the shared data and communication; the language gives us ways to express low-level details like memory layout, but doesn’t force us to do the “right” thing in terms of performance.</p>
+<p>There are case studies as part of UPC tutorial slides. With care, we can sometimes get better performance than MPI! But performance tuning in any setting is nontrivial. There are no silver bullets.</p>
+</aside>
+</section>
+
