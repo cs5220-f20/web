@@ -29,7 +29,7 @@ audio: 2020-11-10-part
 
 <section>
 <h3>Graph partitioning</h3>
-<p><img data-src="figs/part_ref.svg" style="width:35.0%" /></p>
+<p><img data-src="figs/part_ref.svg" style="width:30.0%" /></p>
 <p>Given: <span class="math inline">\(G = (V,E)\)</span>, possibly weights + coordinates.<br />
 We want to partition <span class="math inline">\(G\)</span> into <span class="math inline">\(k\)</span> pieces such that</p>
 <ul>
@@ -41,12 +41,12 @@ We want to partition <span class="math inline">\(G\)</span> into <span class="ma
 
 <section>
 <h3>Vertex separator</h3>
-<p><img data-src="figs/part_vsep.svg" style="width:40.0%" /></p>
+<p><img data-src="figs/part_vsep.svg" style="width:60.0%" /></p>
 </section>
 
 <section>
 <h3>Edge separator</h3>
-<p><img data-src="figs/part_esep.svg" style="width:40.0%" /></p>
+<p><img data-src="figs/part_esep.svg" style="width:60.0%" /></p>
 </section>
 
 <section>
@@ -136,9 +136,9 @@ In practice, use an approximation.</li>
 <li>Don’t always have natural coordinates
 <ul>
 <li>Example: the web graph</li>
-<li>Can sometimes add coordinates (metric embedding)</li>
+<li>Can add coordinates? (metric embedding)</li>
 </ul></li>
-<li>So use edge information for geometry!</li>
+<li>Use edge information for geometry!</li>
 </ul>
 </section>
 
@@ -153,8 +153,7 @@ In practice, use an approximation.</li>
 <li>Use BFS to label nodes by distance from <span class="math inline">\(v_0\)</span>
 <ul>
 <li>We’ve seen this before – remember RCM?</li>
-<li>Could use a different order – minimize edge cuts locally<br />
-(Karypis, Kumar)</li>
+<li>Or minimize cuts locally (Karypis, Kumar)</li>
 </ul></li>
 <li>Partition by distance from <span class="math inline">\(v_0\)</span></li>
 </ul>
@@ -194,7 +193,7 @@ In practice, use an approximation.</li>
 
 <section>
 <h3>Spectral partitioning</h3>
-<p><img data-src="figs/part_esep_spectral.svg" style="width:40.0%" /></p>
+<p><img data-src="figs/part_esep_spectral.svg" style="width:60.0%" /></p>
 </section>
 
 <section>
@@ -273,7 +272,7 @@ D(b) &amp;= \sum_{a&#39; \in A} w(b,a&#39;) - \sum_{b&#39; \in B, b&#39; \neq b}
 
 <section>
 <h3>Coarsening via maximal matching</h3>
-<p><img data-src="figs/part_coarsen.svg" style="width:40.0%" /></p>
+<p><img data-src="figs/part_coarsen.svg" style="width:60.0%" /></p>
 <ul>
 <li>Collapse matched nodes into coarse nodes</li>
 <li>Add all edge weights between coarse nodes</li>
