@@ -15,14 +15,17 @@ audio: 2020-11-10-part
 </section>
 
 <section>
-<h3>Reminder: Sparsity and partitioning</h3>
+<h3>Sparsity and partitioning</h3>
 <p><img data-src="figs/part-mat2graph.svg" style="width:60.0%" /></p>
 <p>Want to partition sparse graphs so that</p>
 <ul>
 <li>Subgraphs are same size (load balance)</li>
 <li>Cut size is minimal (minimize communication)</li>
 </ul>
-<p>Uses: parallel sparse matvec, nested dissection solves, ...</p>
+<p>Uses: sparse matvec, nested dissection solves, ...</p>
+<aside class="notes">
+<p>We’ve seen the notion of graph partitioning a couple times, particularly when we discussed sparse matrix computations. Remember, the nonzero pattern of a sparse matrix defines a graph; make an edge from i to j if A_ij is nonzero. The graph is undirected when the matrix A is symmetric (or at least structurally symmetric). And we might care about cutting the graph into pieces with a small number of edges cut if we want to make matrix-vector products go fast, or we want good nested dissection reorderings for sparse direct solves, or for various other reasons.</p>
+</aside>
 </section>
 
 <section>
@@ -37,6 +40,9 @@ audio: 2020-11-10-part
 <li>Image segmentation</li>
 </ul>
 <p>Goal: Big chunks, small “surface area” between</p>
+<aside class="notes">
+<p>In fact, this is a common theme across lots of areas not just in parallel scientific computing, but in the rest of computing and even in the rest of engineering. The same notion of finding good partitions of a graph comes up in problems ranging from telephone network design to image segmentation!</p>
+</aside>
 </section>
 
 <section>
@@ -49,16 +55,27 @@ We want to partition <span class="math inline">\(G\)</span> into <span class="ma
 <li>Weight of cut edges is minimized.</li>
 </ul>
 <p>Important special case: <span class="math inline">\(k = 2\)</span>.</p>
+<aside class="notes">
+<p>Let’s make things a little more formal. Suppose we are given a graph G with vertices V and edges E. It’s possible that we might also have weights on the edges or coordinates on the vertices. We want to partition the graph into k pieces such that the node weights are balanced across partitions and the total weight of the edges cut is as small as possible.</p>
+<p>The important case where k = 2 is known as the graph bisection problem.</p>
+</aside>
 </section>
 
 <section>
 <h3>Vertex separator</h3>
 <p><img data-src="figs/part_vsep.svg" style="width:60.0%" /></p>
+<aside class="notes">
+<p>I need to be a little careful, because the problem I described emphasized partitioning a graph by cutting edges. But we could also partition a graph by removing vertices (and the adjacent edges with them).</p>
+<p>A vertex separator is a collection of nodes whose removal partitions the graph into two pieces. We’ve shown one vertex separator here (the red nodes).</p>
+</aside>
 </section>
 
 <section>
 <h3>Edge separator</h3>
 <p><img data-src="figs/part_esep.svg" style="width:60.0%" /></p>
+<aside class="notes">
+<p>An edge separator is a collection of edges whose removal partitions the graph. Here we’ve highlighted a collection of edges that form an edge separator.</p>
+</aside>
 </section>
 
 <section>
@@ -71,6 +88,9 @@ We want to partition <span class="math inline">\(G\)</span> into <span class="ma
 </ul>
 <p>Fine if degree bounded (e.g. near-neighbor meshes).<br />
 Optimal vertex/edge separators very different for social networks!</p>
+<aside class="notes">
+<p>It’s easy enough to go back and forth between vertex and edge separators. When we are dealing with degree-bounded graphs, of the type that we often see in problems with near-neighbor connectivity in low-dimensional spaces, we can go from a nearly optimal vertex separator to a nearly optimal edge separator (or vice versa) with this mechanical transformation. But this transformation is far from optimal in social networks and other networks where there may be some very high-degree nodes.</p>
+</aside>
 </section>
 
 <section>
@@ -81,6 +101,9 @@ Optimal vertex/edge separators very different for social networks!</p>
     2^n \sqrt{2/(\pi n)}.
 \]</span> Finding the optimal one is NP-complete.</p>
 <p>We need heuristics!</p>
+<aside class="notes">
+<p>So how hard can it be to partition a graph? The number of possible even splits grows exponentially with the number of nodes in the graph, and it turns out that we don’t know any way to find the optimal partitioning in less than exponential time. It’s an NP-complete problem, and we need good heuristics! Fortunately, we have lots of good heuristics – partly because we are not usually asked to partition completely arbitrary graphs.</p>
+</aside>
 </section>
 
 <section>
@@ -97,6 +120,9 @@ Optimal vertex/edge separators very different for social networks!</p>
 <li>Get useful information from vertex density</li>
 <li>Ignore edges (but can use them in later refinement)</li>
 </ul>
+<aside class="notes">
+<p>Indeed, a lot of graph partitioning problems come from nice meshes associated with something like nearest-neighbor connectivity in low-dimensional spaces. In this case, we can cut the graph by removing O(n^(d-1)/d) edges, where d is the dimension of the space, and we can figure out the best places to cut purely by looking at how vertices are located in space.</p>
+</aside>
 </section>
 
 <section>
@@ -107,6 +133,10 @@ Optimal vertex/edge separators very different for social networks!</p>
 <li>Pro: Fast and simple</li>
 <li>Con: Not always great quality</li>
 </ul>
+<aside class="notes">
+<p>Maybe the simplest approach to partitioning when we have node coordinates is coordinate bisection. Pick a coordinate, and choose a value so that half the nodes lie on one side and half on the other. And there’s your cut! If you want more than two pieces, you can apply the idea recursively, maybe using different coordinates for different steps.</p>
+<p>It’s a fast and simple method. Doesn’t always work that well, alas.</p>
+</aside>
 </section>
 
 <section>
@@ -116,6 +146,9 @@ Optimal vertex/edge separators very different for social networks!</p>
     \bar{\mathbf{r}_i} = \mathbf{x}_i-\bar{\mathbf{x}} \\
     \mathbf{I}&amp;= \sum_{i=1}^n\left[ \|\mathbf{r}_i\|^2 I - \mathbf{r}_i \mathbf{r}_i^T \right]
 \end{aligned}\]</span> Let <span class="math inline">\((\lambda_n, \mathbf{n})\)</span> be the minimal eigenpair for the inertia tensor <span class="math inline">\(\mathbf{I}\)</span>, and choose the hyperplane through <span class="math inline">\(\bar{\mathbf{x}}\)</span> with normal <span class="math inline">\(\mathbf{n}\)</span>.</p>
+<aside class="notes">
+<p>One problem with coordinate bisection is that the natural coordinates might not be the best ones to use in a splitting. A natural alternative is to use coordinates based on the inertia of the vertex cloud. That is, we split on a hyperplane that passes through the centroid, with a normal associated with the minimal rotational inertia for the object.</p>
+</aside>
 </section>
 
 <section>
@@ -125,6 +158,9 @@ Optimal vertex/edge separators very different for social networks!</p>
 <li>Pro: Simple, more flexible than coord planes</li>
 <li>Con: Still restricted to hyperplanes</li>
 </ul>
+<aside class="notes">
+<p>Here’s what inertial bisection looks like for our running example of the mutant-potato graph. In this case, it works pretty well! Indeed, it works better than coordinate planes most of the time, and is still quite simple. But the fact that we are restricted to hyperplanes can still be a problem.</p>
+</aside>
 </section>
 
 <section>
@@ -139,6 +175,9 @@ In practice, use an approximation.</li>
 <li>Convert circle to separator</li>
 </ul>
 <p>May choose best of several random great circles.</p>
+<aside class="notes">
+<p>It turns out that hyperplanes are a great idea, but if we want their full power, we need to apply them after transforming the coordinate geometry. The idea of the random circle approach is to conformally map all the points onto the surface or a sphere and partition on the sphere with a great circle. There’s an element of randomness here, but it turns out that good partitions based on this approach are plentiful enough that choosing the best of several random great circles will generally give us a good partitioning.</p>
+</aside>
 </section>
 
 <section>
@@ -152,6 +191,9 @@ In practice, use an approximation.</li>
 </ul></li>
 <li>Use edge information for geometry!</li>
 </ul>
+<aside class="notes">
+<p>So far we’ve discussed partitioning methods where we have coordinates associated with the vertices. But what if we are only given the graph topology (or, equivalently, what if we only have a sparse matrix)? For example, perhapse we are dealing with an information network like the web graph, and there is no natural geometry. Well, we can often add coordinates just using the edge information!</p>
+</aside>
 </section>
 
 <section>
@@ -169,11 +211,17 @@ In practice, use an approximation.</li>
 </ul></li>
 <li>Partition by distance from <span class="math inline">\(v_0\)</span></li>
 </ul>
+<aside class="notes">
+<p>We’ve seen the first tactic for getting geometry relevant to partitioning, when we talked about reverse Cuthill-McKee and ordering for bandedness. The approach is to choose a peripheral vertex, and use BFS to label nodes by distance from that vertex. Then take the half of the nodes that are closer as one side of our partition, and the other half of the nodes as the other side. It’s not perfect, but it is again pretty good for how simple it is. There are some tweaks on this approach that traverse the graph in other ways, and these methods can work even better.</p>
+</aside>
 </section>
 
 <section>
 <h3>Spectral partitioning</h3>
 <p>Label vertex <span class="math inline">\(i\)</span> with <span class="math inline">\(x_i = \pm 1\)</span>. We want to minimize <span class="math display">\[\mbox{edges cut} = \frac{1}{4} \sum_{(i,j) \in E} (x_i-x_j)^2\]</span> subject to the even partition requirement <span class="math display">\[\sum_i x_i = 0.\]</span> But this is NP hard, so we need a trick.</p>
+<aside class="notes">
+<p>Another approach, which appeals to me, involves writing the (NP-hard) discrete optimization problem as a simple-looking integer optimization with a quadratic objective and a linear constraint. If we could exactly minimize this quadratic subject to the constraint, we would be done! And the only thing that makes it hard, as it turns out, is our insistence that we label each vertex with a plus or minus 1.</p>
+</aside>
 </section>
 
 <section>
@@ -195,17 +243,27 @@ In practice, use an approximation.</li>
       0, &amp; \mbox{otherwise}.
     \end{cases}
   \end{aligned}\]</span> Note: <span class="math inline">\(C e = 0\)</span> (so <span class="math inline">\(L e = 0\)</span>), <span class="math inline">\(e = (1, 1, 1, \ldots, 1)^T\)</span>.</p>
+<aside class="notes">
+<p>Before we show the relaxation that makes this easy, let’s write the quadratic in our problem in terms of a matrix. The sum of squares of differences across edges can be taken as the two norm of Cx where C is the so called incidence matrix for which each row corresponds to an edge, with a +1 in the column for one endpoint and a -1 in the column for the other. The matrix C^T C is the so-called Graph Laplacian matrix, and what we have just shown is that we can write the edge cut as a quarter x^T L x where x is the label vector and L is the graph Laplacian.</p>
+</aside>
 </section>
 
 <section>
 <h3>Spectral partitioning</h3>
 <p>Now consider the <em>relaxed</em> problem with <span class="math inline">\(x \in \mathbb{R}^n\)</span>: <span class="math display">\[\mbox{minimize } x^T L x \mbox{ s.t. } x^T e = 0 \mbox{ and } x^T x = 1.\]</span> Equivalent to finding the second-smallest eigenvalue <span class="math inline">\(\lambda_2\)</span> and corresponding eigenvector <span class="math inline">\(x\)</span>, also called the <em>Fiedler vector</em>. Partition according to sign of <span class="math inline">\(x_i\)</span>.</p>
 <p>How to approximate <span class="math inline">\(x\)</span>? Use a Krylov subspace method (Lanczos)! Expensive, but gives high-quality partitions.</p>
+<aside class="notes">
+<p>Minimizing x^T L x over +/-1 vectors with mean 0 is hard. Minimizing over real vectors with mean 0 (and some other normalizing constraint) is easy! This turns into an eigenvalue problem; in fact, x is proportional to the eigenvector of L associated with the second-smallest eigenvalue. This is sometimes called the Fiedler vector.</p>
+<p>The spectral bisection algorithm is pretty simple: compute the Fiedler vector, and use the sign of the entries to partition the nodes. The only trouble is in finding the Fiedler vector! We can use standard iterations to do this; it’s expensive, but it tends to give gold-standard partitions.</p>
+</aside>
 </section>
 
 <section>
 <h3>Spectral partitioning</h3>
 <p><img data-src="figs/part_esep_spectral.svg" style="width:60.0%" /></p>
+<aside class="notes">
+<p>And here’s our plot of the spectral partitioning – we’ve colored the nodes according to the Fiedler vector, where red is positive, blue is negative, and the color intensity indicates magnitude of the entry. There’s one node that is labeled very near zero; note that moving that node to one side of the partition or the other gives cuts with about equal quality.</p>
+</aside>
 </section>
 
 <section>
@@ -215,11 +273,17 @@ In practice, use an approximation.</li>
 <li>Spectral partitioning = bisection in spectral coords</li>
 <li>Can cluster in other ways as well (e.g. <span class="math inline">\(k\)</span>-means)</li>
 </ul>
+<aside class="notes">
+<p>There’s another way of thinking about spectral partitioning, too: we can think of the Fiedler vector as giving us a one-dimensional coordinate system on which we have done bisection. Indeed, there are lots of settings where people interpret the first few eigenvectors as giving node coordinates in some d-dimensional space, and this gives a useful geometry to the problem. Once we have such a geometry, coordinate bisection is only one way of using it for partitioning; we could also cluster in other ways (e.g. by using Lloyd’s algorithm, aka k-means, on the spectral node coordinates).</p>
+</aside>
 </section>
 
 <section>
 <h3>Spectral coordinates</h3>
 <p><img data-src="figs/part_spec_embed.svg" style="width:40.0%" /></p>
+<aside class="notes">
+<p>And here’s the 2D layout of our example graph using spectral coordinates, with spectral bisectioning represented as coordinate bisection.</p>
+</aside>
 </section>
 
 <section>
@@ -229,6 +293,9 @@ In practice, use an approximation.</li>
 D(a) &amp;= \sum_{b&#39; \in B} w(a,b&#39;) - \sum_{a&#39; \in A, a&#39; \neq a} w(a,a&#39;) \\
 D(b) &amp;= \sum_{a&#39; \in A} w(b,a&#39;) - \sum_{b&#39; \in B, b&#39; \neq b} w(b,b&#39;) 
 \end{aligned}\]</span></p>
+<aside class="notes">
+<p>The methods that we’ve discussed so far often give us a reasonably good partitioning. But can we take a reasonable partitioning and refine it? That is, suppose that we wanted to swap a pair (a, b), where a was in one partition and b in the other; could we make such a swap and reduce the cost of the cut? Sometimes, the answer is yes!</p>
+</aside>
 </section>
 
 <section>
@@ -244,6 +311,9 @@ D(b) &amp;= \sum_{a&#39; \in A} w(b,a&#39;) - \sum_{b&#39; \in B, b&#39; \neq b}
 </ul></li>
 <li>Local minima are a problem.</li>
 </ul>
+<aside class="notes">
+<p>When we can make a swap that reduces the cut, why not do it? It turns out that this purely greedy strategy works as far as it goes, but it often doesn’t go so far – it tends to get stuck in local minima.</p>
+</aside>
 </section>
 
 <section>
@@ -256,12 +326,18 @@ D(b) &amp;= \sum_{a&#39; \in A} w(b,a&#39;) - \sum_{b&#39; \in B, b&#39; \neq b}
 <li>Find <span class="math inline">\(j\)</span> such that swaps <span class="math inline">\(1, \ldots, j\)</span> yield maximal gain</li>
 <li>Apply swaps <span class="math inline">\(1, \ldots, j\)</span></li>
 </ul>
+<aside class="notes">
+<p>The Kernighan-Lin algorithm is just a little bit smarter than the greedy approach. Instead of immediately taking a swap, we consider a bunch of possible swaps and then take those that yield the greatest improvement.</p>
+</aside>
 </section>
 
 <section>
 <h3>Kernighan-Lin</h3>
 <p>Usually converges in a few (2-6) sweeps. Each sweep is <span class="math inline">\(O(|V|^3)\)</span>. Can be improved to <span class="math inline">\(O(|E|)\)</span> (Fiduccia, Mattheyses).</p>
 <p>Further improvements (Karypis, Kumar): only consider vertices on boundary, don’t complete full sweep.</p>
+<aside class="notes">
+<p>The Kernighan-Lin approach usually converges in very few sweeps. Each sweep is O(|V|^3) when we implement it naively, but that time can be reduced to O(|E|). There have been further improvements by Karypis and Kumar that involve only considering boundary vertices for swaps rather than looking at everything.</p>
+</aside>
 </section>
 
 <section>
@@ -273,6 +349,9 @@ D(b) &amp;= \sum_{a&#39; \in A} w(b,a&#39;) - \sum_{b&#39; \in B, b&#39; \neq b}
 <li>Interpolate (and possibly refine)</li>
 </ul>
 <p>May apply recursively.</p>
+<aside class="notes">
+<p>For big graphs, we may not want to just directly apply a partitioning scheme or a refinement scheme like Kernighan-Lin. Instead, we’d like to apply these schemes to a coarser graph that captures the general geometry of the original problem (and then maybe refine the resulting partition). This gives us a “multilevel” approach.</p>
+</aside>
 </section>
 
 <section>
@@ -284,6 +363,9 @@ D(b) &amp;= \sum_{a&#39; \in A} w(b,a&#39;) - \sum_{b&#39; \in B, b&#39; \neq b}
 <li>Constructed by an obvious greedy algorithm.</li>
 <li>Maximal matchings are non-unique; some may be preferable to others (e.g. choose heavy edges first).</li>
 </ul>
+<aside class="notes">
+<p>One very natural way to coarsen is using a maximal matching. The idea of a maximal matching is that we choose a set of edges with no vertices in common, and then lump together the endpoints with each other. This is very non-unique, but sometimes one matching is preferable to another (e..g we want to choose heavy edges first).</p>
+</aside>
 </section>
 
 <section>
@@ -293,6 +375,9 @@ D(b) &amp;= \sum_{a&#39; \in A} w(b,a&#39;) - \sum_{b&#39; \in B, b&#39; \neq b}
 <li>Collapse matched nodes into coarse nodes</li>
 <li>Add all edge weights between coarse nodes</li>
 </ul>
+<aside class="notes">
+<p>Once we have a matching, we can coarsen the graph by collapsing the matched nodes, and adding up all the edge weights from the fine graph to get new weights in the coarse graph.</p>
+</aside>
 </section>
 
 <section>
@@ -306,6 +391,9 @@ D(b) &amp;= \sum_{a&#39; \in A} w(b,a&#39;) - \sum_{b&#39; \in B, b&#39; \neq b}
 <li>Jostle (now commercialized)</li>
 <li>Zoltan (Sandia)</li>
 </ul>
+<aside class="notes">
+<p>There are lots of codes out there that use these multilevel partitioning ideas together with Kernighan-Lin refinement and perhaps some other partitioner. The one that I have used most is Kapyris’s METIS code, which is a multilevel Kernighan-Lin partitioner, but there are plenty of choices.</p>
+</aside>
 </section>
 
 <section>
@@ -317,6 +405,9 @@ D(b) &amp;= \sum_{a&#39; \in A} w(b,a&#39;) - \sum_{b&#39; \in B, b&#39; \neq b}
 <li>Communication volume – what about latencies?</li>
 </ul>
 <p>Some go beyond graph partitioning (e.g. hypergraph in Zoltan).</p>
+<aside class="notes">
+<p>Some of these partitioners are actually smart, and go beyond just graph partitioning. After all, I have argued that sometimes edge cuts correspond to communication volume, and minimizing communication volume is good – but you should know at this point that message counts (latencies) matter as much as message sizes (bandwidths) in many cases! Partitioners like Zoltan try to capture some more complicated measures of partitioning quality in terms of a hypergraph partitioning problem rather than a graph partitioning.</p>
+</aside>
 </section>
 
 <section>
@@ -327,6 +418,9 @@ D(b) &amp;= \sum_{a&#39; \in A} w(b,a&#39;) - \sum_{b&#39; \in B, b&#39; \neq b}
 <li>Covering sets with small overlaps</li>
 </ul>
 <p>Also: Classes of graphs with no small cuts (expanders)</p>
+<aside class="notes">
+<p>There has also been work on different classes of graphs that show up a lot in the analysis of social and “small world” networks, and methods that try to cover a graph with small overlaps but allow some redundancy (i.e. the nodes are not partitioned into disjoint sets).</p>
+</aside>
 </section>
 
 <section>
@@ -347,6 +441,9 @@ D(b) &amp;= \sum_{a&#39; \in A} w(b,a&#39;) - \sum_{b&#39; \in B, b&#39; \neq b}
 </ul></li>
 <li>Tradeoffs are why we need to be <em>informed</em> users</li>
 </ul>
+<aside class="notes">
+<p>Sometimes, too, the graph doesn’t tell the whole picture. If we’re partitioning for preconditioning with a block Jacobi method, for example, we would much rather cut “floppy” edges than “stiff” edges. It’s not like this can’t be captured by the methods we’ve discussed; for example, we can encode notions of stiffness or floppiness in the edge weights, giving greater penalty for cutting stiff edges. But we have to know what we care about in order to get the right encoding. And the fact that tradeoffs like this exist is the reason that I’m telling you about a lot of this stuff rather! We need enformed users to be able to set up our partitioning problems in an appropriate way.</p>
+</aside>
 </section>
 
 <section>
@@ -358,5 +455,8 @@ D(b) &amp;= \sum_{a&#39; \in A} w(b,a&#39;) - \sum_{b&#39; \in B, b&#39; \neq b}
 <li>Or what about...?</li>
 </ul>
 <p>Next time: more general <em>load balancing</em> issues</p>
+<aside class="notes">
+<p>Finally, the overview of graph partitioning in this slide deck might cover lots of problems with mostly static interactions, but what about problems where the interactions are changing over time? For example, nearest-neighbor interactions between moving particles are constantly shifting; does a static partitioning make sense there? Well, maybe it makes sense as a starting point, but we will need more ideas after that. And we will pick up some of these ideas next time when we discuss more general load balancing issues.</p>
+</aside>
 </section>
 
