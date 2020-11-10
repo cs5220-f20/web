@@ -1,0 +1,343 @@
+---
+title: Graph partitioning
+layout: slides
+audio: 2020-11-10-part
+---
+
+<section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <h3>Graph partitioning</h3>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
+  </p>
+  <p>Please click the play button below.</p>
+</section>
+<section>
+<h3>A common theme</h3>
+<p>Common idea: partition static data (or networked things):</p>
+<ul>
+<li>Physical network design (telephone layout, VLSI layout)</li>
+<li>Sparse matvec</li>
+<li>Preconditioners for PDE solvers</li>
+<li>Sparse Gaussian elimination</li>
+<li>Data clustering</li>
+<li>Image segmentation</li>
+</ul>
+<p>Goal: Keep chunks big, minimize the “surface area” between</p>
+</section>
+
+<section>
+<h3>Graph partitioning</h3>
+<p><img data-src="figs/part_ref.svg" style="width:40.0%" /></p>
+<p>Given: <span class="math inline">\(G = (V,E)\)</span>, possibly with weights and coordinates.<br />
+We want to partition <span class="math inline">\(G\)</span> into <span class="math inline">\(k\)</span> pieces such that</p>
+<ul>
+<li>Node weights are balanced across partitions.</li>
+<li>Weight of cut edges is minimized.</li>
+</ul>
+<p>Important special case: <span class="math inline">\(k = 2\)</span>.</p>
+</section>
+
+<section>
+<h3>Graph partitioning: Vertex separator</h3>
+<p><img data-src="figs/part_vsep.svg" style="width:40.0%" /></p>
+</section>
+
+<section>
+<h3>Graph partitioning: Edge separator</h3>
+<p><img data-src="figs/part_esep.svg" style="width:40.0%" /></p>
+</section>
+
+<section>
+<h3>Node to edge and back again</h3>
+<p><img data-src="figs/part_v2esep.svg" style="width:40.0%" /></p>
+<p>Can convert between node and edge separators</p>
+<ul>
+<li>Node to edge: cut all edges from separator to one side</li>
+<li>Edge to node: remove nodes on one side of cut edges</li>
+</ul>
+<p>Fine if graph is degree bounded (e.g. near-neighbor meshes).<br />
+Optimal vertex/edge separators very different for social networks!</p>
+</section>
+
+<section>
+<h3>Cost</h3>
+<p>How many partitionings are there? If <span class="math inline">\(n\)</span> is even, <span class="math display">\[
+  \begin{pmatrix} n \\ n/2 \end{pmatrix} =
+    \frac{n!}{( (n/2)! )^2} \approx 
+    2^n \sqrt{2/(\pi n)}.
+\]</span> Finding the optimal one is NP-complete.</p>
+<p>We need heuristics!</p>
+</section>
+
+<section>
+<h3>Partitioning with coordinates</h3>
+<ul>
+<li>Lots of partitioning problems from “nice” meshes
+<ul>
+<li>Planar meshes (maybe with regularity condition)</li>
+<li><span class="math inline">\(k\)</span>-ply meshes (works for <span class="math inline">\(d &gt; 2\)</span>)</li>
+<li>Nice enough <span class="math inline">\(\implies\)</span> partition with <span class="math inline">\(O(n^{1-1/d})\)</span> edge cuts<br />
+(Tarjan, Lipton; Miller, Teng, Thurston, Vavasis)</li>
+<li>Edges link nearby vertices</li>
+</ul></li>
+<li>Get useful information from vertex density</li>
+<li>Ignore edges (but can use them in later refinement)</li>
+</ul>
+</section>
+
+<section>
+<h3>Recursive coordinate bisection</h3>
+<p><img data-src="figs/part_esep_bisect.svg" style="width:40.0%" /></p>
+<p>Idea: Cut with hyperplane parallel to a coordinate axis.</p>
+<ul>
+<li>Pro: Fast and simple</li>
+<li>Con: Not always great quality</li>
+</ul>
+</section>
+
+<section>
+<h3>Inertial bisection</h3>
+<p>Idea: Optimize cutting hyperplane based on vertex density <span class="math display">\[\begin{aligned}
+    \bar{\mathbf{x}} &amp;= \frac{1}{n} \sum_{i=1}^n \mathbf{x}_i \\
+    \bar{\mathbf{r}_i} &amp;= \mathbf{x}_i-\bar{\mathbf{x}} \\
+    \mathbf{I}&amp;= \sum_{i=1}^n\left[ \|\mathbf{r}_i\|^2 I - \mathbf{r}_i \mathbf{r}_i^T \right]
+\end{aligned}\]</span> Let <span class="math inline">\((\lambda_n, \mathbf{n})\)</span> be the minimal eigenpair for the inertia tensor <span class="math inline">\(\mathbf{I}\)</span>, and choose the hyperplane through <span class="math inline">\(\bar{\mathbf{x}}\)</span> with normal <span class="math inline">\(\mathbf{n}\)</span>.</p>
+</section>
+
+<section>
+<h3>Inertial bisection</h3>
+<p><img data-src="figs/part_esep_inertia.svg" style="width:40.0%" /></p>
+<ul>
+<li>Pro: Still simple, more flexible than coordinate planes</li>
+<li>Con: Still restricted to hyperplanes</li>
+</ul>
+</section>
+
+<section>
+<h3>Random circles (Gilbert, Miller, Teng)</h3>
+<ul>
+<li>Stereographic projection</li>
+<li>Find centerpoint (any plane is an even partition)<br />
+In practice, use an approximation.</li>
+<li>Conformally map sphere, moving centerpoint to origin</li>
+<li>Choose great circle (at random)</li>
+<li>Undo stereographic projection</li>
+<li>Convert circle to separator</li>
+</ul>
+<p>May choose best of several random great circles.</p>
+</section>
+
+<section>
+<h3>Coordinate-free methods</h3>
+<p><img data-src="figs/part_matrix.svg" style="width:40.0%" /></p>
+<ul>
+<li>Don’t always have natural coordinates
+<ul>
+<li>Example: the web graph</li>
+<li>Can sometimes add coordinates (metric embedding)</li>
+</ul></li>
+<li>So use edge information for geometry!</li>
+</ul>
+</section>
+
+<section>
+<h3>Breadth-first search</h3>
+<p><img data-src="figs/part_bfs.svg" style="width:40.0%" /></p>
+<ul>
+<li>Pick a start vertex <span class="math inline">\(v_0\)</span>
+<ul>
+<li>Might start from several different vertices</li>
+</ul></li>
+<li>Use BFS to label nodes by distance from <span class="math inline">\(v_0\)</span>
+<ul>
+<li>We’ve seen this before – remember RCM?</li>
+<li>Could use a different order – minimize edge cuts locally<br />
+(Karypis, Kumar)</li>
+</ul></li>
+<li>Partition by distance from <span class="math inline">\(v_0\)</span></li>
+</ul>
+</section>
+
+<section>
+<h3>Spectral partitioning</h3>
+<p>Label vertex <span class="math inline">\(i\)</span> with <span class="math inline">\(x_i = \pm 1\)</span>. We want to minimize <span class="math display">\[\mbox{edges cut} = \frac{1}{4} \sum_{(i,j) \in E} (x_i-x_j)^2\]</span> subject to the even partition requirement <span class="math display">\[\sum_i x_i = 0.\]</span> But this is NP hard, so we need a trick.</p>
+</section>
+
+<section>
+<h3>Spectral partitioning</h3>
+<p>Write <span class="math display">\[\mbox{edges cut} 
+    = \frac{1}{4} \sum_{(i,j) \in E} (x_i-x_j)^2 
+    = \frac{1}{4} \|Cx\|^2 = \frac{1}{4} x^T L x
+\]</span> where <span class="math inline">\(C\)</span> is the incidence matrix and <span class="math inline">\(L = C^T C\)</span> is the graph Laplacian: <span class="math display">\[\begin{aligned}
+    C_{ij} &amp;= 
+      \begin{cases}
+         1, &amp; e_j = (i,k) \\
+        -1, &amp; e_j = (k,i) \\
+         0, &amp; \mbox{otherwise},
+      \end{cases} &amp;
+    L_{ij} &amp;= 
+    \begin{cases} 
+      d(i), &amp; i = j \\
+      -1, &amp; i \neq j, (i,j) \in E, \\ 
+      0, &amp; \mbox{otherwise}.
+    \end{cases}
+  \end{aligned}\]</span> Note that <span class="math inline">\(C e = 0\)</span> (so <span class="math inline">\(L e = 0\)</span>), <span class="math inline">\(e = (1, 1, 1, \ldots, 1)^T\)</span>.</p>
+</section>
+
+<section>
+<h3>Spectral partitioning</h3>
+<p>Now consider the <em>relaxed</em> problem with <span class="math inline">\(x \in \bbR^n\)</span>: <span class="math display">\[\mbox{minimize } x^T L x \mbox{ s.t. } x^T e = 0 \mbox{ and } x^T x = 1.\]</span> Equivalent to finding the second-smallest eigenvalue <span class="math inline">\(\lambda_2\)</span> and corresponding eigenvector <span class="math inline">\(x\)</span>, also called the <em>Fiedler vector</em>. Partition according to sign of <span class="math inline">\(x_i\)</span>.</p>
+<p>How to approximate <span class="math inline">\(x\)</span>? Use a Krylov subspace method (Lanczos)! Expensive, but gives high-quality partitions.</p>
+</section>
+
+<section>
+<h3>Spectral partitioning</h3>
+<p><img data-src="figs/part_esep_spectral.svg" style="width:40.0%" /></p>
+</section>
+
+<section>
+<h3>Spectral coordinates</h3>
+<p><img data-src="figs/part_spec_embed.svg" style="width:40.0%" /></p>
+<p>Alternate view: define a coordinate system with the first <span class="math inline">\(d\)</span> non-trivial Laplacian eigenvectors.</p>
+<ul>
+<li>Spectral partitioning = bisection in spectral coordinates</li>
+<li>Can cluster in other ways as well (e.g. <span class="math inline">\(k\)</span>-means)</li>
+</ul>
+</section>
+
+<section>
+<h3>Refinement by swapping</h3>
+<p><img data-src="figs/part_swap0.svg" style="width:40.0%" /></p>
+<p>Gain from swapping <span class="math inline">\((a,b)\)</span> is <span class="math inline">\(D(a) + D(b) - 2w(a,b)\)</span>, where<br />
+<span class="math inline">\(D\)</span> is external - internal edge costs: <span class="math display">\[\begin{aligned}
+D(a) &amp;= \sum_{b&#39; \in B} w(a,b&#39;) - \sum_{a&#39; \in A, a&#39; \neq a} w(a,a&#39;) \\
+D(b) &amp;= \sum_{a&#39; \in A} w(b,a&#39;) - \sum_{b&#39; \in B, b&#39; \neq b} w(b,b&#39;) 
+\end{aligned}\]</span></p>
+</section>
+
+<section>
+<h3>Greedy refinement</h3>
+<p><img data-src="figs/part_swap0.svg" style="width:40.0%" /></p>
+<p>Start with a partition <span class="math inline">\(V = A \cup B\)</span> and refine.</p>
+<ul>
+<li><span class="math inline">\(\operatorname{gain}(a,b) = D(a) + D(b) - 2w(a,b)\)</span></li>
+<li>Purely greedy strategy: until no positive gain
+<ul>
+<li>Choose swap with most gain</li>
+<li>Update <span class="math inline">\(D\)</span> in neighborhood of swap; update gains</li>
+</ul></li>
+<li>Local minima are a problem.</li>
+</ul>
+</section>
+
+<section>
+<h3>Kernighan-Lin</h3>
+<p>In one sweep:</p>
+<p>̄ While no vertices marked<br />
+Choose <span class="math inline">\((a,b)\)</span> with greatest gain<br />
+Update <span class="math inline">\(D(v)\)</span> for all unmarked <span class="math inline">\(v\)</span> as if <span class="math inline">\((a,b)\)</span> were swapped<br />
+Mark <span class="math inline">\(a\)</span> and <span class="math inline">\(b\)</span> (but don’t swap)<br />
+Find <span class="math inline">\(j\)</span> such that swaps <span class="math inline">\(1, \ldots, j\)</span> yield maximal gain<br />
+Apply swaps <span class="math inline">\(1, \ldots, j\)</span></p>
+<p>Usually converges in a few (2-6) sweeps. Each sweep is <span class="math inline">\(O(|V|^3)\)</span>. Can be improved to <span class="math inline">\(O(|E|)\)</span> (Fiduccia, Mattheyses).</p>
+<p>Further improvements (Karypis, Kumar): only consider vertices on boundary, don’t complete full sweep.</p>
+</section>
+
+<section>
+<h3>Multilevel ideas</h3>
+<p>Basic idea (same will work in other contexts):</p>
+<ul>
+<li>Coarsen</li>
+<li>Solve coarse problem</li>
+<li>Interpolate (and possibly refine)</li>
+</ul>
+<p>May apply recursively.</p>
+</section>
+
+<section>
+<h3>Maximal matching</h3>
+<p>One idea for coarsening: maximal matchings</p>
+<ul>
+<li><em>Matching</em> of <span class="math inline">\(G = (V,E)\)</span> is <span class="math inline">\(E_m \subset E\)</span> with no common vertices.</li>
+<li><em>Maximal</em>: cannot add edges and remain matching.</li>
+<li>Constructed by an obvious greedy algorithm.</li>
+<li>Maximal matchings are non-unique; some may be preferable to others (e.g. choose heavy edges first).</li>
+</ul>
+</section>
+
+<section>
+<h3>Coarsening via maximal matching</h3>
+<p><img data-src="figs/part_coarsen.svg" style="width:40.0%" /></p>
+<ul>
+<li>Collapse nodes connected in matching into coarse nodes</li>
+<li>Add all edge weights between connected coarse nodes</li>
+</ul>
+</section>
+
+<section>
+<h3>Software</h3>
+<p>All these use some flavor(s) of multilevel:</p>
+<ul>
+<li>METIS/ParMETIS (Kapyris)</li>
+<li>PARTY (U. Paderborn)</li>
+<li>Chaco (Sandia)</li>
+<li>Scotch (INRIA)</li>
+<li>Jostle (now commercialized)</li>
+<li>Zoltan (Sandia)</li>
+</ul>
+</section>
+
+<section>
+<h3>Graph partitioning: Is this it?</h3>
+<p>Consider partitioning just for sparse matvec:</p>
+<ul>
+<li>Edge cuts <span class="math inline">\(\neq\)</span> communication volume</li>
+<li>Should we minimize <em>max</em> communication volume?</li>
+<li>Looked at communication volume – what about latencies?</li>
+</ul>
+<p>Some go beyond graph partitioning (e.g. hypergraph in Zoltan).</p>
+</section>
+
+<section>
+<h3>Graph partitioning: Is this it?</h3>
+<p>Additional work on:</p>
+<ul>
+<li>Partitioning power law graphs</li>
+<li>Covering sets with small overlaps</li>
+</ul>
+<p>Also: Classes of graphs with no small cuts (expanders)</p>
+</section>
+
+<section>
+<h3>Graph partitioning: Is this it?</h3>
+<p>Recall: partitioning for matvec <em>and</em> preconditioner</p>
+<ul>
+<li>Block Jacobi (or Schwarz) – relax on each partition</li>
+<li>Want to consider edge cuts <em>and physics</em>
+<ul>
+<li>E.g. consider edges = beams</li>
+<li>Cutting a stiff beam worse than a flexible beam?</li>
+<li>Doesn’t show up from just the topology</li>
+</ul></li>
+<li>Multiple ways to deal with this
+<ul>
+<li>Encode physics via edge weights?</li>
+<li>Partition geometrically?</li>
+</ul></li>
+<li>Tradeoffs are why we need to be <em>informed</em> users</li>
+</ul>
+</section>
+
+<section>
+<h3>Graph partitioning: Is this it?</h3>
+<p>So far, considered problems with <em>static</em> interactions</p>
+<ul>
+<li>What about particle simulations?</li>
+<li>Or what about tree searches?</li>
+<li>Or what about...?</li>
+</ul>
+<p>Next time: more general <em>load balancing</em> issues</p>
+</section>
+
