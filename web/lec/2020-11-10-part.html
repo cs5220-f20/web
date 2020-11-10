@@ -198,12 +198,16 @@ In practice, use an approximation.</li>
 
 <section>
 <h3>Spectral coordinates</h3>
-<p><img data-src="figs/part_spec_embed.svg" style="width:40.0%" /></p>
 <p>Alternate view: define a coordinate system with the first <span class="math inline">\(d\)</span> non-trivial Laplacian eigenvectors.</p>
 <ul>
 <li>Spectral partitioning = bisection in spectral coords</li>
 <li>Can cluster in other ways as well (e.g. <span class="math inline">\(k\)</span>-means)</li>
 </ul>
+</section>
+
+<section>
+<h3>Spectral coordinates</h3>
+<p><img data-src="figs/part_spec_embed.svg" style="width:40.0%" /></p>
 </section>
 
 <section>
@@ -298,7 +302,7 @@ D(b) &amp;= \sum_{a&#39; \in A} w(b,a&#39;) - \sum_{b&#39; \in B, b&#39; \neq b}
 <ul>
 <li>Edge cuts <span class="math inline">\(\neq\)</span> communication volume</li>
 <li>Should we minimize <em>max</em> communication volume?</li>
-<li>Looked at communication volume – what about latencies?</li>
+<li>Communication volume – what about latencies?</li>
 </ul>
 <p>Some go beyond graph partitioning (e.g. hypergraph in Zoltan).</p>
 </section>
