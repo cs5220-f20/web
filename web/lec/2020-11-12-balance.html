@@ -64,11 +64,11 @@ audio: 2020-11-12-balance
 <li>Simplest strategy: partition by task index
 <ul>
 <li>What if task costs are inhomogeneous?</li>
-<li>Worse: what if expensive tasks all land on one thread?</li>
+<li>Worse: all expensive tasks on one thread?</li>
 </ul></li>
 <li>Potential fixes
 <ul>
-<li>Many small tasks, randomly assigned to processors</li>
+<li>Many small tasks, randomly assigned</li>
 <li>Dynamic task assignment</li>
 </ul></li>
 <li>Issue: what about scheduling overhead?</li>
@@ -77,12 +77,16 @@ audio: 2020-11-12-balance
 
 <section>
 <h3>Variations on a theme</h3>
-<p>How to avoid overhead? Chunks! (Think OpenMP loops)</p>
+<p>How to avoid overhead? Chunks!<br />
+(Think OpenMP loops)</p>
 <ul>
 <li>Small chunks: good balance, large overhead</li>
 <li>Large chunks: poor balance, low overhead</li>
 </ul>
-<p>Variants:</p>
+</section>
+
+<section>
+<h3>Variations on a theme</h3>
 <ul>
 <li>Fixed chunk size (requires good cost estimates)</li>
 <li>Guided self-scheduling (take <span class="math inline">\(\lceil (\mbox{tasks left})/p \rceil\)</span> work)</li>
@@ -92,11 +96,11 @@ audio: 2020-11-12-balance
 </section>
 
 <section>
-<h3>Static dependency and graph partitioning</h3>
+<h3>Static dependency</h3>
 <p><img data-src="figs/part_esep.svg" style="width:40.0%" /></p>
 <ul>
 <li>Graph <span class="math inline">\(G = (V,E)\)</span> with vertex and edge weights</li>
-<li>Goal: even partition with small edge cut (comm volume)</li>
+<li>Goal: even partition, small cut (comm volume)</li>
 <li>Optimal partitioning is NP complete – use heuristics</li>
 <li>Tradeoff quality vs speed</li>
 <li>Good software exists (e.g. METIS)</li>
@@ -108,7 +112,7 @@ audio: 2020-11-12-balance
 <p>What if</p>
 <ul>
 <li>We don’t know task costs?</li>
-<li>We don’t know the communication/dependency pattern?</li>
+<li>We don’t know the comm/dependency pattern?</li>
 <li>These things change over time?</li>
 </ul>
 <p>May want <em>dynamic</em> load balancing?</p>
@@ -128,19 +132,19 @@ audio: 2020-11-12-balance
 <section>
 <h3>Example: Longest Common Substring</h3>
 <p>Goal: Longest sequence of (not necessarily contiguous) characters common to strings <span class="math inline">\(S\)</span> and <span class="math inline">\(T\)</span>.</p>
-<p>Recursive formulation: <span class="math display">\[
-\mathrm{LCS}[i,j] =
-  \begin{cases}
+<p>Recursive formulation: <span class="math display">\[\begin{aligned}
+\lefteqn{\mathrm{LCS}[i,j]} &amp;= \\
+&amp; \begin{cases}
     \max(\mathrm{LCS}[i-1,j], \mathrm{LCS}[j,i-1]), &amp; S[i] \neq T[j] \\
     1 + \mathrm{LCS}[i-1,j-1], &amp; S[i] = T[j]
   \end{cases}
-\]</span> Dynamic programming: Form a table of <span class="math inline">\(\mathrm{LCS}[i,j]\)</span></p>
+\end{aligned}\]</span> Dynamic programming: Form a table of <span class="math inline">\(\mathrm{LCS}[i,j]\)</span></p>
 </section>
 
 <section>
 <h3>Dependency graphs</h3>
 <p><img data-src="figs/lb-lcs-dependency.svg" style="width:40.0%" /></p>
-<p>Can process in any order consistent with dependencies.<br />
+<p>Process in any order consistent with dependencies.<br />
 Limits to available parallel work early on or late!</p>
 </section>
 
@@ -158,13 +162,6 @@ Limits to available parallel work early on or late!</p>
 
 <section>
 <h3>Alternate perspective</h3>
-<p>Recall LCS <span class="math display">\[
-\mathrm{LCS}[i,j] =
-  \begin{cases}
-    \max(\mathrm{LCS}[i-1,j], \mathrm{LCS}[j,i-1]), &amp; S[i] \neq T[j] \\
-    1 + \mathrm{LCS}[i-1,j-1], &amp; S[i] = T[j]
-  \end{cases}
-\]</span></p>
 <p>Two approaches to LCS:</p>
 <ul>
 <li>Solve subproblems from bottom up</li>
@@ -189,7 +186,7 @@ Limits to available parallel work early on or late!</p>
 <li>Task costs
 <ul>
 <li>Do all tasks have equal costs?</li>
-<li>Costs known statically, at creation, at completion?</li>
+<li>Known statically, at creation, at completion?</li>
 </ul></li>
 <li>Task dependencies
 <ul>
@@ -198,7 +195,7 @@ Limits to available parallel work early on or late!</p>
 </ul></li>
 <li>Locality
 <ul>
-<li>Should tasks be co-located to reduce communication?</li>
+<li>Tasks co-located to reduce communication?</li>
 <li>When is this information known?</li>
 </ul></li>
 </ul>
@@ -223,7 +220,7 @@ Limits to available parallel work early on or late!</p>
 <img data-src="figs/lb-deps-easy.svg" alt="Easy: dependency-free loop (Jacobi sweep)" style="width:80.0%" /><figcaption>Easy: dependency-free loop (Jacobi sweep)</figcaption>
 </figure>
 <figure>
-<img data-src="figs/lb-deps-harder.svg" alt="Harder: tasks have predictable structure (some DAG)" style="width:80.0%" /><figcaption>Harder: tasks have predictable structure (some DAG)</figcaption>
+<img data-src="figs/lb-deps-harder.svg" alt="Harder: tasks have predictable structure (some DAG)" style="width:40.0%" /><figcaption>Harder: tasks have predictable structure (some DAG)</figcaption>
 </figure>
 <figure>
 <img data-src="figs/lb-tree-search.svg" alt="Hardest: structure is dynamic (search, sparse LU)" style="width:40.0%" /><figcaption>Hardest: structure is dynamic (search, sparse LU)</figcaption>
@@ -242,26 +239,38 @@ Limits to available parallel work early on or late!</p>
 
 <section>
 <h3>A spectrum of solutions</h3>
-<p>How much we can do depends on cost, dependency, locality</p>
+<p>Depending on cost, dependency, locality:</p>
 <ul>
-<li>Static scheduling
+<li>Static scheduling</li>
+<li>Semi-static scheduling</li>
+<li>Dynamic scheduling</li>
+</ul>
+</section>
+
+<section>
+<h3>Static scheduling</h3>
 <ul>
 <li>Everything known in advance</li>
 <li>Can schedule offline (e.g. graph partitioning)</li>
 <li>Example: Shallow water solver</li>
-</ul></li>
-<li>Semi-static scheduling
+</ul>
+</section>
+
+<section>
+<h3>Semi-static scheduling</h3>
 <ul>
 <li>Everything known at start of step (for example)</li>
-<li>Can use offline ideas (e.g. Kernighan-Lin refinement)</li>
+<li>Use offline ideas (e.g. Kernighan-Lin refinement)</li>
 <li>Example: Particle-based methods</li>
-</ul></li>
-<li>Dynamic scheduling
+</ul>
+</section>
+
+<section>
+<h3>Dynamic scheduling</h3>
 <ul>
 <li>Don’t know what we’re doing until we’ve started</li>
 <li>Have to use online algorithms</li>
 <li>Example: most search problems</li>
-</ul></li>
 </ul>
 </section>
 
@@ -287,7 +296,7 @@ Limits to available parallel work early on or late!</p>
 <p><img data-src="figs/lb-tree-search.svg" style="width:40.0%" /></p>
 <ul>
 <li>Tree unfolds dynamically during search</li>
-<li>May be common problems on different paths (graph)</li>
+<li>Common problems on different paths (graph)?</li>
 <li>Graph may or may not be explicit in advance</li>
 </ul>
 </section>
@@ -302,11 +311,11 @@ Limits to available parallel work early on or late!</p>
 <li>remove node <span class="math inline">\(n\)</span> from queue</li>
 <li>if <span class="math inline">\(n\)</span> satisfies goal, return</li>
 <li>mark <span class="math inline">\(n\)</span> as searched</li>
-<li>add viable unsearched children of <span class="math inline">\(n\)</span> to stack/queue<br />
+<li>queue viable unsearched children<br />
 (Can branch-and-bound)</li>
 </ul></li>
 </ul>
-<p>Variants: DFS (stack), BFS (queue), A<span class="math inline">\(^*\)</span> (priority queue), ...</p>
+<p>DFS (stack), BFS (queue), A<span class="math inline">\(^*\)</span> (priority queue), ...</p>
 </section>
 
 <section>
@@ -314,8 +323,8 @@ Limits to available parallel work early on or late!</p>
 <p><img data-src="figs/lb-static-tree.svg" style="width:40.0%" /></p>
 <p>Static load balancing:</p>
 <ul>
-<li>Each new task on an idle processor until all have a subtree</li>
-<li>Not very effective without work estimates for subtrees!</li>
+<li>Each new task on a proc until all have a subtree</li>
+<li>Ineffective without work estimates for subtrees!</li>
 <li>How can we do better?</li>
 </ul>
 </section>
@@ -334,8 +343,7 @@ Limits to available parallel work early on or late!</p>
 <h3>Centralized scheduling</h3>
 <p>Teaser: What could go wrong with this parallel BFS?</p>
 <ul>
-<li>Put root in queue</li>
-<li>fork
+<li>Queue root and fork
 <ul>
 <li>obtain queue lock</li>
 <li>while queue has work
@@ -344,7 +352,7 @@ Limits to available parallel work early on or late!</p>
 <li>release queue lock</li>
 <li>process <span class="math inline">\(n\)</span>, mark as searched</li>
 <li>obtain queue lock</li>
-<li>enqueue unsearched children of <span class="math inline">\(n\)</span></li>
+<li>enqueue unsearched children</li>
 </ul></li>
 <li>release queue lock</li>
 </ul></li>
@@ -356,8 +364,7 @@ Limits to available parallel work early on or late!</p>
 <h3>Centralized scheduling</h3>
 <p>Teaser: What could go wrong with this parallel BFS?</p>
 <ul>
-<li>Put root in queue; <strong>workers active = 0</strong></li>
-<li>fork
+<li>Put root in queue; <strong>workers active = 0</strong>; fork
 <ul>
 <li>obtain queue lock</li>
 <li>while queue has work <strong>or workers active &gt; 0</strong>
@@ -366,7 +373,7 @@ Limits to available parallel work early on or late!</p>
 <li>release queue lock</li>
 <li>process <span class="math inline">\(n\)</span>, mark as searched</li>
 <li>obtain queue lock</li>
-<li>enqueue unsearched children of <span class="math inline">\(n\)</span>; <strong>workers active –</strong></li>
+<li>enqueue unsearched children; <strong>workers active –</strong></li>
 </ul></li>
 <li>release queue lock</li>
 </ul></li>
@@ -391,7 +398,7 @@ Limits to available parallel work early on or late!</p>
 
 <section>
 <h3>Beyond centralized task queue</h3>
-<p><img data-src="figs/lb-centralq.svg" style="width:80.0%" /></p>
+<p><img data-src="figs/lb-distq.svg" style="width:80.0%" /></p>
 </section>
 
 <section>
@@ -412,7 +419,7 @@ Limits to available parallel work early on or late!</p>
 <p>Could use:</p>
 <ul>
 <li>Asynchronous round-robin</li>
-<li>Global round-robin (keep current donor pointer at proc 0)</li>
+<li>Global round-robin (current donor ptr at P0)</li>
 <li>Randomized – optimal with high probability!</li>
 </ul>
 </section>
