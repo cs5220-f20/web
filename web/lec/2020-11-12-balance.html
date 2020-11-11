@@ -133,7 +133,7 @@ audio: 2020-11-12-balance
 <h3>Example: Longest Common Substring</h3>
 <p>Goal: Longest sequence of (not necessarily contiguous) characters common to strings <span class="math inline">\(S\)</span> and <span class="math inline">\(T\)</span>.</p>
 <p>Recursive formulation: <span class="math display">\[\begin{aligned}
-\lefteqn{\mathrm{LCS}[i,j]} &amp;= \\
+&amp; \mathrm{LCS}[i,j] = \\
 &amp; \begin{cases}
     \max(\mathrm{LCS}[i-1,j], \mathrm{LCS}[j,i-1]), &amp; S[i] \neq T[j] \\
     1 + \mathrm{LCS}[i-1,j-1], &amp; S[i] = T[j]
@@ -165,7 +165,7 @@ Limits to available parallel work early on or late!</p>
 <p>Two approaches to LCS:</p>
 <ul>
 <li>Solve subproblems from bottom up</li>
-<li>Solve from top down and <em>memoize</em> common subproblems</li>
+<li>Solve top down, <em>memoize</em> common subproblems</li>
 </ul>
 <p>Parallel question: shared memoization (and synchronize) or independent memoization (and redundant computation)?</p>
 </section>
@@ -217,13 +217,13 @@ Limits to available parallel work early on or late!</p>
 <section>
 <h3>Dependencies</h3>
 <figure>
-<img data-src="figs/lb-deps-easy.svg" alt="Easy: dependency-free loop (Jacobi sweep)" style="width:80.0%" /><figcaption>Easy: dependency-free loop (Jacobi sweep)</figcaption>
+<img data-src="figs/lb-deps-easy.svg" alt="Easy: dependency-free loop (Jacobi sweep)" style="width:70.0%" /><figcaption>Easy: dependency-free loop (Jacobi sweep)</figcaption>
 </figure>
 <figure>
-<img data-src="figs/lb-deps-harder.svg" alt="Harder: tasks have predictable structure (some DAG)" style="width:40.0%" /><figcaption>Harder: tasks have predictable structure (some DAG)</figcaption>
+<img data-src="figs/lb-deps-harder.svg" alt="Harder: tasks have predictable structure (some DAG)" style="width:30.0%" /><figcaption>Harder: tasks have predictable structure (some DAG)</figcaption>
 </figure>
 <figure>
-<img data-src="figs/lb-tree-search.svg" alt="Hardest: structure is dynamic (search, sparse LU)" style="width:40.0%" /><figcaption>Hardest: structure is dynamic (search, sparse LU)</figcaption>
+<img data-src="figs/lb-tree-search.svg" alt="Hardest: structure is dynamic (search, sparse LU)" style="width:20.0%" /><figcaption>Hardest: structure is dynamic (search, sparse LU)</figcaption>
 </figure>
 </section>
 
@@ -331,7 +331,7 @@ Limits to available parallel work early on or late!</p>
 
 <section>
 <h3>Centralized scheduling</h3>
-<p><img data-src="figs/lb-centralq.svg" style="width:40.0%" /></p>
+<p><img data-src="figs/lb-centralq.svg" style="width:50.0%" /></p>
 <p>Idea: obvious parallelization of standard search</p>
 <ul>
 <li>Locks on shared data structure (stack, queue, etc)</li>
