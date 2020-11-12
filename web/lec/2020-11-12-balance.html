@@ -22,6 +22,11 @@ audio: 2020-11-12-balance
 <li>Typically in the memory system</li>
 <li>Saw this in matrix multiply assignment</li>
 </ul>
+<aside class="notes">
+<p>Before we talk about load balance, let’s talk more generally about how parallel code might be inefficient.</p>
+<p>At the start of the semester, we talked about inefficiencies in single-core code. Often this comes because of bad use of caches and the memory system; or perhaps the code isn’t properly vectorized. We saw a lot of this in the matrix multiply assignment.</p>
+<p>The key to good parallel performance is good single-core performance.</p>
+</aside>
 </section>
 
 <section>
@@ -30,8 +35,11 @@ audio: 2020-11-12-balance
 <p>Overhead for parallelism</p>
 <ul>
 <li>Thread creation, synchronization, communication</li>
-<li>Saw this in moshpit and shallow water assignments</li>
+<li>Saw this in shallow water assignment</li>
 </ul>
+<aside class="notes">
+<p>Once we have tuned our serial performance, the time spent on parallel overheads looks relatively larger. This includes all types of parallel overheads: thread creation, synchronization, or explicit message passing. We saw this in the shallow water assignment, for example.</p>
+</aside>
 </section>
 
 <section>
@@ -44,6 +52,10 @@ audio: 2020-11-12-balance
 <li>Insufficient parallel work</li>
 <li>All this can change over phases</li>
 </ul>
+<aside class="notes">
+<p>Once we have tuned both the single core performance and the communication costs, we still have to worry about assigning different amounts of work to different processors. This is what we call load imbalance. Maybe we have different amounts of work, maybe we have different resources at different processors, or maybe we just have more processors than we have parallelism.</p>
+<p>If our computations has phases, all of these things can change from one phase to the next.</p>
+</aside>
 </section>
 
 <section>
@@ -55,6 +67,9 @@ audio: 2020-11-12-balance
 <li>And ordinary time sharing can confuse things more</li>
 <li>Can get some help from profiling tools</li>
 </ul>
+<aside class="notes">
+<p>When you look at wallclock time, load imbalance may look like a long time spent in a barrier or other synchronization construct. But maybe so does ordinary synchronization overhead! Or, depending on the profiler, synchronization techniques like spin locks may make synchronization overhead appear like useful work, even though they’re note. Ordinary time-sharing on a modern operating system can confuse things even more. So while we can get some help from timers and profiling tools, really separating out overheads associated with synchronization or with OS-based sharing of a processor from those associated with load imbalance may not be as easy as it seems.</p>
+</aside>
 </section>
 
 <section>
@@ -73,6 +88,11 @@ audio: 2020-11-12-balance
 </ul></li>
 <li>Issue: what about scheduling overhead?</li>
 </ul>
+<aside class="notes">
+<p>Scheduling is easiest when we have independent tasks. So let’s consider this case first. A natural approach is to partition statically, say by index, giving each processor one pth of the original tasks. But… if task costs are inhomogeneous, we could end up with a bad situation where we lump all the expensive tasks on one thread.</p>
+<p>If there are lots of small tasks, we could randomly assign them in the hopes that things will balance out. If you remember your law of large numbers, though, you’ll realize that for a fixed distribution of task costs, the load imbalance relative to the total time cost decays like the square root of the number of tasks. So for this to make sense, either you want fairly homogeneous task costs or you want a large number of tasks.</p>
+<p>We could also dynamically assign tasks in a way that events out the load across processprs. But if we’re going to do that type of dynamic task assignment, what about the overhead of scheduling?</p>
+</aside>
 </section>
 
 <section>
@@ -83,6 +103,9 @@ audio: 2020-11-12-balance
 <li>Small chunks: good balance, large overhead</li>
 <li>Large chunks: poor balance, low overhead</li>
 </ul>
+<aside class="notes">
+<p>One of our common tools for defeating overhead is to amortize it by doing work in big chunks. This is an option for OpenMP loop scheduling, for example. But in the load balancing case, there is a tension to how we size the chunks of work. If we have very small chunks of work, that’s probably good for balance, but the overhead of scheduling may be very high. In contrast, if we have big chunks of work, the overhead of scheduling is relatively low, but our load balance might be worse.</p>
+</aside>
 </section>
 
 <section>
@@ -93,6 +116,14 @@ audio: 2020-11-12-balance
 <li>Tapering (size chunks based on variance)</li>
 <li>Weighted factoring (GSS with heterogeneity)</li>
 </ul>
+<aside class="notes">
+<p>So how do we resolve the tension between large chunks good for overhead and small chunks good for load balancing?</p>
+<p>The simplest approach is to statically partition the work into fixed size chunks, but this requires good cost estimates a priori. The other extreme, sometimes called self-scheduling, involves querying a work queue for every new task; this is good for load balance under uncertain costs, but the overhead is pretty high.</p>
+<p>An alternate approach that has some of the advantages of self-scheduling without quite so much scheduling overhead is called guided self scheduling (GSS). In GSS, the scheduler decreases the chunk size over time: each time a processor requests work, it gets one pth of the remaining work (or one work item, whichever is larger).</p>
+<p>Tapering is based on GSS, but it takes the mean and standard deviation of the work costs into account. If the standard deviation is zero, tapering is just GSS. Otherwise, tapering takes somewhat smaller chunks than GSS according to soem complicated formula.</p>
+<p>Weighted factoring is a little like GSS, but it can take into account heterogeneity in processor speeds as well.</p>
+<p>These are not the only scheduling protocols out there! This stuff has been studied since the 1980s, and there are still new ideas proposed every year. But our goal is not to consider only independent tasks, so let’s move on.</p>
+</aside>
 </section>
 
 <section>
@@ -105,6 +136,10 @@ audio: 2020-11-12-balance
 <li>Tradeoff quality vs speed</li>
 <li>Good software exists (e.g. METIS)</li>
 </ul>
+<aside class="notes">
+<p>The next step up in complexity from independent tasks is when we have tasks with a fixed dependency. Often, these dependencies can be captured in terms of a graph, where nodes represent variables that we have to update and edges are dependencies between them. We talked in the last deck about using graph partitioning to cut up these problems in a way that evenly partitions the variables while minimizing the edge cut (which corresponds to the communication volume).</p>
+<p>Of course, we have to pay attention to how expensive graph partitioning might be. Different methods represent different tradeoffs between speed and quality of the partition. Fortunately, there are good software packages for the static partitioning problem, like METIS and ParMETIS.</p>
+</aside>
 </section>
 
 <section>
@@ -117,6 +152,9 @@ audio: 2020-11-12-balance
 </ul>
 <p>May want <em>dynamic</em> load balancing?</p>
 <p>Even in regular case: not every problem looks like an undirected graph!</p>
+<aside class="notes">
+<p>Static graph partitioning has its limits. Graph partitioning mostly solves load-balancing when we tasks costs and dependency patterns are fixed and known. But there are problems that have none of these properties! So what do we do if the task costs are unknown, the dependency pattern is unknown, and everything is constantly changing? This calls for a more dynamic approach!</p>
+</aside>
 </section>
 
 <section>
@@ -127,10 +165,14 @@ audio: 2020-11-12-balance
 <li>Arrow from <span class="math inline">\(A\)</span> to <span class="math inline">\(B\)</span> means that <span class="math inline">\(B\)</span> depends on <span class="math inline">\(A\)</span></li>
 <li>Result is a <em>directed acyclic graph</em> (DAG)</li>
 </ul>
+<aside class="notes">
+<p>When we talk about static graph partitioning, we’re often – though not always – thinking about the graph as representing symmetric dependencies between unknowns. In contrast, at the heart of a lot of dynamic scheduling is the notion of a task graph, a directed acyclic graph (DAG) that represents how data flows out of one task and into others.</p>
+<p>This sounds a little abstract, so let’s walk through a concrete example.</p>
+</aside>
 </section>
 
 <section>
-<h3>Example: Longest Common Substring</h3>
+<h3>Longest Common Substring</h3>
 <p>Goal: Longest sequence of (not necessarily contiguous) characters common to strings <span class="math inline">\(S\)</span> and <span class="math inline">\(T\)</span>.</p>
 <p>Recursive formulation: <span class="math display">\[\begin{aligned}
 &amp; \mathrm{LCS}[i,j] = \\
@@ -139,6 +181,12 @@ audio: 2020-11-12-balance
     1 + \mathrm{LCS}[i-1,j-1], &amp; S[i] = T[j]
   \end{cases}
 \end{aligned}\]</span> Dynamic programming: Form a table of <span class="math inline">\(\mathrm{LCS}[i,j]\)</span></p>
+<aside class="notes">
+<p>The longest common substring problem is one of those classic CS problems that comes up in algorithms classes where people talk about dynamic programming (though it also comes up in some other situations, like in genomics studies). The goal is just to find the longest subsequence of characters that two strings S and T have in common.</p>
+<p>We can write down the length of the longest common subsequence via a recursion. Let LCS[i,j] represent the longest common subsequence of characters 1 through i in string S and 1 through j in string T. When i or j is zero, the LCS is zero. That’s our base case. Otherwise, we could have the last characters in the substrings of S and T be the same, or they could be different. If they’re the same, the LCS is going to be one longer than the LCS where we leave the ith character off S and the jth off T. Otherwise, we take the max of the LCS where we either leave the ith character off S or the jth off T.</p>
+<p>It’s OK to stare at this if you need a moment.</p>
+<p>The usual dynamic programming approach to solving this problem involves computing a table of LCS[i,j] for every i and j in the range from zero to the string lengths.</p>
+</aside>
 </section>
 
 <section>
@@ -146,18 +194,29 @@ audio: 2020-11-12-balance
 <p><img data-src="figs/lb-lcs-dependency.svg" style="width:40.0%" /></p>
 <p>Process in any order consistent with dependencies.<br />
 Limits to available parallel work early on or late!</p>
+<aside class="notes">
+<p>Here’s a plot of the dependencies in the longest substring recurrence. Each entry depends on the entries below it, to the left of it, and on the diagonal to the left and below. We can process the entries in this graph in any order consistent with the dependencies, and there are various ways to do this.</p>
+<p>The coloring denotes one order, a sweep starting at the lower left corner (position 1,1) and moving to the top right corner. If we tilt our heads so that the diagonals of constant color run side-to-side, we might notice that the pattern of arrows is very similar to the one that we’ve seen in save problems, and this suggests that we can think about what’s happening in similar ways (e.g. we can think of the analog of “batching steps”, doing some redundant computation in order to reduce communication between neighboring processors.</p>
+<p>But one of the things that is different between this problem and our wave problems is that the diagonals are not all the same size! So there isn’t much work (or parallelism) available in the early phases, nor at the very end.</p>
+</aside>
 </section>
 
 <section>
 <h3>Dependency graphs</h3>
 <p><img data-src="figs/lb-lcs-coarsen.svg" style="width:40.0%" /></p>
 <p>Partition into coarser-grain tasks for locality?</p>
+<aside class="notes">
+<p>We can potentially reduce the synchronization overheads and improve locality of reference by tiling the dynamic programming table, and handling each tile as a chunk. Of course, we then have the same issue we had in the case of independent tasks: how big should the chunks be?</p>
+</aside>
 </section>
 
 <section>
 <h3>Dependency graphs</h3>
 <p><img data-src="figs/lb-lcs-coarse3x3.svg" style="width:40.0%" /></p>
 <p>Dependence between coarse tasks limits parallelism.</p>
+<aside class="notes">
+<p>Having coarse tasks may reduce synchronization overheads, but it also reduces the available parallelization. For the version shown in this picture (corresponding to the coarse blocking in the previous slide), we can never process more than three blocks concurrently!</p>
+</aside>
 </section>
 
 <section>
@@ -168,6 +227,9 @@ Limits to available parallel work early on or late!</p>
 <li>Solve top down, <em>memoize</em> common subproblems</li>
 </ul>
 <p>Parallel question: shared memoization (and synchronize) or independent memoization (and redundant computation)?</p>
+<aside class="notes">
+<p>Everything we’ve discussed so far is from the “bottom up” perspective: we start with short prefixes of S and T and build up to the full strings. But there’s another way of approaching this type of dynamic program, too, sometimes known as “memo-ization,” where we use a data structure to keep track of previously-solved subproblems. The memoization perspective gives maybe a slightly different way of thinking about parallelism for LCS, where we could be more or less strict about synchronized access to a shared memoization data structure, depending on whether we think it’s more important to reduce synchronization costs or more important to avoid all redundant computations. Of course, we see the same type of tradeoff in the bottom-up approach.</p>
+</aside>
 </section>
 
 <section>
@@ -178,6 +240,9 @@ Limits to available parallel work early on or late!</p>
 <li>May be known at outset or dynamically generated</li>
 <li>Topological sort reveals parallelism opportunities</li>
 </ul>
+<aside class="notes">
+<p>Going back to the general picture: a task graph is a directed acyclic graph that captures the data dependencies between different tasks in our computation. The task graph might be known from the start, as in our dynamic programming example, or it might be something that we generate on the fly. Either way, any DAG admits a “topological sort” of the nodes: that is, we can always come up with a linear ordering of the tasks so that all dependencies between tasks are satisfied. In fact, there are many such orderings – if there weren’t, we would have no room for parallelism! A variant of one of the earliest topological sort algorithms (Kahn’s algorithm – no relation to the Star Trek villan!) decomposes a task graph into layers as shown here, where all the tasks in each layer are independent, and can be computed when the tasks in each previous layer are done. Hence, topological sort – or at least this layered variant of topological sort – shows us the opportunities for parallelism that exist in the computation.</p>
+</aside>
 </section>
 
 <section>
@@ -199,6 +264,9 @@ Limits to available parallel work early on or late!</p>
 <li>When is this information known?</li>
 </ul></li>
 </ul>
+<aside class="notes">
+<p>We now have a handle on the main parameters we need to consider when thinking about dynamic load balancing and parallelism. Somehow, we have to start with decomposing our problem into tasks, and look for parallelism between those tasks. In the easiest case, the tasks have equal costs, known statically; but there are certainly problems where we don’t know how much it will cost to execute a task until we start working on it (or even until we finish working on it!). We also may have dependencies between tasks that keep us from executing them in arbitrary order and with arbitrary parallelism; the fewer the dependencies and the earlier we know them, the easier the task of scheduling for parallelism. Finally, we always look for ways to keep locality of reference, and in a task-based problem decomposition, that often means co-locating the execution of tasks that depend on each other as much as possible.</p>
+</aside>
 </section>
 
 <section>
@@ -212,6 +280,11 @@ Limits to available parallel work early on or late!</p>
 <figure>
 <img data-src="figs/lb-task-unk-circles.svg" alt="Hardest: costs unknown until completed (search)" style="width:80.0%" /><figcaption>Hardest: costs unknown until completed (search)</figcaption>
 </figure>
+<aside class="notes">
+<p>Breaking it down a bit more: in terms of task costs, the easiest case is lots of tasks that cost the same amount.</p>
+<p>An example of a harder case might be partitioning the row-times-vector products in a sparse matrix-vector product. The cost of handling each row is proportional to the number of nonzeros in that row; this varies from row to row, but we know the counts in advance. If we want to partition the matrix into sets of rows so that each processor is doing the same amount of work in a matrix-vector product, we have to take this heterogeneity into account. But it’s something that we know at the start, and it doesn’t change over time.</p>
+<p>The hardest case, which is common in search, is when we don’t know how much time it will take to complete a given task until the task is actually done!</p>
+</aside>
 </section>
 
 <section>
@@ -225,6 +298,12 @@ Limits to available parallel work early on or late!</p>
 <figure>
 <img data-src="figs/lb-tree-search.svg" alt="Hardest: structure is dynamic (search, sparse LU)" style="width:15.0%" /><figcaption>Hardest: structure is dynamic (search, sparse LU)</figcaption>
 </figure>
+<aside class="notes">
+<p>Similarly, there are easy, harder, and hardest cases for dependencies.</p>
+<p>The easiest case is independent tasks. This is what happens in our parallel for loops in OpenMP, for example.</p>
+<p>A harder case is when tasks have a predictable structure that is known statically. This is what happened in our wave propagation codes, for example, where the “task” in question corresponded to computing a value for a given mesh point at a given time step.</p>
+<p>The hardest case, again, is search. In this case, we might not know what depends on what until we’ve started exploring. This also happens in problems like sparse LU factorization.</p>
+</aside>
 </section>
 
 <section>
@@ -232,9 +311,12 @@ Limits to available parallel work early on or late!</p>
 <p>When do you communicate?</p>
 <ul>
 <li>Easy: Only at start/end (embarrassingly parallel)</li>
-<li>Harder: In a predictable pattern (elliptic PDE solver)</li>
+<li>Harder: In a predictable pattern (PDE solver)</li>
 <li>Hardest: Unpredictable (discrete event simulation)</li>
 </ul>
+<aside class="notes">
+<p>And then there’s the question of when we communicate, which is closely coupled to the nature of the dependency pattern. The easy case is when there are no dependencies except maybe at the start or the end; this gives us a pleasingly parallel problem. Harder is the case of a predictable pattern like we see in PDE solvers. And in the interest of not constantly complaining about search, let’s give discrete event simulations as an instance of the hardest case, where you don’t necessarily know when you’ll need to send a message. We talked about this earlier in the class when we talked about playing the Game of Life on a dilute board, for example.</p>
+</aside>
 </section>
 
 <section>
@@ -245,6 +327,9 @@ Limits to available parallel work early on or late!</p>
 <li>Semi-static scheduling</li>
 <li>Dynamic scheduling</li>
 </ul>
+<aside class="notes">
+<p>Depending on what we know about the cost of the tasks, how they depend on each other, and what type of locality or communication minimization concerns we might have, we might try different strategies for scheduling our work and communication. In particular, we can arrange these strategies along a continuum, with completely static pre-computed strategies at one extreme and completely dynamic strategies at the other.</p>
+</aside>
 </section>
 
 <section>
@@ -254,6 +339,10 @@ Limits to available parallel work early on or late!</p>
 <li>Can schedule offline (e.g. graph partitioning)</li>
 <li>Example: Shallow water solver</li>
 </ul>
+<aside class="notes">
+<p>When we know the whole shape of the computation in advance, we can plan things out in advance and just execute our plan, with no need for communication to update the plans as we go. Often this involves some form of graph partitioning. An example of a completely static schedule is what we did with the shallow water solver (or at least our version of the solver). We know exactly what depends on what, and probably decide in advance how many steps we should take in a bach.</p>
+<p>Of course, you might recall that the stable step size depends on the water height, so there is some room to do something dynamic here, advancing some parts of the domain with longer time steps and other parts with shorter steps. Load balancing gets trickier if we want to do something like that, since we would get a bad load imbalance if the regions with long time steps were the same size as the regions requiring short time steps.</p>
+</aside>
 </section>
 
 <section>
@@ -263,6 +352,9 @@ Limits to available parallel work early on or late!</p>
 <li>Use offline ideas (e.g. Kernighan-Lin refinement)</li>
 <li>Example: Particle-based methods</li>
 </ul>
+<aside class="notes">
+<p>In other problems, dependencies or task costs might change over time, but slowly enough that we can create a static plan that is useful over several steps of the algorithm. We might then re-compute the plan from scratch, or we might do something to refine the plan in the face of changes, like applying a few sweeps of Kernighan-Lin to update a partition after changing some edges around. An example where this comes in handy is in particle simulations where particles interact with all other particles in some local neighborhood. As the particles move around, who they interact with slowly changes. But these changes are slow enough relative to the time step size that we can re-use the same (slightly conservative) interaction graph for scheduling interaction computations over several consecutive time steps.</p>
+</aside>
 </section>
 
 <section>
@@ -272,6 +364,9 @@ Limits to available parallel work early on or late!</p>
 <li>Have to use online algorithms</li>
 <li>Example: most search problems</li>
 </ul>
+<aside class="notes">
+<p>In cases where we have less advance knowledge of how things will unfold, we’re forced to schedule dynamically. As I’ve said, this is usually what happens with search problems.</p>
+</aside>
 </section>
 
 <section>
@@ -289,6 +384,9 @@ Limits to available parallel work early on or late!</p>
 <li>...</li>
 </ul></li>
 </ul>
+<aside class="notes">
+<p>I keep complaining about search problems! So what’s the story with these? They’re pretty different from the types of structured simulations that we’ve seen so far. Examples include finding optimal layouts for integrated circuits, path planning for robots, game playing, speech processing, reconstructing phylogenetic trees, and many more. For those of you in CS, these likely feel like much more comfortable problems than wave simulations! But they’re a lot harder from the perspective of parallel performance.</p>
+</aside>
 </section>
 
 <section>
@@ -299,6 +397,9 @@ Limits to available parallel work early on or late!</p>
 <li>Common problems on different paths (graph)?</li>
 <li>Graph may or may not be explicit in advance</li>
 </ul>
+<aside class="notes">
+<p>A canonical example is tree search, where the tree unfolds dynamically as part of the search process. A lot of graph problems end up looking like this. Tree traversals sometimes kick up different problems along different paths in the tree, so it can in principal be effective to look for opportunities to treat them like DAGs – but the tree case is usually easier.</p>
+</aside>
 </section>
 
 <section>
@@ -316,6 +417,10 @@ Limits to available parallel work early on or late!</p>
 </ul></li>
 </ul>
 <p>DFS (stack), BFS (queue), A<span class="math inline">\(^*\)</span> (priority queue), ...</p>
+<aside class="notes">
+<p>Let’s take a generic graph search as a working example of something that’s building a search tree. We start with a root node of the tree, which we put into some type of queue data structure. Then, while there are nodes in the queue, we remove one node, check whether it matches our goal (returning if it does), and otherwise mark the node as returned and queue up any viable unsearched children.</p>
+<p>Here I uses “queue” to denote not only a first-in-first-out (FIFO) data structure, but a more generic collection that we can add to and remove from. With a FIFO queue, we’ve just described breadth-first search; with a stack, it would be depth-first search; and with a priority queue, it would be A-star search.</p>
+</aside>
 </section>
 
 <section>
@@ -327,6 +432,9 @@ Limits to available parallel work early on or late!</p>
 <li>Ineffective without work estimates for subtrees!</li>
 <li>How can we do better?</li>
 </ul>
+<aside class="notes">
+<p>It is, in fact, possible to consider a mostly-static partitioning scheme for this type of tree search algorithm. Start unfolding the search tree, assigning each new node to a different processors until we have used all the processors; then let each processor handle its subtree. Of course, in the case of something like our graph search example, we might have to do some synchronization around marking already-searched nodes, but there are a lot of situations where different subtrees really can be processed completely independently. The problem is, unless we know in advance how big each of those subtrees is, this strategy might assign massively more work to some processors than to others! So what do we need to do in order to do better?</p>
+</aside>
 </section>
 
 <section>
@@ -337,6 +445,9 @@ Limits to available parallel work early on or late!</p>
 <li>Locks on shared data structure (stack, queue, etc)</li>
 <li>Or might be a manager task</li>
 </ul>
+<aside class="notes">
+<p>The obvious thing to do is to organize our work around some centralized queue. For example, in our graph search picture, we might try to just use an appropriately-synchronized shared stack or FIFO queue. Or we might set up a manager to parcel out work on request.</p>
+</aside>
 </section>
 
 <section>
@@ -358,11 +469,15 @@ Limits to available parallel work early on or late!</p>
 </ul></li>
 <li>join</li>
 </ul>
+<aside class="notes">
+<p>Let’s think through how we might do this. It’s constructive to do the most straightforward thing first, and then think about what goes wrong, rather than jumping immediately to the right answer!</p>
+<p>In this code, we start off by putting the root node into the queue, and then we fork a bunch of worker processes to handle nodes as they appear in the queue. We use a lock to ensure that only one worker is modifying a queue at any given time.</p>
+<p>Can you see what goes wrong with this code? I’ll give you a hint: the code produces a correct result, but is potentially subject to a massive load imbalance.</p>
+</aside>
 </section>
 
 <section>
 <h3>Centralized scheduling</h3>
-<p>Teaser: What could go wrong with this parallel BFS?</p>
 <ul>
 <li>Put root in queue; <strong>workers active = 0</strong>; fork
 <ul>
@@ -379,6 +494,10 @@ Limits to available parallel work early on or late!</p>
 </ul></li>
 <li>join</li>
 </ul>
+<aside class="notes">
+<p>The problem with our code on the previous slide is that if P0 dequeues the root node at the start, all the other processors might look at the empty work queue and decide to quit before P0 enqueues the searched children! To avoid this problem, we need to know not only when the queue is empty, but also when there is the <em>potential</em> for new work to be added to the queue. We can do this by keeping track of the number of workers that are processing nodes – if anyone is processing a node, they might generate new nodes in the not-too-distant future.</p>
+<p>If I was implementing this in real code, by the way, I would probably use a condition variable to signal when the queue had work available. But explaining that would have made this longer than one slide, too.</p>
+</aside>
 </section>
 
 <section>
@@ -394,11 +513,19 @@ Limits to available parallel work early on or late!</p>
 <li>Con: centralized, so doesn’t scale</li>
 <li>Con: high overhead if tasks are small</li>
 </ul>
+<aside class="notes">
+<p>We’ve already seen this type of centralized queue data structure in our OpenMP discussion, though we didn’t describe it that way at the time. In a parallel for loop, tasks correspond to indices (or chunks of indices), all of which are assumed to be independent. The “dynamic” scheduling option (aka self-scheduling) in an OpenMP loop does this.</p>
+<p>This type of centralized task queue is great for load balance, but it also requires a potentially-expensive synchronized global data structure. Imagine we were in a distributed memory environment and had to send an MPI message every time we wanted to process a point! This is great for small numbers of processors, but we probably want something else as we scale up to larger machines.</p>
+</aside>
 </section>
 
 <section>
 <h3>Beyond centralized task queue</h3>
 <p><img data-src="figs/lb-distq.svg" style="width:80.0%" /></p>
+<aside class="notes">
+<p>Maybe unsurprisingly, the obvious competitor to a centralized task queue is a decentralized task queue! The idea here is that each worker maintains its own local task queue, but there is a mechanism to transfer work from one worker to another in order to balance load out. For example, in the diagram shown here, worker 1 might see that it has an empty work queue, and decide to steal a work item from worker 2 (yoink!). This is a “work-stealing” arrangement.</p>
+<p>It’s worth thinking for a moment: in an environment like this, how do you decide when you’re done?</p>
+</aside>
 </section>
 
 <section>
@@ -408,10 +535,12 @@ Limits to available parallel work early on or late!</p>
 <li>Each processor works on part of a tree</li>
 <li>When done, get work from a peer</li>
 <li><em>Or</em> if busy, push work to a peer</li>
-<li>Requires asynch communication</li>
+<li>Asynch communication useful</li>
 </ul>
 <p>Also goes by work stealing, work crews...</p>
-<p>Implemented in OpenMP, Cilk, X10, CUDA, QUARK, SMPss, ...</p>
+<aside class="notes">
+<p>In words, here’s the distributed task queue idea. Each processor works on its queue of tasks; if the queue empties, it might steal work from a peer, or it might push work to a peer if the queue gets too full. Either way, this is a place where one-sided communication is probably useful, though not totally critical.</p>
+</aside>
 </section>
 
 <section>
@@ -422,6 +551,12 @@ Limits to available parallel work early on or late!</p>
 <li>Global round-robin (current donor ptr at P0)</li>
 <li>Randomized – optimal with high probability!</li>
 </ul>
+<aside class="notes">
+<p>Let’s consider the work-stealing variant. My queue is empty, and I want to take work from a donor. How do I decide who to go to?</p>
+<p>One approach would be for me to ask each of the processors in turn. The problem with this is that if I use the same ordering as everyone else, we’ll all end up swamping the first few nodes with requests for work (and probably running them completely dry so that they then have to beg). This is not great for spreading around the wealth.</p>
+<p>A second approach, much more equitable in how it steals work, would involve a global round-robin ordering. But to do a global ordering of work stealing, we would need to keep a synchronized pointer to the next in the list, maybe at processor 0. That pointer is now a source of contention and communication overhead.</p>
+<p>It turns out that a somewhat stupid-sounding strategy is nearly as good as global round robin, but involves no communication. This strategy is to choose a donor at random.</p>
+</aside>
 </section>
 
 <section>
@@ -434,6 +569,9 @@ Limits to available parallel work early on or late!</p>
 </ul></li>
 <li>Average out load with neighbors <span class="math inline">\(\implies\)</span> diffusion!</li>
 </ul>
+<aside class="notes">
+<p>Randomly targeting who we beg for work doesn’t require any sophisticated communication around who to ask. But we do have to communicate to make the ask, and not all communication messages are equal! In an MPI job with multiple ranks per node, messages that are within the node are probably going to be much faster than inter-node messages. So maybe instead of choosing a donor uniformly at random, we should choose a donor according to a distribution that favors asking nearby nodes first! This is sometimes called diffusion-based load balancing. This type of diffusion-based load balancing doesn’t “spread out” developing load imbalances as fast as uniform donor selection does, but it does spread the load eventually, and with less expensive inter-node communication.</p>
+</aside>
 </section>
 
 <section>
@@ -443,6 +581,9 @@ Limits to available parallel work early on or late!</p>
 <li>Other times: fine-grain <em>data</em> parallelism</li>
 <li>Why not do both? <em>Switched</em> parallelism.</li>
 </ul>
+<aside class="notes">
+<p>You may feel a bit uneasy that the type of task-based parallelism we’ve discussed today feels very different from the type of data-parallel strategies that we’ve discussed previously. But there’s no need to just one or the other. A big part of this class involves aggregating our computation into chunks of work that are big enough to amortize the cost of synchronization and communication, but small enough to play nicely with caches and provide some opportunities for parallelism and load balance. Switched parallelism is really just an instance of this approach: do fine-grained data parallelism at one level, where that data parallelism lives inside of a coarse-grained task.</p>
+</aside>
 </section>
 
 <section>
@@ -460,5 +601,10 @@ steal from neighbors (comm. overhead)</li>
 </ul></li>
 <li>Sometimes hard to know when code should stop!</li>
 </ul>
+<aside class="notes">
+<p>Wrapping up for today: there is no uber-algorithm for finding parallelism and balancing load across processors. While it’s often useful to think about these problems in terms of tasks and their interdependencies, the exact nature of the task costs and dependencies (and when we find out about those costs and dependencies) has a huge impact on what’s most appropriate. The right solution in any given situation represents a particular answer to how we should make some fundamental tradeoffs. For example, should we overdecompose a project, getting lots of small tasks that are easier to spread across processors in a balanced way? Or should we keep the tasks big in order to amortize scheduling overhead and potentially improve locality of reference? And if we’re in distributed memory environments, should we do work stealing with donors chosen uniformly at random, which is better for evening out load quickly in very imbalanced settings? Or should we use a diffusion scheme that favors nearby donors, which may not spread out load as quickly but will tend to do less expensive communication when we stay around an equilibrium?</p>
+<p>As a final theme that has come up a few times: for as cool as some of the more dynamic load balancing mechanisms are, they often make it really hard to decide when a program should be done.</p>
+<p>Fortunately, I have no such difficulty with deciding when to end this slide deck! Until next time…</p>
+</aside>
 </section>
 
