@@ -214,6 +214,9 @@
 -
   date: 2020-11-12
   info: Load balancing
+  files:
+    - info: Load balancing
+      file: lec/2020-11-12-balance.html
 # =================
 # Week 10
 #
