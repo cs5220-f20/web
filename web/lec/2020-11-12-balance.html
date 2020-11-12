@@ -91,7 +91,7 @@ audio: 2020-11-12-balance
 <aside class="notes">
 <p>Scheduling is easiest when we have independent tasks. So let’s consider this case first. A natural approach is to partition statically, say by index, giving each processor one pth of the original tasks. But… if task costs are inhomogeneous, we could end up with a bad situation where we lump all the expensive tasks on one thread.</p>
 <p>If there are lots of small tasks, we could randomly assign them in the hopes that things will balance out. If you remember your law of large numbers, though, you’ll realize that for a fixed distribution of task costs, the load imbalance relative to the total time cost decays like the square root of the number of tasks. So for this to make sense, either you want fairly homogeneous task costs or you want a large number of tasks.</p>
-<p>We could also dynamically assign tasks in a way that events out the load across processprs. But if we’re going to do that type of dynamic task assignment, what about the overhead of scheduling?</p>
+<p>We could also dynamically assign tasks in a way that evens out the load across processors. But if we’re going to do that type of dynamic task assignment, what about the overhead of scheduling?</p>
 </aside>
 </section>
 
