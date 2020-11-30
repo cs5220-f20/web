@@ -20,10 +20,10 @@ audio: 2020-12-01-graph
 <ul>
 <li>Convention: <span class="math inline">\(|V| = n\)</span> and <span class="math inline">\(|E| = m\)</span></li>
 <li>May be directed or undirected</li>
-<li>May have weights <span class="math inline">\(w_V : V \rightarrow \bbR\)</span> or <span class="math inline">\(w_E : E : \rightarrow \bbR\)</span></li>
+<li>May have weights <span class="math inline">\(w_V : V \rightarrow \mathbb{R}\)</span> or <span class="math inline">\(w_E : E : \rightarrow \mathbb{R}\)</span></li>
 <li>May have other node or edge attributes as well</li>
 <li>Path is <span class="math inline">\(\left[ \, (u_i,u_{i+1}) \, \right]_{i=1}^\ell \in E^*\)</span>, sum of weights is length</li>
-<li>Diameter is max shortest path length between any <span class="math inline">\(s, t \in V\)</span></li>
+<li>Diameter is <span class="math inline">\(\max_{s, t \in V} d(s, t)\)</span></li>
 </ul>
 </section>
 
@@ -95,7 +95,7 @@ audio: 2020-12-01-graph
 <td style="text-align: left;">Small</td>
 </tr>
 <tr class="odd">
-<td>Edge separators</td>
+<td>Edge sep</td>
 <td style="text-align: left;"><span class="math inline">\(O(\sqrt{n})\)</span></td>
 <td style="text-align: left;">nothing small</td>
 </tr>
@@ -105,7 +105,7 @@ audio: 2020-12-01-graph
 <td style="text-align: left;">Iterative</td>
 </tr>
 <tr class="odd">
-<td>Prototypical apps</td>
+<td>Apps</td>
 <td style="text-align: left;">PDEs</td>
 <td style="text-align: left;">Social networks</td>
 </tr>
@@ -189,9 +189,12 @@ Let’s spend a few minutes on more productive algorithms...</p>
 <h3>Parallel BFS: Ullman-Yannakakis</h3>
 <p>Assuming a high-diameter graph:</p>
 <ul>
-<li>Form set <span class="math inline">\(S\)</span> with start + random nodes, <span class="math inline">\(|S| = \Theta(\sqrt{n}  \log n)\)</span> — long shortest paths must go through <span class="math inline">\(S\)</span> with high prob</li>
+<li>Form set <span class="math inline">\(S\)</span> with start + random nodes, <span class="math inline">\(|S| = \Theta(\sqrt{n}  \log n)\)</span>
+<ul>
+<li>long shortest paths go through <span class="math inline">\(S\)</span> w.h.p.</li>
+</ul></li>
 <li>Take <span class="math inline">\(\sqrt{n}\)</span> steps of BFS from each seed in <span class="math inline">\(S\)</span></li>
-<li>Form aux weighted graph for distances between seeds</li>
+<li>Form aux graph for distances between seeds</li>
 <li>Run all-pairs shortest path on aux graph</li>
 </ul>
 <p>OK, but what if diameter is not large?</p>
@@ -213,15 +216,14 @@ Let’s spend a few minutes on more productive algorithms...</p>
 <li>Use 2D blocking of adjacency</li>
 <li>Temporally partition work: vertex processed by at most one processor at a time, cycle processors (“systolic rotation”)</li>
 </ul>
-<p>Together gives state-of-art performance. But...</p>
 </section>
 
 <section>
 <h3>Single-source shortest path</h3>
 <p>Classic algorithm: Dijkstra</p>
 <ul>
-<li>Dequeue closest point from frontier and expand frontier</li>
-<li>Update priority queue of distances (can be done in parallel)</li>
+<li>Dequeue closest point to frontier, expand frontier</li>
+<li>Update priority queue of distances (in parallel)</li>
 <li>Repeat</li>
 </ul>
 <p>Or run serial Dijkstra from different sources for APSP.</p>
@@ -242,18 +244,18 @@ Let’s spend a few minutes on more productive algorithms...</p>
 <p>Alternate approach: <em>hybrid</em> algorithm</p>
 <ul>
 <li>Process a “bucket” at a time</li>
-<li>Relax “light” edges (weight &lt; <span class="math inline">\(\Delta\)</span>) which might add to current bucket</li>
+<li>Relax “light” edges (wt &lt; <span class="math inline">\(\Delta\)</span>), might add to current bucket</li>
 <li>When bucket empties, relax “heavy” edges a la Dijkstra</li>
 </ul>
 </section>
 
 <section>
-<h3>Maximal independent sets</h3>
+<h3>Maximal independent sets (MIS)</h3>
 <ul>
 <li><span class="math inline">\(S \subset V\)</span> <em>independent</em> if none are neighbors.</li>
 <li><em>Maximal</em> if no others can be added and remain independent.</li>
-<li><em>Maximum</em> if no other maximal independent set is bigger.</li>
-<li>Maximum is NP-hard; maximal is easy in one processor</li>
+<li><em>Maximum</em> if no other MIS is bigger.</li>
+<li>Maximum is NP-hard; maximal is easy (serial)</li>
 </ul>
 </section>
 
@@ -434,11 +436,10 @@ Con: wasteful for sparse case...</p>
 <section>
 <h3>At what COST?</h3>
 <p>“Scalability! But at what COST?”<br />
-McSherry, Isard, Murray<br />
-HotOS 15</p>
+McSherry, Isard, Murray, HotOS 15</p>
 <blockquote>
 <p>You can have a second computer once you’ve shown you know how to use the first one.<br />
-– Paul Barham (quoted in intro to HotOS15 paper)</p>
+– Paul Barham (quoted in intro)</p>
 </blockquote>
 <ul>
 <li>COST = Configuration that Outperforms a Single Thread</li>
