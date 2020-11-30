@@ -1,0 +1,448 @@
+---
+title: Parallel graph algorithms
+layout: slides
+audio: 2020-12-01-graph
+---
+
+<section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <h3>Parallel graph algorithms</h3>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
+  </p>
+  <p>Please click the play button below.</p>
+</section>
+
+<section>
+<h3>Graphs</h3>
+<p>Mathematically: <span class="math inline">\(G = (V,E)\)</span> where <span class="math inline">\(E \subset V \times V\)</span></p>
+<ul>
+<li>Convention: <span class="math inline">\(|V| = n\)</span> and <span class="math inline">\(|E| = m\)</span></li>
+<li>May be directed or undirected</li>
+<li>May have weights <span class="math inline">\(w_V : V \rightarrow \bbR\)</span> or <span class="math inline">\(w_E : E : \rightarrow \bbR\)</span></li>
+<li>May have other node or edge attributes as well</li>
+<li>Path is <span class="math inline">\(\left[ \, (u_i,u_{i+1}) \, \right]_{i=1}^\ell \in E^*\)</span>, sum of weights is length</li>
+<li>Diameter is max shortest path length between any <span class="math inline">\(s, t \in V\)</span></li>
+</ul>
+</section>
+
+<section>
+<h3>Generalizations</h3>
+<ul>
+<li>Hypergraph (edges in <span class="math inline">\(V^d\)</span>)</li>
+<li>Multigraph (multiple copies of edges)</li>
+</ul>
+</section>
+
+<section>
+<h3>Types of graphs</h3>
+</section>
+
+<section>
+<h3>Types of graphs</h3>
+</section>
+
+<section>
+<h3>Types of graphs</h3>
+</section>
+
+<section>
+<h3>Types of graphs</h3>
+</section>
+
+<section>
+<h3>Types of graphs</h3>
+</section>
+
+<section>
+<h3>Types of graphs</h3>
+</section>
+
+<section>
+<h3>Types of graphs</h3>
+<p>Many possible structures:</p>
+<ul>
+<li>Lines and trees</li>
+<li>Completely regular grids</li>
+<li>Planar graphs (no edges need cross)</li>
+<li>Low-dimensional Euclidean</li>
+<li>Power law graphs</li>
+<li>...</li>
+</ul>
+<p>Algorithms are not one-size-fits-all!</p>
+</section>
+
+<section>
+<h3>Ends of a spectrum</h3>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th style="text-align: left;">Planar</th>
+<th style="text-align: left;">Power law</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Vertex degree</td>
+<td style="text-align: left;">Uniformly small</td>
+<td style="text-align: left;"><span class="math inline">\(P(\mathrm{deg} = k) \sim k^{-\gamma}\)</span></td>
+</tr>
+<tr class="even">
+<td>Radius</td>
+<td style="text-align: left;"><span class="math inline">\(\Omega(\sqrt{n})\)</span></td>
+<td style="text-align: left;">Small</td>
+</tr>
+<tr class="odd">
+<td>Edge separators</td>
+<td style="text-align: left;"><span class="math inline">\(O(\sqrt{n})\)</span></td>
+<td style="text-align: left;">nothing small</td>
+</tr>
+<tr class="even">
+<td>Linear solve</td>
+<td style="text-align: left;">Direct OK</td>
+<td style="text-align: left;">Iterative</td>
+</tr>
+<tr class="odd">
+<td>Prototypical apps</td>
+<td style="text-align: left;">PDEs</td>
+<td style="text-align: left;">Social networks</td>
+</tr>
+</tbody>
+</table>
+<p>Calls for different methods!</p>
+</section>
+
+<section>
+<h3>Applications: Routing and shortest paths</h3>
+<figure>
+<embed data-src="figs/ithaca2nyc.pdf" style="width:50.0%" /><figcaption>image</figcaption>
+</figure>
+</section>
+
+<section>
+<h3>Applications: Traversal, ranking, clustering</h3>
+<ul>
+<li>Web crawl / traversal</li>
+<li>PageRank, HITS</li>
+<li>Clustering similar documents</li>
+</ul>
+</section>
+
+<section>
+<h3>Applications: Sparse solvers</h3>
+<p><a href="http://yifanhu.net/GALLERY/GRAPHS/GIF_SMALL/Pothen@barth5.html"><img data-src="figs/Pothen-barth5.jpg" alt="image" style="width:50.0%" /></a></p>
+<ul>
+<li>Ordering for sparse factorization</li>
+<li>Partitioning</li>
+<li>Graph coarsening for AMG</li>
+<li>Other preconditioning ops...</li>
+</ul>
+</section>
+
+<section>
+<h3>Applications: Dimensionality reduction</h3>
+<p><a href="http://web.mit.edu/cocosci/isomap/isomap.html"><img data-src="figs/web1.jpg" alt="image" style="width:80.0%" /></a></p>
+</section>
+
+<section>
+<h3>Common building blocks</h3>
+<ul>
+<li>Traversals</li>
+<li>Shortest paths</li>
+<li>Spanning tree</li>
+<li>Flow computations</li>
+<li>Topological sort</li>
+<li>Coloring</li>
+<li>...</li>
+</ul>
+<p>... and most of sparse linear algebra.</p>
+</section>
+
+<section>
+<h3>Over-simple models</h3>
+<p>Let <span class="math inline">\(t_p =\)</span> idealized time on <span class="math inline">\(p\)</span> processors</p>
+<ul>
+<li><span class="math inline">\(t_1 =\)</span> work</li>
+<li><span class="math inline">\(t_\infty =\)</span> span (or depth, or critical path length)</li>
+</ul>
+</section>
+
+<section>
+<h3>One implication</h3>
+<p>Don’t bother with parallel DFS! Span is <span class="math inline">\(\Omega(n)\)</span>.<br />
+Let’s spend a few minutes on more productive algorithms...</p>
+</section>
+
+<section>
+<h3>Parallel BFS</h3>
+<p>Simple idea: parallelize across frontiers</p>
+<ul>
+<li>Pro: Simple to think about</li>
+<li>Pro: Lots of parallelism with small radius?</li>
+<li>Con: What if frontiers are small?</li>
+</ul>
+</section>
+
+<section>
+<h3>Parallel BFS: Ullman-Yannakakis</h3>
+<p>Assuming a high-diameter graph:</p>
+<ul>
+<li>Form set <span class="math inline">\(S\)</span> with start + random nodes, <span class="math inline">\(|S| = \Theta(\sqrt{n}  \log n)\)</span> — long shortest paths must go through <span class="math inline">\(S\)</span> with high prob</li>
+<li>Take <span class="math inline">\(\sqrt{n}\)</span> steps of BFS from each seed in <span class="math inline">\(S\)</span></li>
+<li>Form aux weighted graph for distances between seeds</li>
+<li>Run all-pairs shortest path on aux graph</li>
+</ul>
+<p>OK, but what if diameter is not large?</p>
+</section>
+
+<section>
+<h3>LA take</h3>
+<ul>
+<li>Indicate frontier at each stage by <span class="math inline">\(x\)</span></li>
+<li><span class="math inline">\(x&#39; = A^T x\)</span> (multiply=select, add=min)</li>
+</ul>
+</section>
+
+<section>
+<h3>Parallel BFS: LA perspective</h3>
+<p>Key ideas:</p>
+<ul>
+<li>At some point, switch from top-down expanding frontier (“are you my child?”) to bottom-up checking for parents (“are you my parent?”)</li>
+<li>Use 2D blocking of adjacency</li>
+<li>Temporally partition work: vertex processed by at most one processor at a time, cycle processors (“systolic rotation”)</li>
+</ul>
+<p>Together gives state-of-art performance. But...</p>
+</section>
+
+<section>
+<h3>Single-source shortest path</h3>
+<p>Classic algorithm: Dijkstra</p>
+<ul>
+<li>Dequeue closest point from frontier and expand frontier</li>
+<li>Update priority queue of distances (can be done in parallel)</li>
+<li>Repeat</li>
+</ul>
+<p>Or run serial Dijkstra from different sources for APSP.</p>
+</section>
+
+<section>
+<h3>Alternate idea: label correcting</h3>
+<p>Initialize <span class="math inline">\(d[u]\)</span> with distance over-estimates to source</p>
+<ul>
+<li><span class="math inline">\(d[s] = 0\)</span></li>
+<li>Repeatedly relax <span class="math inline">\(d[u] := \min_{(v,u) \in E} d[v] + w(v,u)\)</span></li>
+</ul>
+<p>Converges (eventually) as long as all nodes visited repeatedly, updates are atomic. If serial sweep in a consistent order, call it Bellman-Ford.</p>
+</section>
+
+<section>
+<h3>Single-source shortest path: <span class="math inline">\(\Delta\)</span>-stepping</h3>
+<p>Alternate approach: <em>hybrid</em> algorithm</p>
+<ul>
+<li>Process a “bucket” at a time</li>
+<li>Relax “light” edges (weight &lt; <span class="math inline">\(\Delta\)</span>) which might add to current bucket</li>
+<li>When bucket empties, relax “heavy” edges a la Dijkstra</li>
+</ul>
+</section>
+
+<section>
+<h3>Maximal independent sets</h3>
+<ul>
+<li><span class="math inline">\(S \subset V\)</span> <em>independent</em> if none are neighbors.</li>
+<li><em>Maximal</em> if no others can be added and remain independent.</li>
+<li><em>Maximum</em> if no other maximal independent set is bigger.</li>
+<li>Maximum is NP-hard; maximal is easy in one processor</li>
+</ul>
+</section>
+
+<section>
+<h3>Simple greedy MIS</h3>
+<ul>
+<li>Start with <span class="math inline">\(S\)</span> empty</li>
+<li>For each <span class="math inline">\(v \in V\)</span> <em>sequentially</em>, add <span class="math inline">\(v\)</span> to <span class="math inline">\(S\)</span> if possible.</li>
+</ul>
+</section>
+
+<section>
+<h3>Luby’s algorithm</h3>
+<ul>
+<li>Init <span class="math inline">\(S := \emptyset\)</span></li>
+<li>Init candidates <span class="math inline">\(C := V\)</span></li>
+<li>While <span class="math inline">\(C \neq \emptyset\)</span>
+<ul>
+<li>Label each <span class="math inline">\(v\)</span> with a random <span class="math inline">\(r(v)\)</span></li>
+<li>For each <span class="math inline">\(v \in C\)</span> in parallel, if <span class="math inline">\(r(v) &lt;  \min_{\mathcal{N}(v)} r(u)\)</span>
+<ul>
+<li>Move <span class="math inline">\(v\)</span> from <span class="math inline">\(C\)</span> to <span class="math inline">\(S\)</span></li>
+<li>Remove neighbors from <span class="math inline">\(v\)</span> to <span class="math inline">\(C\)</span></li>
+</ul></li>
+</ul></li>
+</ul>
+<p>Very probably finishes in <span class="math inline">\(O(\log n)\)</span> rounds.</p>
+</section>
+
+<section>
+<h3>Luby’s algorithm (round 1)</h3>
+</section>
+
+<section>
+<h3>Luby’s algorithm (round 1)</h3>
+</section>
+
+<section>
+<h3>A fundamental problem</h3>
+<p>Many graph ops are</p>
+<ul>
+<li>Computationally cheap (per node or edge)</li>
+<li>Bad for locality</li>
+</ul>
+<p><strong>Memory bandwidth</strong> as a limiting factor.</p>
+</section>
+
+<section>
+<h3>Big data?</h3>
+<p>Consider:</p>
+<ul>
+<li>323 million in US (fits in 32-bit int)</li>
+<li>About 350 Facebook friends each</li>
+<li>Compressed sparse row: about 450 GB</li>
+</ul>
+<p>Topology (no metadata) on one big cloud node...</p>
+</section>
+
+<section>
+<h3>Graph representation: Adjacency matrix</h3>
+<p>Pro: efficient for dense graphs<br />
+Con: wasteful for sparse case...</p>
+</section>
+
+<section>
+<h3>Graph representation: Coordinate</h3>
+<ul>
+<li>Tuples: <span class="math inline">\((i,j,w_{ij})\)</span></li>
+<li>Pro: Easy to update</li>
+<li>Con: Slow for multiply</li>
+</ul>
+</section>
+
+<section>
+<h3>Graph representation: Adj list</h3>
+<ul>
+<li>Linked lists of adjacent nodes</li>
+<li>Pro: Still easy to update</li>
+<li>Con: May cost more to store than coord?</li>
+</ul>
+</section>
+
+<section>
+<h3>Graph representations: CSR</h3>
+<p>Pro: traversal? Con: updates</p>
+</section>
+
+<section>
+<h3>Graph representations: implicit</h3>
+<ul>
+<li>Idea: Never materialize a graph data structure</li>
+<li>Key: Provide traversal primitives</li>
+<li>Pro: Explicit rep’n sometimes overkill for one-off graphs?</li>
+<li>Con: Hard to use canned software (except NLA?)</li>
+</ul>
+</section>
+
+<section>
+<h3>Graph algorithms and linear algebra</h3>
+<ul>
+<li>Looks like LA
+<ul>
+<li>Floyd-Warshall</li>
+<li>Breadth-first search?</li>
+</ul></li>
+<li>Really is standard LA
+<ul>
+<li>Spectral partitioning and clustering</li>
+<li>PageRank and some other centralities</li>
+<li>“Laplacian Paradigm” (Spielman, Teng, others...)</li>
+</ul></li>
+</ul>
+</section>
+
+<section>
+<h3>Graph algorithms and linear algebra</h3>
+<p><em>Semirings</em> have <span class="math inline">\(\oplus\)</span> and <span class="math inline">\(\otimes\)</span> s.t.</p>
+<ul>
+<li>Addition is commutative+associative with an identity 0</li>
+<li>Multiplication is associative with identity 1</li>
+<li>Both are distributive</li>
+<li><span class="math inline">\(a \otimes 0 = 0 \otimes a = 0\)</span></li>
+<li>But no subtraction or division</li>
+</ul>
+<p>Technically have <em>modules</em> (vs vector spaces) over semirings</p>
+</section>
+
+<section>
+<h3>Graph algorithms and linear algebra</h3>
+<p>Example: min-plus</p>
+<ul>
+<li><span class="math inline">\(\oplus = \min\)</span> and additive identity <span class="math inline">\(0 \equiv \infty\)</span></li>
+<li><span class="math inline">\(\otimes = +\)</span> and multiplicative identity <span class="math inline">\(1 \equiv 0\)</span></li>
+<li>Useful for breadth-first search (on board)</li>
+</ul>
+</section>
+
+<section>
+<h3>Graph BLAS</h3>
+<p><a href="http://www.graphblas.org/" class="uri">http://www.graphblas.org/</a></p>
+<ul>
+<li>Provisional API as of late May 2017</li>
+<li>(Opaque) internal sparse matrix data structure</li>
+<li>Allows operations over misc semirings</li>
+</ul>
+</section>
+
+<section>
+<h3>Graph frameworks</h3>
+<p>Several to choose from!</p>
+<ul>
+<li>Pregel, Apache Giraph, Stanford GPS, ...</li>
+<li>GraphLab family
+<ul>
+<li>GraphLab: Original distributed memory</li>
+<li>PowerGraph: Tuned toward “natural” (power law) networks</li>
+<li>GraphChi: <em>Chi</em>huahua – shared memory vs distributed</li>
+</ul></li>
+<li>Outperformed by Galois, Ligra, BlockGRACE, others</li>
+<li>But... programming model was easy</li>
+</ul>
+</section>
+
+<section>
+<h3>Graph frameworks</h3>
+<ul>
+<li>“Think as a vertex”
+<ul>
+<li>Each vertex updates locally</li>
+<li>Exchanges messages with neighbors</li>
+<li>Runtime actually schedules updates/messages</li>
+</ul></li>
+<li>Message sent at super-step <span class="math inline">\(S\)</span> arrives at <span class="math inline">\(S+1\)</span></li>
+<li>Looks like BSP</li>
+</ul>
+</section>
+
+<section>
+<h3>At what COST?</h3>
+<p>“Scalability! But at what COST?”<br />
+McSherry, Isard, Murray<br />
+HotOS 15</p>
+<blockquote>
+<p>You can have a second computer once you’ve shown you know how to use the first one.<br />
+– Paul Barham (quoted in intro to HotOS15 paper)</p>
+</blockquote>
+<ul>
+<li>COST = Configuration that Outperforms a Single Thread</li>
+<li>Observation: many systems have unbounded COST!</li>
+</ul>
+</section>
+
