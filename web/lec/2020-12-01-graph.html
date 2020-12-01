@@ -24,6 +24,10 @@ audio: 2020-12-01-graph
 <li>Graphs and LA</li>
 <li>Frameworks</li>
 </ul>
+<aside class="notes">
+<p>We have a bit of a potpourri today. After reminding you about different types of graphs and their applications to various problems, we’ll talk about basic parallel graph algorithms. This is different from our earlier discussion of graph theory for load balancing, in that this time we are talking about actually parallelizing the graph computations instead of using them to reason about another parallel computation! We’ll do a couple examples here to highlight some common ideas that show up when transitioning from the serial to the parallel settings. In particular, randomization shows up often.</p>
+<p>In the back half of the latter, we’ll switch from talking about algorithms to talking about some of the nuts-and-bolts of making things run fast on modern machines. That means understanding representations of graphs that we might want to use, and also frameworks that allow us to program graph algorithms fast and at scale (or that people think allow us to do so).</p>
+</aside>
 </section>
 
 <section>
@@ -37,6 +41,9 @@ audio: 2020-12-01-graph
 <li>Path is <span class="math inline">\(\left[ \, (u_i,u_{i+1}) \, \right]_{i=1}^\ell \in E^*\)</span>, sum of weights is length</li>
 <li>Diameter is <span class="math inline">\(\max_{s, t \in V} d(s, t)\)</span></li>
 </ul>
+<aside class="notes">
+<p>First, a reminder: a graph consists of vertices (also called nodes) and edges (which are just pairs of vertices). If the edge order matters, we call the graph directed; otherwise, it is undirected. We can attach weights or other attributes to either the vertices or edges. A path through the graph is just a sequence of edges that share endpoints. The length of the path is the sum of the edge weights, and the distance between two vertices in a graph is the length of the shortest path that connects them. The longest shortest path in the graph is called the graph diameter.</p>
+</aside>
 </section>
 
 <section>
@@ -45,36 +52,59 @@ audio: 2020-12-01-graph
 <li>Hypergraph (edges in <span class="math inline">\(V^d\)</span>)</li>
 <li>Multigraph (multiple copies of edges)</li>
 </ul>
+<aside class="notes">
+<p>There are some natural generalizations of graphs that come up often. In particular, a hypergraph is like a graph, but with edges (pairs of vertices) generalized to hyper-edges (longer tuples of vertices). We mentioned hypergraphs very briefly when we talked about graph partitioning.</p>
+<p>A multigraph still just has normal edges, but we’re allowed to have more than one copy of an edge.</p>
+<p>We aren’t going to discuss hypergraphs or multigraphs further in this class, though if any of you want to hear more about hypergraphs and tensors, you should consider taking 6241 with me in the spring!</p>
+</aside>
 </section>
 
 <section>
 <h3>Types of graphs</h3>
 <p><img data-src="figs/pg-chain.svg" style="width:50.0%" /></p>
+<aside class="notes">
+<p>Maybe the simplest graph is a chain. The diameter here is one minus the number of vertices – longest diameter we can get without having a disconnected graph. Also, there’s only one path between any two vertices.</p>
+</aside>
 </section>
 
 <section>
 <h3>Types of graphs</h3>
 <p><img data-src="figs/pg-tree.svg" style="width:50.0%" /></p>
+<aside class="notes">
+<p>The property that there’s only one path between any two vertices characterizes a tree. The 1D chain was a tree; this binary tree is probably a more specific example.</p>
+</aside>
 </section>
 
 <section>
 <h3>Types of graphs</h3>
 <p><img data-src="figs/pg-mesh.svg" style="width:50.0%" /></p>
+<aside class="notes">
+<p>One step up from a tree or chain, we have very regular “low-dimensional” graphs like this mesh. This type of mesh has diameter at least proportional to sqrt(n), and can be cut into pieces with separators of size sqrt(n).</p>
+</aside>
 </section>
 
 <section>
 <h3>Types of graphs</h3>
 <p><img data-src="figs/pg-Lmesh.svg" style="width:50.0%" /></p>
+<aside class="notes">
+<p>Of course, we can get a little fancier than a completely regular mesh and still maintain lots of the important properties.</p>
+</aside>
 </section>
 
 <section>
 <h3>Types of graphs</h3>
 <p><img data-src="figs/part_esep_spectral.svg" style="width:50.0%" /></p>
+<aside class="notes">
+<p>Graphs don’t have to be regular meshes to still “look” fundamentally 2D. Planar graphs with nearest neighbor connectivity, like this one, have the same types of properties, like (relatively) small separators, relatively high diameters, and (often) bounded vertex degrees.</p>
+</aside>
 </section>
 
 <section>
 <h3>Types of graphs</h3>
 <p><img data-src="figs/Karate_new.svg" style="width:50.0%" /></p>
+<aside class="notes">
+<p>In contrast to these fundamentally low-dimensional graphs are the types of things that we see with social networks. This is a rendering of the so-called Zachary karate club network, often used as a demonstration problem for social network analysis. The graph describes the friendship relations within a karate club that split in half. As you can see, there is a lot of variation in the degree, from the two super-connected leaders to that one poor lonely guy who only ever talked to his teacher (bottom of the cluster on the right). Social networks tend to not have highly variable node connectivity; they often don’t have good separators; and they are pretty low-dimensional.</p>
+</aside>
 </section>
 
 <section>
@@ -89,6 +119,9 @@ audio: 2020-12-01-graph
 <li>...</li>
 </ul>
 <p>Algorithms are not one-size-fits-all!</p>
+<aside class="notes">
+<p>So, we have a lot of possible structures, running from the line graph to these super-connected graphs that show up in social network analysis. The coarse scale properties of these graphs are pretty different, so it shouldn’t surprise you that they deserve different algorithms!</p>
+</aside>
 </section>
 
 <section>
@@ -130,6 +163,10 @@ audio: 2020-12-01-graph
 </tbody>
 </table>
 <p>Calls for different methods!</p>
+<aside class="notes">
+<p>Over-simplifying a bit, we might say that most of the world sits between the extremes represented by nice regular planar graphs and power-law graphs. For planar graphs, we have small degree, diameters no smaller than sqrt(n), and separators no bigger than sqrt(n). For power law graphs, we have a highly variable degree distribution, with bigger graphs showing higher degree nodes; the diameters are small; and there are no small edge separators.</p>
+<p>When we’re doing linear algebra, a direct solver works pretty well for 2D PDE discretizations, where the matrix has the structure of a regular planar graph; for matrices associated with graphs at the other extreme, we usually use iterative methods. It turns out that we generally use different graph algorithms in the two cases, too.</p>
+</aside>
 </section>
 
 <section>
@@ -137,6 +174,10 @@ audio: 2020-12-01-graph
 <figure>
 <img data-src="figs/ithaca2nyc.png" alt="image" style="width:50.0%" /><figcaption>image</figcaption>
 </figure>
+<aside class="notes">
+<p>All right. I’ve rattled on about this range of different types of graphs enough without saying what we want to <em>do</em> with them. So what do we want to do?</p>
+<p>One thing that we might want to do is to find shortest paths, or at least good-enough paths. The standard example might be navigation systems, where we want directions for the shortest path between two points. The road network is a very two-dimensional sort of graph, which we generally use in algorithms.</p>
+</aside>
 </section>
 
 <section>
@@ -146,6 +187,9 @@ audio: 2020-12-01-graph
 <li>PageRank, HITS</li>
 <li>Clustering similar documents</li>
 </ul>
+<aside class="notes">
+<p>Ranking and clustering in social and information networks generally involves computing over graphs. Often, the computations are linear algebraic in nature: linear solves and eigenvalue computations. We often use these for small-world types of graphs.</p>
+</aside>
 </section>
 
 <section>
@@ -156,11 +200,17 @@ audio: 2020-12-01-graph
 <li>Partitioning</li>
 <li>Coarsening for AMG</li>
 </ul>
+<aside class="notes">
+<p>We’ve already had a couple lectures as well in which we discussed the role of graph algorithms for graph partitioning and for finding small separators for sparse direct solvers. We usually apply these techniques when we’re dealing with graphs that have good separators, often coming from physics problems.</p>
+</aside>
 </section>
 
 <section>
 <h3>Applications: Dimensionality reduction</h3>
 <p><a href="http://web.mit.edu/cocosci/isomap/isomap.html"><img data-src="figs/web1-isomap.jpg" alt="image" style="width:80.0%" /></a></p>
+<aside class="notes">
+<p>And then there is dimensionality reduction, where we might try to use a graph to uncover low-dimensional structure in high-dimensional geometric data. If you want to see lots of tricks of this sort, I again encourage you to take my spring course!</p>
+</aside>
 </section>
 
 <section>
@@ -175,6 +225,10 @@ audio: 2020-12-01-graph
 <li>...</li>
 </ul>
 <p>... and most of sparse linear algebra.</p>
+<aside class="notes">
+<p>The building blocks for all of these applications are linear algebra (of course) and the types of things that you would typically see in early courses on algorithms: graph traversals, shortest path finding, spanning tree computations, flow computations, topological sorting, graph coloring, and so on.</p>
+<p>We’ve talked a lot about parallelizing linear algebra. Let’s talk a little about parallelizing some of these other building blocks for a while.</p>
+</aside>
 </section>
 
 <section>
@@ -184,12 +238,29 @@ audio: 2020-12-01-graph
 <li><span class="math inline">\(t_1 =\)</span> work</li>
 <li><span class="math inline">\(t_\infty =\)</span> span (or depth, or critical path length)</li>
 </ul>
+<p>Don’t bother with parallel DFS! Span is <span class="math inline">\(\Omega(n)\)</span>.<br />
+Let’s spend a few minutes on more productive algorithms...</p>
+<aside class="notes">
+<p>An overly simplified way of thinking about the potential parallelism in an algorithm is to think what would happen if you had an infinite number of processors and communication was free. In that case, the time to complete a computation would be determined by the longest dependency chain within the computation. This is sometimes called the span, or depth, or critical path length.</p>
+<p>As an example: things that look like depth first search tend to be terrible for parallelism, because the span is proportional to the problem size! So we won’t spend time thinking about depth first search. Let’s instead think about breadth first search.</p>
+</aside>
 </section>
 
 <section>
-<h3>One implication</h3>
-<p>Don’t bother with parallel DFS! Span is <span class="math inline">\(\Omega(n)\)</span>.<br />
-Let’s spend a few minutes on more productive algorithms...</p>
+<h3>Serial BFS</h3>
+<ul>
+<li>Push seed node onto queue and mark</li>
+<li>While Q nonempty
+<ul>
+<li>Pop node from queue</li>
+<li>Visit node</li>
+<li>Push unmarked neighbors on queue</li>
+<li>Mark all neighbors</li>
+</ul></li>
+</ul>
+<aside class="notes">
+<p>Breadth-first search visits nodes in an unweighted graph in ascending order by distance from a start node. The serial version of breadth-first search usually involves a queue that contains a “frontier” of nodes that have been seen, but not yet visited. In the process of visiting all nodes at distance d from the start, we queue up all nodes at distance d+1 to be visited next. Hence, the algorithm proceeds layer by layer.</p>
+</aside>
 </section>
 
 <section>
@@ -200,13 +271,16 @@ Let’s spend a few minutes on more productive algorithms...</p>
 <li>Pro: Lots of parallelism with small radius?</li>
 <li>Con: What if frontiers are small?</li>
 </ul>
+<aside class="notes">
+<p>The simplest way to think about parallelizing BFS is to parallelize exploration from a frontier at depth d to one at depth d+1. This is simple enough to think about, except for the part where we have to deal with a parallel data structure of some sort to accumulate the nodes at step d+1 without redundancy. Unfortunately, if we are dealing with a large-diameter graph with lots of good separators, the frontiers might never get all that big, and so we might not have enough parallel work to make us happy. What should we do then?</p>
+</aside>
 </section>
 
 <section>
 <h3>Parallel BFS: Ullman-Yannakakis</h3>
 <p>Assuming a high-diameter graph:</p>
 <ul>
-<li>Form set <span class="math inline">\(S\)</span> with start + random nodes, <span class="math inline">\(|S| = \Theta(\sqrt{n}  \log n)\)</span>
+<li>Form set <span class="math inline">\(S\)</span> with start + random nodes, <span class="math inline">\(|S| = \Theta(\sqrt{n} \log n)\)</span>
 <ul>
 <li>long shortest paths go through <span class="math inline">\(S\)</span> w.h.p.</li>
 </ul></li>
@@ -215,24 +289,41 @@ Let’s spend a few minutes on more productive algorithms...</p>
 <li>Run all-pairs shortest path on aux graph</li>
 </ul>
 <p>OK, but what if diameter is not large?</p>
+<aside class="notes">
+<p>An idea due to Ullman and Yanakakkis involves parallel exploration of different parts of the graph, followed by a method for connecting things together. The idea is to take the start node together with a lot of other randomly selected nodes, and expand a small BFS of length sqrt(n) from each of those seeds. Then we show that, with high probability, any shortest path that is longer than sqrt(n) must go through one of the seeds. From there, we only need to consider the graph of seed-to-seed distances, which we can compute with an all-pairs shortest path computation on an auxiliary graph.</p>
+<p>The good thing about this algorithm is that it has lots of parallelism and is relatively simple to code. The bad thing is that the analysis is not so intuitive, and it only works for graphs with large diameter.</p>
+<p>So what should we do if we want to do breadth-first search in a “small world” graph?</p>
+</aside>
 </section>
 
 <section>
-<h3>LA take</h3>
+<h3>Serial BFS: Bottom-up</h3>
 <ul>
-<li>Indicate frontier at each stage by <span class="math inline">\(x\)</span></li>
-<li><span class="math inline">\(x&#39; = A^T x\)</span> (multiply=select, add=min)</li>
+<li>Set <span class="math inline">\(d[v] = \infty\)</span> for all vertices</li>
+<li>Set <span class="math inline">\(d[s] = 0\)</span> for seed <span class="math inline">\(s\)</span></li>
+<li>Until <span class="math inline">\(d\)</span> stops changing
+<ul>
+<li>For each <span class="math inline">\(u \in V\)</span>
+<ul>
+<li><span class="math inline">\(d[u] = \min(d[u], \min_{w \in N(u)} d[w]+1)\)</span></li>
+</ul></li>
+</ul></li>
 </ul>
+<aside class="notes">
+<p>Let’s go back to the serial setting, and talk about another way of doing breadth-first search. Before, we did a “top-down” exploration of a search tree, pushing from each node out to its children. But we can also do a “bottom-up” exploration, checking at every step whether a node could find a closer neighbor. The algorithm is shown here: until the distance stops changing, we sweep over all the nodes, updating their distance to the min of the old distances and one more than the min of their neighbor distances. The sweep is embarassingly parallel, and the number of iterations to converge is just the graph diameter.</p>
+</aside>
 </section>
 
 <section>
-<h3>Parallel BFS: LA perspective</h3>
+<h3>Parallel BFS</h3>
 <p>Key ideas:</p>
 <ul>
 <li>At some point, switch from top-down expanding frontier (“are you my child?”) to bottom-up checking for parents (“are you my parent?”)</li>
 <li>Use 2D blocking of adjacency</li>
-<li>Temporally partition work: vertex processed by at most one processor at a time, cycle processors (“systolic rotation”)</li>
 </ul>
+<aside class="notes">
+<p>The fastest parallel BFS approaches out there combine the top-down approach with the bottom-up approach, switching at some point in the process. They also do a linear-algebra-style tiling of the adjacency matrix. We’ll revisit this later.</p>
+</aside>
 </section>
 
 <section>
@@ -244,6 +335,9 @@ Let’s spend a few minutes on more productive algorithms...</p>
 <li>Repeat</li>
 </ul>
 <p>Or run serial Dijkstra from different sources for APSP.</p>
+<aside class="notes">
+<p>All right. Breadth-first search explores in order of distance from a start node in an <em>unweighted</em> graph. What about the same order in a <em>weighted</em> graph? For that, we would usually use Dijkstra’s algorithm, which is very similar to BFS, except with a priority queue ordered by distance to the already-visited points. At each step, we pull off the closest unvisited point, and update the distances for all its (unprocessed) neighbors. Like BFS, this is a very “top-down” organization.</p>
+</aside>
 </section>
 
 <section>
@@ -254,6 +348,9 @@ Let’s spend a few minutes on more productive algorithms...</p>
 <li>Repeatedly relax <span class="math inline">\(d[u] := \min_{(v,u) \in E} d[v] + w(v,u)\)</span></li>
 </ul>
 <p>Converges (eventually) as long as all nodes visited repeatedly, updates are atomic. If serial sweep in a consistent order, call it Bellman-Ford.</p>
+<aside class="notes">
+<p>The same “bottom-up” organization we described for BFS works here, too. In this general setting, it is called a label correcting method. The classic label correcting method that repeatedly sweeps the vertices in a consistent order is called Bellman-Ford; but for convergence, we really only need to manage to visit all the nodes repeatedly.</p>
+</aside>
 </section>
 
 <section>
@@ -264,6 +361,10 @@ Let’s spend a few minutes on more productive algorithms...</p>
 <li>Relax “light” edges (wt &lt; <span class="math inline">\(\Delta\)</span>), might add to bucket</li>
 <li>When bucket empties, relax “heavy” edges a la Dijkstra</li>
 </ul>
+<aside class="notes">
+<p>And, as in breadth first search, we can make a lot of progress with parallel methods that combine the bottom-up and top-down approaches. So called delta-stepping methods do label correcting on a bucket of nodes connected by very lightweight edges, and alternates that with Dijkstra-style handling of longer edges.</p>
+<p>OK, I admit that isn’t the best description of delta-stepping, but it gets across the basic idea.</p>
+</aside>
 </section>
 
 <section>
@@ -274,6 +375,10 @@ Let’s spend a few minutes on more productive algorithms...</p>
 <li><em>Maximum</em> if no other MIS is bigger.</li>
 <li>Maximum is NP-hard; maximal is easy (serial)</li>
 </ul>
+<aside class="notes">
+<p>Let’s talk about another graph primitive that doesn’t involve a traversal. An independent set in a graph is a subset of the vertices in which no vertex is a neighbor. A maximal independent set is one to which no node can be added without violating independence. The maximum independent set is a largest maximal independent set, and finding maximum independent sets is generally hard. But maximal independent sets are relatively easy.</p>
+<p>Maximal independent sets are a good setup for other problems, too, like graph coloring.</p>
+</aside>
 </section>
 
 <section>
@@ -282,6 +387,9 @@ Let’s spend a few minutes on more productive algorithms...</p>
 <li>Start with <span class="math inline">\(S\)</span> empty</li>
 <li>For each <span class="math inline">\(v \in V\)</span> <em>sequentially</em>, add <span class="math inline">\(v\)</span> to <span class="math inline">\(S\)</span> if possible.</li>
 </ul>
+<aside class="notes">
+<p>How would we find a maximal independent set in a serial setting? Keep adding vertices until we can’t anymore! This greedy method works just fine — but how could you parallelize it? Doesn’t seem so obvious.</p>
+</aside>
 </section>
 
 <section>
@@ -300,16 +408,25 @@ Let’s spend a few minutes on more productive algorithms...</p>
 </ul></li>
 </ul>
 <p>Very probably finishes in <span class="math inline">\(O(\log n)\)</span> rounds.</p>
+<aside class="notes">
+<p>The clever trick here – as in the Ullman-Yannakakis BFS algorithm – is to introduce randomization. This algorithm for maximal independent sets, due to Luby, generally finishes in O(log n) rounds, where each round involves running over the graph once (in parallel). In each round, we give all the nodes in a graph a random label. Then we add every node with a locally smallest label to the independent set, and remove all the neighbors of every such node from the candidates to join the independent set. We finish when the set of candidates is empty.</p>
+</aside>
 </section>
 
 <section>
 <h3>Luby’s algorithm (round 1)</h3>
 <p><img data-src="figs/mis_luby1.svg" style="width:80.0%" /></p>
+<aside class="notes">
+<p>Let’s look at how this plays out with our potato graph. In the first round, each of the red nodes joins the independent set – they have labels smaller than the labels of their neighbors. The gray nodes, neighbors of the nodes in the independent set, are taken off the list of candidates. At the end of the round, only the two blue nodes in the corner remain as candidates.</p>
+</aside>
 </section>
 
 <section>
-<h3>Luby’s algorithm (round 1)</h3>
+<h3>Luby’s algorithm (round 2)</h3>
 <p><img data-src="figs/mis_luby2.svg" style="width:80.0%" /></p>
+<aside class="notes">
+<p>Now, in round two, we add one of the corner nodes and finish the algorithm. The four indicated red nodes are a maximal independent set in this graph.</p>
+</aside>
 </section>
 
 <section>
@@ -320,6 +437,10 @@ Let’s spend a few minutes on more productive algorithms...</p>
 <li>Bad for locality</li>
 </ul>
 <p><strong>Memory bandwidth</strong> as a limiting factor.</p>
+<aside class="notes">
+<p>At this point in the lecture, perhaps you’re starting to get suspicious. All the graph theory and randomization ideas and bottom-up-vs-top-down stuff sounds very much like what you’d see in an algorithms class – or maybe a parallel algorithms class – but it’s missing a lot of what we often focus on when we do HPC. What about the data structures? Issues of memory locality and computational intensity?</p>
+<p>Well, we’ll talk about the data structures in a moment. In terms of memory locality and computational intensity, though, the news is mostly bad. Many graph operations are computationally cheap per node or edge, requiring only one or a small number of visits before completing (and with each of the visits only involving cheap operations). So the main bottleneck is generally not computing on the graph, but getting the graph out of memory.</p>
+</aside>
 </section>
 
 <section>
@@ -331,6 +452,10 @@ Let’s spend a few minutes on more productive algorithms...</p>
 <li>Compressed sparse row: about 450 GB</li>
 </ul>
 <p>Topology (no metadata) on one big cloud node...</p>
+<aside class="notes">
+<p>There’s good news here, though, too. Compared to many of the problems we’re used to dealing with even “big” graphs may not be that big. For example, consider the Facebook social graph in the US (or the graph for a comparable network – I don’t mean to be old-fashioned here, I just happen to know more numbers in this case). We can identify everyone in the US by a 32 bit int, and if we just store connectivity (assuming about 350 friends per person), the entire topology can be represented in compressed sparse row form with less than half a terabyte of memory. That may seem like a lot, but it easily fits on a single big machine; maybe not your laptop, but a cloud node that you can easily get time on.</p>
+<p>So – is CSR the Right Way to represent things? The answer, of course, is “it depends.” Let’s talk about a few options.</p>
+</aside>
 </section>
 
 <section>
@@ -338,6 +463,10 @@ Let’s spend a few minutes on more productive algorithms...</p>
 <p><img data-src="figs/part_matrix.svg" style="width:40.0%" /></p>
 <p>Pro: efficient for dense graphs<br />
 Con: wasteful for sparse case...</p>
+<aside class="notes">
+<p>One possible representation of a graph would be as a dense matrix. In fact, if more than a couple percent of the edges are present, this probably is <em>the</em> right way to do the representation! In the unweighted case, we only need one bit per edge, though we need more in the weighted case. The dense adjacency matrix representation is also cheap to update, and there are sometimes when that property is useful.</p>
+<p>In the sparse case, storing a lot of explicit zeros is wasteful – we just want to store where the edges are, not a marker for the absence of other edges.</p>
+</aside>
 </section>
 
 <section>
@@ -347,6 +476,9 @@ Con: wasteful for sparse case...</p>
 <li>Pro: Easy to update</li>
 <li>Con: Slow for multiply</li>
 </ul>
+<aside class="notes">
+<p>Another possibility is to store a graph as an edge list. That is, we keep tuples <span class="math inline">\((i,j)\)</span> (and possibly a weight) for each edge in the graph. This is again easy to update, and it’s more compact than a dense adjacency matrix in the sparse case. But it’s not great for things that look like matrix-vector products, nor is it necessarily great for iterating through all the neighbors of a particular node.</p>
+</aside>
 </section>
 
 <section>
@@ -356,12 +488,18 @@ Con: wasteful for sparse case...</p>
 <li>Pro: Still easy to update</li>
 <li>Con: May cost more to store than coord?</li>
 </ul>
+<aside class="notes">
+<p>Another standard representation is the adjacency list. Here, each list has a linked list of neighbors in the graph. This is still easy to update, and it’s easy to make nearest-neighbor queries with this structure, but it will generally cost more to store than the simple coordinate form.</p>
+</aside>
 </section>
 
 <section>
 <h3>Graph rep: CSR</h3>
 <p><img data-src="figs/csr-demo.svg" style="width:80.0%" /></p>
 <p>Pro: traversal? Con: updates</p>
+<aside class="notes">
+<p>And then, of course, there is the compressed sparse row representation that we’ve discussed before in the context of sparse matrices. This is a pretty nice data structure when it comes to fast traversal; the Achilles heel is that it is painful if we ever have to add edges.</p>
+</aside>
 </section>
 
 <section>
@@ -372,23 +510,32 @@ Con: wasteful for sparse case...</p>
 <li>Pro: Explicit rep’n sometimes overkill for one-off graphs?</li>
 <li>Con: Hard to use canned software (except NLA?)</li>
 </ul>
+<aside class="notes">
+<p>Finally, there’s the option of not keeping any data structure at all! As long as we provide some primitives that let us traverse edges, it doesn’t matter if we have an explicit representation in memory. Of course, this type of limited functional interface might be less than we want for some algorithms – except, perhaps, if we just need a matrix-vector product.</p>
+</aside>
 </section>
 
 <section>
 <h3>Graph algorithms and LA</h3>
 <ul>
-<li>Looks like LA
-<ul>
-<li>Floyd-Warshall</li>
-<li>Breadth-first search?</li>
-</ul></li>
 <li>Really is standard LA
 <ul>
 <li>Spectral partitioning and clustering</li>
 <li>PageRank and some other centralities</li>
 <li>“Laplacian Paradigm” (Spielman, Teng, others...)</li>
 </ul></li>
+<li>Looks like LA
+<ul>
+<li>Floyd-Warshall</li>
+<li>Breadth-first search?</li>
+</ul></li>
 </ul>
+<aside class="notes">
+<p>We have been flirting throughout the lecture with the relationship between graph theory and linear algebra. Let’s take a moment now to clarify this relationship.</p>
+<p>Lots of graph operations that we care about really are based on standard linear algebra over the real numbers. This includes various algorithms for partitioning, clustering, and ranking, as well as anything that can be built on the “graph Laplacian paradigm” popularized by Spielman, Teng, and others.</p>
+<p>At the same time, there are also operations that end up looking suspiciously like linear algebra in structure, even if the details aren’t quite right. Examples include the Floyd-Warshall algorithm for all-pairs shortest path, or the bottom-up breadth-first search algorithm. Well, it turns out that these may not exactly be linear algebra, but they aren’t exactly not linear algebra, either.</p>
+<p>Perhaps that deserves some more explanation…</p>
+</aside>
 </section>
 
 <section>
@@ -402,6 +549,11 @@ Con: wasteful for sparse case...</p>
 <li>But no subtraction or division</li>
 </ul>
 <p>Technically <em>modules</em> over semirings</p>
+<aside class="notes">
+<p>In abstract algebra, we have vector spaces over fields. The most frequently-used fields are the real and complex numbers or subsets thereof (the rationals, the algebraic numbers, etc), but there are also plenty of applications of finite field arithmetic. But we can still do a lot with a weaker abstraction than a field called a semi-ring. A semi-ring has addition and multiplication, each with the usual identity element. Addition is commutative and associative, multiplication is associative (but maybe not commutative), and the two together satisfy the usual distributive law. But we have no subtraction (unlike a ring), and no division (unlike a division ring or a field).</p>
+<p>We have something like a vector space in this setting, too. It just happens to be called a module rather than a vector space in the case when you don’t have an underlying field.</p>
+<p>Have I jumped off the deep end and started talking pure math when I should be telling you about HPC? Well, bear with me for one more slide, and perhaps things will become more clear.</p>
+</aside>
 </section>
 
 <section>
@@ -410,8 +562,11 @@ Con: wasteful for sparse case...</p>
 <ul>
 <li><span class="math inline">\(\oplus = \min\)</span> and additive identity <span class="math inline">\(0 \equiv \infty\)</span></li>
 <li><span class="math inline">\(\otimes = +\)</span> and multiplicative identity <span class="math inline">\(1 \equiv 0\)</span></li>
-<li>Useful for breadth-first search (on board)</li>
+<li>Useful for shortest distance: <span class="math inline">\(d = A \otimes d\)</span></li>
 </ul>
+<aside class="notes">
+<p>An example of a semiring is the min-plus semiring (a “tropical” semiring). The addition operation here takes a min, and the multiplication operation is ordinary addition. Shortest distance computations can be seen as fixed-point iterations for the equation d = Ad under this semi-ring. Other semi-rings can be used to express many other graph algorithms in matrix-vector language, too.</p>
+</aside>
 </section>
 
 <section>
@@ -422,6 +577,9 @@ Con: wasteful for sparse case...</p>
 <li>(Opaque) internal sparse matrix data structure</li>
 <li>Allows operations over misc semirings</li>
 </ul>
+<aside class="notes">
+<p>The GraphBLAS interfaces formalize this “graph algorithms as linear algebra” way of thinking. There are lots of advantages to this: one can get different algorithms by playing with associativity and distributivity, and build on top of high-performance linar-algebra-style building blocks that have been tuned for different types of architectures. For someone like me, who likes to think about things in terms of linear algebra, this is a very tempting intervace indeed, particularly since I can take advantage of the work that friends of mine have done to make this interface fast on various platforms.</p>
+</aside>
 </section>
 
 <section>
@@ -439,6 +597,10 @@ Con: wasteful for sparse case...</p>
 <li>But... programming model was easy</li>
 <li>GraphIt - best of both worlds?</li>
 </ul>
+<aside class="notes">
+<p>Alas, not everyone thinks that linear algebra is the right way to think about graph algorithms! Over the past decade or so, a lot of work has been done on other frameworks for programming graph algorithms “at scale.” Maybe the earliest such was Google’s Pregel system, followed by the GraphLab family of systems from CMU. Later frameworks out-performed these earlier systems. Indeed, I was involved in some of this work – the GRACE system was Cornell’s entry into this world, back when Johannes Gehrke was still on the faculty, and I was involved in work that added blocked algorithms into GRACE. But some of the performance improvements came at the cost of the so-called “think like a vertex” abstraction that the original designers of Pregel and GraphLab liked so much.</p>
+<p>As a brief aside: there’s a project at MIT called GraphIt that involves a domain-specific language for programming graph algorithms that have high performance. It seems like the logical successor to the Pregel/GraphLab/etc line of work, but it has much higher performance than those systems did.</p>
+</aside>
 </section>
 
 <section>
@@ -453,6 +615,9 @@ Con: wasteful for sparse case...</p>
 <li>Message sent at super-step <span class="math inline">\(S\)</span> arrives at <span class="math inline">\(S+1\)</span></li>
 <li>Looks like BSP</li>
 </ul>
+<aside class="notes">
+<p>The programming framework used by Pregel, GraphLab, and so forth involved phased independent message exchanges between vertices. In each phase, a vertex could update locally and then send messages to neighbors; those messages would arrive in the next “super-step.” So this looks a lot like a bulk-synchronous programming abstraction with a parallel loop over the vertices and the messages serving as the intermediate data structure that carries information from one phase ot the next. But I suppose “think like a vertex” is a catchier way of putting it.</p>
+</aside>
 </section>
 
 <section>
@@ -467,5 +632,9 @@ McSherry, Isard, Murray, HotOS 15</p>
 <li>Configuration that Outperforms a Single Thread</li>
 <li>Observation: many systems have unbounded COST!</li>
 </ul>
+<aside class="notes">
+<p>One of my very favorite things to come out of some of the craze in the early 2010s for simple-and-scalable analytics frameworks — things like Pregel and MapReduce and the like — is watching people eventually realize that there’s more to performance than parallelism, and that often a well-written code on a laptop could do what industry players were attempting to do with a framework code distributed across a giant cluster or cloud environment. McSherry, Isard, and Murray made the point very nicely in this 2015 paper, where they talked about Configuration that Outperforms a Single Thread. The punchline for the paper was that in many cases, there was no configuration that outperforms a single thread! This is not to be too dismissive of the framework work, which often was pretty good about parallelizing disk head use (which is not an entirely trivial matter). But it is good for perspective.</p>
+<p>My personal punchline to all this: if I were trying to do high-performance combinatorial graph operations for something these days, I would probably reach for GraphBLAS before reaching for any of the graph processing engine frameworks.</p>
+</aside>
 </section>
 
