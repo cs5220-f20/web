@@ -241,6 +241,9 @@
 -
   date: 2020-12-01
   info: Parallel graph algorithms  
+  files:
+    - info: Parallel graph algorithms
+      file: lec/2020-12-01-graph.html
 -
   date: 2020-12-03
   info: Mixing languages, libraries, and frameworks
