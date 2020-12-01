@@ -334,14 +334,14 @@ Let’s spend a few minutes on more productive algorithms...</p>
 </section>
 
 <section>
-<h3>Graph representation: Adjacency matrix</h3>
+<h3>Graph rep: Adj matrix</h3>
 <p><img data-src="figs/part_matrix.svg" style="width:40.0%" /></p>
 <p>Pro: efficient for dense graphs<br />
 Con: wasteful for sparse case...</p>
 </section>
 
 <section>
-<h3>Graph representation: Coordinate</h3>
+<h3>Graph rep: Coordinate</h3>
 <ul>
 <li>Tuples: <span class="math inline">\((i,j,w_{ij})\)</span></li>
 <li>Pro: Easy to update</li>
@@ -350,7 +350,7 @@ Con: wasteful for sparse case...</p>
 </section>
 
 <section>
-<h3>Graph representation: Adj list</h3>
+<h3>Graph rep: Adj list</h3>
 <ul>
 <li>Linked lists of adjacent nodes</li>
 <li>Pro: Still easy to update</li>
@@ -359,13 +359,13 @@ Con: wasteful for sparse case...</p>
 </section>
 
 <section>
-<h3>Graph representations: CSR</h3>
+<h3>Graph rep: CSR</h3>
 <p><img data-src="figs/csr-demo.svg" style="width:80.0%" /></p>
 <p>Pro: traversal? Con: updates</p>
 </section>
 
 <section>
-<h3>Graph representations: implicit</h3>
+<h3>Graph rep: implicit</h3>
 <ul>
 <li>Idea: Never materialize a graph data structure</li>
 <li>Key: Provide traversal primitives</li>
@@ -375,7 +375,7 @@ Con: wasteful for sparse case...</p>
 </section>
 
 <section>
-<h3>Graph algorithms and linear algebra</h3>
+<h3>Graph algorithms and LA</h3>
 <ul>
 <li>Looks like LA
 <ul>
@@ -392,7 +392,7 @@ Con: wasteful for sparse case...</p>
 </section>
 
 <section>
-<h3>Graph algorithms and linear algebra</h3>
+<h3>Graph algorithms and LA</h3>
 <p><em>Semirings</em> have <span class="math inline">\(\oplus\)</span> and <span class="math inline">\(\otimes\)</span> s.t.</p>
 <ul>
 <li>Addition is commutative+associative with a 0</li>
@@ -405,7 +405,7 @@ Con: wasteful for sparse case...</p>
 </section>
 
 <section>
-<h3>Graph algorithms and linear algebra</h3>
+<h3>Graph algorithms and LA</h3>
 <p>Example: min-plus</p>
 <ul>
 <li><span class="math inline">\(\oplus = \min\)</span> and additive identity <span class="math inline">\(0 \equiv \infty\)</span></li>
