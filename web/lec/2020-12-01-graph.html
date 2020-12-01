@@ -15,6 +15,18 @@ audio: 2020-12-01-graph
 </section>
 
 <section>
+<h3>Plan</h3>
+<ul>
+<li>Some background on graphs</li>
+<li>Applications and building blocks</li>
+<li>Basic parallel graph algorithms</li>
+<li>Representations and performance</li>
+<li>Graphs and LA</li>
+<li>Frameworks</li>
+</ul>
+</section>
+
+<section>
 <h3>Graphs</h3>
 <p>Mathematically: <span class="math inline">\(G = (V,E)\)</span> where <span class="math inline">\(E \subset V \times V\)</span></p>
 <ul>
@@ -37,26 +49,32 @@ audio: 2020-12-01-graph
 
 <section>
 <h3>Types of graphs</h3>
+<p><img data-src="figs/pg-chain.svg" style="width:50.0%" /></p>
 </section>
 
 <section>
 <h3>Types of graphs</h3>
+<p><img data-src="figs/pg-tree.svg" style="width:50.0%" /></p>
 </section>
 
 <section>
 <h3>Types of graphs</h3>
+<p><img data-src="figs/pg-mesh.svg" style="width:50.0%" /></p>
 </section>
 
 <section>
 <h3>Types of graphs</h3>
+<p><img data-src="figs/pg-Lmesh.svg" style="width:50.0%" /></p>
 </section>
 
 <section>
 <h3>Types of graphs</h3>
+<p><img data-src="figs/part_esep_spectral.svg" style="width:50.0%" /></p>
 </section>
 
 <section>
 <h3>Types of graphs</h3>
+<p><img data-src="figs/Karate_new.svg" style="width:50.0%" /></p>
 </section>
 
 <section>
@@ -117,7 +135,7 @@ audio: 2020-12-01-graph
 <section>
 <h3>Applications: Routing and shortest paths</h3>
 <figure>
-<embed data-src="figs/ithaca2nyc.pdf" style="width:50.0%" /><figcaption>image</figcaption>
+<img data-src="figs/ithaca2nyc.png" alt="image" style="width:50.0%" /><figcaption>image</figcaption>
 </figure>
 </section>
 
@@ -143,7 +161,7 @@ audio: 2020-12-01-graph
 
 <section>
 <h3>Applications: Dimensionality reduction</h3>
-<p><a href="http://web.mit.edu/cocosci/isomap/isomap.html"><img data-src="figs/web1.jpg" alt="image" style="width:80.0%" /></a></p>
+<p><a href="http://web.mit.edu/cocosci/isomap/isomap.html"><img data-src="figs/web1-isomap.jpg" alt="image" style="width:80.0%" /></a></p>
 </section>
 
 <section>
@@ -244,7 +262,7 @@ Let’s spend a few minutes on more productive algorithms...</p>
 <p>Alternate approach: <em>hybrid</em> algorithm</p>
 <ul>
 <li>Process a “bucket” at a time</li>
-<li>Relax “light” edges (wt &lt; <span class="math inline">\(\Delta\)</span>), might add to current bucket</li>
+<li>Relax “light” edges (wt &lt; <span class="math inline">\(\Delta\)</span>), might add to bucket</li>
 <li>When bucket empties, relax “heavy” edges a la Dijkstra</li>
 </ul>
 </section>
@@ -287,10 +305,12 @@ Let’s spend a few minutes on more productive algorithms...</p>
 
 <section>
 <h3>Luby’s algorithm (round 1)</h3>
+<p><img data-src="figs/mis_luby1.svg" style="width:80.0%" /></p>
 </section>
 
 <section>
 <h3>Luby’s algorithm (round 1)</h3>
+<p><img data-src="figs/mis_luby2.svg" style="width:80.0%" /></p>
 </section>
 
 <section>
@@ -316,6 +336,7 @@ Let’s spend a few minutes on more productive algorithms...</p>
 
 <section>
 <h3>Graph representation: Adjacency matrix</h3>
+<p><img data-src="figs/part_matrix.svg" style="width:80.0%" /></p>
 <p>Pro: efficient for dense graphs<br />
 Con: wasteful for sparse case...</p>
 </section>
@@ -340,6 +361,7 @@ Con: wasteful for sparse case...</p>
 
 <section>
 <h3>Graph representations: CSR</h3>
+<p><img data-src="figs/csr-demo.svg" style="width:80.0%" /></p>
 <p>Pro: traversal? Con: updates</p>
 </section>
 
@@ -374,13 +396,13 @@ Con: wasteful for sparse case...</p>
 <h3>Graph algorithms and linear algebra</h3>
 <p><em>Semirings</em> have <span class="math inline">\(\oplus\)</span> and <span class="math inline">\(\otimes\)</span> s.t.</p>
 <ul>
-<li>Addition is commutative+associative with an identity 0</li>
+<li>Addition is commutative+associative with a 0</li>
 <li>Multiplication is associative with identity 1</li>
 <li>Both are distributive</li>
 <li><span class="math inline">\(a \otimes 0 = 0 \otimes a = 0\)</span></li>
 <li>But no subtraction or division</li>
 </ul>
-<p>Technically have <em>modules</em> (vs vector spaces) over semirings</p>
+<p>Technically <em>modules</em> over semirings</p>
 </section>
 
 <section>
@@ -397,7 +419,7 @@ Con: wasteful for sparse case...</p>
 <h3>Graph BLAS</h3>
 <p><a href="http://www.graphblas.org/" class="uri">http://www.graphblas.org/</a></p>
 <ul>
-<li>Provisional API as of late May 2017</li>
+<li>Version 1.3.0 (final) as of 2019-09-25</li>
 <li>(Opaque) internal sparse matrix data structure</li>
 <li>Allows operations over misc semirings</li>
 </ul>
