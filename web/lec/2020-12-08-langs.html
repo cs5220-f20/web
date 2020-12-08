@@ -1,0 +1,352 @@
+---
+title: Mixed languages, libraries, frameworks
+layout: slides
+audio: 2020-12-08-langs
+---
+
+<section>
+  <h1><a href="https://www.cs.cornell.edu/courses/cs5220/2020fa/">CS 5220</a></h1>
+  <h2>Applications of Parallel Computers</h2>
+  <h3>Mixed languages, libraries, frameworks</h3>
+  <p>
+    <small>Prof <a href="http://www.cs.cornell.edu/~bindel">David Bindel</a></small>
+  </p>
+  <p>Please click the play button below.</p>
+</section>
+
+<section>
+<h2>Grumpy Old Man Warning!</h2>
+<ul>
+<li>Lots of opinions ahead</li>
+<li>I can be wrong!</li>
+</ul>
+</section>
+
+<section>
+<h2>I have said…</h2>
+<ul>
+<li>Use libraries! And frameworks! And tools!</li>
+<li>Use high-level languages (Lua, Python)!</li>
+<li>Lots of cool new tools! UPC++, SYCL, …</li>
+<li>Languages evolve, prefer modern C/C++/Fortran/Python</li>
+<li>You just need to tweak the <code>Makefile.in</code> files</li>
+</ul>
+</section>
+
+<section>
+<h2>Why Johnny Can’t Build</h2>
+<ul>
+<li>Libraries aren’t installed</li>
+<li>How do I call Fortran from C++?</li>
+<li>How do I build with Lua, Python, etc?</li>
+<li>What about accelerators?</li>
+<li>How do I link everything?</li>
+</ul>
+</section>
+
+<section>
+<h2>Today</h2>
+<ul>
+<li>Tool pragmatics</li>
+<li>Languages: big and little</li>
+<li>Some major frameworks</li>
+</ul>
+</section>
+
+<section>
+<h2>What is a compiler?</h2>
+<p><img data-src="https://pbs.twimg.com/media/EoQYfemUcAMIgKr?format=png&amp;name=medium" style="width:80.0%" /></p>
+</section>
+
+<section>
+<h2>C/Fortran build flow</h2>
+<ul>
+<li><em>Compiler</em> maps source to assembly
+<ul>
+<li>Or to something else</li>
+</ul></li>
+<li><em>Assembler</em> maps to object files</li>
+<li><em>Librarian</em> produces
+<ul>
+<li>Static *archives (<code>.a</code>)</li>
+<li>Dynamic libraries (<code>.dylib</code>) / shared objects (<code>.so</code>)</li>
+</ul></li>
+<li><em>Linker</em> combines objects, resolves symbols</li>
+<li><em>Loader</em> brings executables into memory</li>
+</ul>
+</section>
+
+<section>
+<h2>Compilation issues</h2>
+<ul>
+<li>Language issues
+<ul>
+<li>Old compiler? (common, alas)</li>
+<li>Specific extensions?</li>
+</ul></li>
+<li>Missing header files?</li>
+</ul>
+</section>
+
+<section>
+<h2>Assembler issues?</h2>
+<p>AARGH! (but not so common)</p>
+</section>
+
+<section>
+<h2>Static linker issues?</h2>
+<ul>
+<li>Problems with name mangling
+<ul>
+<li>Know: <code>extern &quot;C&quot;</code> and <code>iso_c_binding</code></li>
+</ul></li>
+<li>Can’t find libraries?
+<ul>
+<li>Esp language support libraries</li>
+</ul></li>
+</ul>
+</section>
+
+<section>
+<h2>Dynamic linking issues?</h2>
+<ul>
+<li>Dynamic libraries resolve at load time
+<ul>
+<li>Need to have them on search paths!</li>
+</ul></li>
+<li>Classic problem: “DLL hell”
+<ul>
+<li>Versioning on libraries helps</li>
+<li>Still can run into issues</li>
+</ul></li>
+</ul>
+</section>
+
+<section>
+<h2>Building</h2>
+<ul>
+<li>Lowest: compile/link</li>
+<li>Next: Makefiles</li>
+<li>Next: CMake/autoconf/etc</li>
+<li>Use package managers if possible!</li>
+</ul>
+</section>
+
+<section>
+<h2>Autoconf</h2>
+<ul>
+<li><code>configure; make; make install</code></li>
+<li>Behind the scenes: shell scripts and M4</li>
+<li>Finds libraries / platform specifics</li>
+<li>Generates build system for you</li>
+</ul>
+</section>
+
+<section>
+<h2>CMake</h2>
+<ul>
+<li>Commercial tool (Kitware)
+<ul>
+<li>Pay for documentation</li>
+</ul></li>
+<li>Configure and build all in one</li>
+<li>Improvement on autotools?</li>
+</ul>
+</section>
+
+<section>
+<h2>Package managers</h2>
+<ul>
+<li>Common on single node
+<ul>
+<li>Linux: apt, yum</li>
+<li>MacOS: brew, macports</li>
+<li>Cross: conda</li>
+</ul></li>
+<li>Spack, EasyBuild
+<ul>
+<li>Support environment modules</li>
+<li>Allow multiple build toolchains</li>
+</ul></li>
+</ul>
+</section>
+
+<section>
+<h2>A step back</h2>
+</section>
+
+<section>
+<h2>The mountain of abstraction</h2>
+<p>Consider class trajectory:</p>
+<ul>
+<li>Started very low-level</li>
+<li>Up to general ideas/kernels</li>
+<li>Up to parallel concepts, applications</li>
+<li>Nirvana: performance “just happens”?</li>
+</ul>
+</section>
+
+<section>
+<h2>Low-level frameworks and languages</h2>
+<ul>
+<li>OpenMP and MPI</li>
+<li>Intel TBB</li>
+<li>Global arays</li>
+<li>Newer(?) parallel languages, extensions</li>
+</ul>
+</section>
+
+<section>
+<h2>Libraries</h2>
+<p>One thing (or a few) done fast:</p>
+<ul>
+<li>BLAS (MKL, OpenBLAS, ATLAS, etc)</li>
+<li>LAPACK and successors</li>
+<li>FFTW</li>
+<li>Sparse direct solvers</li>
+</ul>
+<p>Key challenge: linking (esp across languages)</p>
+</section>
+
+<section>
+<h2>Framework libraries</h2>
+<ul>
+<li>Many in PDE land
+<ul>
+<li>PETSc, SLEPc, TAO, etc</li>
+<li>Trilinos</li>
+<li>Overture</li>
+<li>deal.ii</li>
+</ul></li>
+<li>More complicated interfaces</li>
+<li>Effectively defines embedded solver lang</li>
+</ul>
+</section>
+
+<section>
+<h2>Framework libraries</h2>
+<p>Renaissance thanks to ML!</p>
+<ul>
+<li>TensorFlow, PyTorch, JAX, etc</li>
+<li>Often define embedded DSLs
+<ul>
+<li>Build expression in Python, etc</li>
+<li>Separate compile/optimize/execute</li>
+</ul></li>
+</ul>
+</section>
+
+<section>
+<h2>Scripting languages and PSEs</h2>
+<ul>
+<li>MATLAB, Octave, R, Python, Julia</li>
+<li>“High productivity” vs “high performance”?</li>
+<li>Not necessarily slow! Extensions, libs, JIT</li>
+<li>Performance strategies transfer</li>
+<li>Bottlenecks may not be where you expect</li>
+</ul>
+</section>
+
+<section>
+<h2>Domain specific languages</h2>
+<p>Great opportunities from limited scope!</p>
+<ul>
+<li>Classic example: SQL</li>
+<li>PDE domain: finite element compilers
+<ul>
+<li>Dolfin framework</li>
+<li>Sundance</li>
+</ul></li>
+<li>Embedded languages/specializers</li>
+<li>Modern: SimIt, GraphIt, Halide, etc</li>
+</ul>
+</section>
+
+<section>
+<h2>Simulation codes</h2>
+<ul>
+<li>Typical pattern
+<ul>
+<li>Cusom lang/preproc for problem input</li>
+<li>Scripting language to describe analysis</li>
+<li>User-defined elements/modules in compiled lang</li>
+</ul></li>
+<li>Great for some classes of problems</li>
+<li>Can be torturned into covering other types!</li>
+</ul>
+</section>
+
+<section>
+<h2>Role of scripting languages</h2>
+<ul>
+<li>Often interpreted</li>
+<li>Great for “high-level”</li>
+<li>Python is the default (or Lua?)</li>
+<li>Interface with C/Fortran for perf</li>
+</ul>
+</section>
+
+<section>
+<h2>Issues in mixing languages</h2>
+<ul>
+<li>How do languages communicate?</li>
+<li>How are extensions compiled/linked?</li>
+<li>What support libraries are needed?</li>
+<li>Who owns main loop?</li>
+<li>Who owns program objects?</li>
+<li>How are exceptions handled?</li>
+</ul>
+</section>
+
+<section>
+<h2>Cross-language calls?</h2>
+<ul>
+<li>Via pipes (pre-/post-processors)</li>
+<li>Inter-process communication</li>
+<li>Remote procedure call</li>
+<li>Linked together (with wrapper gen?)</li>
+</ul>
+</section>
+
+<section>
+<h2>Mixed language: tech issues</h2>
+<p>Primary pain points:</p>
+<ul>
+<li>Cross-language communication</li>
+<li>Building and deployment</li>
+<li>Debugging and run-time issues</li>
+</ul>
+</section>
+
+<section>
+<h2>Mixed language: social issues</h2>
+<ul>
+<li>Availability of docs</li>
+<li>Availability of tools/libraries</li>
+<li>Active user base</li>
+<li>Open-ness of code base?</li>
+<li>Longevity</li>
+</ul>
+</section>
+
+<section>
+<h2>Best advice</h2>
+<ul>
+<li>Conservative re general-purpose lang
+<ul>
+<li>(Modern) C++ and Fortran</li>
+<li>Otherwise, look for C-compatible calling</li>
+<li>Python on top</li>
+</ul></li>
+<li>More adventurous for DSLs</li>
+</ul>
+<p>Also like Julia (yes, I’m inconsistent)</p>
+</section>
+
+<section>
+<h2>Concluding thought</h2>
+<blockquote>
+<p>I don’t know what the programming languge of the year 2000 will look like, but I know it will be called FORTRAN. – C.A.R. Hoare</p>
+</blockquote>
+</section>
+

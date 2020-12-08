@@ -246,19 +246,19 @@
       file: lec/2020-12-01-graph.html
 -
   date: 2020-12-03
-  info: Mixing languages, libraries, and frameworks
+  info: Parallel graph algorithms
 # =================
 # Week 13
 #
 -
   date: 2020-12-08
-  info: Heterogeneity and accelerators
+  info: Mixing languages, libraries, and frameworks
 -
   date: 2020-12-10
-  info: Impact of floating point
+  info: N-body and related problems
 # =================
 # Week 13
 #
 -
   date: 2020-12-15
-  info: Project poster blitz
+  info: Project poster blitz (no meeting)
