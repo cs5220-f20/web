@@ -258,7 +258,10 @@
       file: lec/2020-12-08-langs.html
 -
   date: 2020-12-10
-  info: N-body and related problems
+  info: Impact of floating point
+  files:
+    - info: Slide deck (no narration)
+      file: lec/2020-12-10-fp.html
 # =================
 # Week 13
 #
