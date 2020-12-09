@@ -350,8 +350,7 @@ int check_side(float ax, float ay, float bx, float by,
 <section>
 <h3>Problem 0: Mis-attributed Blame</h3>
 <blockquote>
-<p>To blame is human. To fix is to engineer.<br />
-— Unknown</p>
+<p>To blame is human. To fix is to engineer. — Unknown</p>
 </blockquote>
 <p>Three variants:</p>
 <ul>
@@ -363,7 +362,7 @@ int check_side(float ax, float ay, float bx, float by,
 
 <section>
 <h3>Problem 1: Repeatability</h3>
-<p>Floating point addition is <em>not</em> associative: <span class="math display">\[\mathrm{fl}(a + \mathrm{fl}(b + c)) \neq \mathrm{fl}(\mathrm{fl}(a + \b) + c)\]</span></p>
+<p>Floating point addition is <em>not</em> associative: <span class="math display">\[\mathrm{fl}(a + \mathrm{fl}(b + c)) \neq \mathrm{fl}(\mathrm{fl}(a + b) + c)\]</span></p>
 <p>So answers depends on the inputs, but also</p>
 <ul>
 <li>How blocking is done in multiply or other kernels</li>
@@ -383,7 +382,7 @@ int check_side(float ax, float ay, float bx, float by,
 <p>What can we do?</p>
 <ul>
 <li>Apply error analysis agnostic to ordering</li>
-<li>Write a slower version with specific ordering for debugging</li>
+<li>Write slower debug version with specific ordering</li>
 <li>Soon(?): Call the <em>reproducible BLAS</em></li>
 </ul>
 </section>
@@ -393,13 +392,16 @@ int check_side(float ax, float ay, float bx, float by,
 <ul>
 <li>Local arithmetic faster than communication</li>
 <li>So be redundant about some computation</li>
-<li>What if the redundant computations are on different HW?
+<li>What if redundant computations use different HW?
 <ul>
 <li>Different nodes in the cloud?</li>
 <li>GPU and CPU?</li>
 </ul></li>
-<li>Problem: different exception handling on different nodes</li>
-<li>Problem: different branches due to different rounding</li>
+<li>Problems
+<ul>
+<li>Different exception handling on different nodes</li>
+<li>Different branches due to different rounding</li>
+</ul></li>
 </ul>
 </section>
 
