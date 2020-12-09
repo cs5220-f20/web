@@ -141,22 +141,22 @@ Modern error analysis of Gaussian elimination</p>
 <li><span class="math inline">\(2^{e_{\max}} + 2^{e_{\max}}\)</span> generates <span class="math inline">\(\infty\)</span> (<em>overflow exception</em>)</li>
 <li><span class="math inline">\(1/0\)</span> generates <span class="math inline">\(\infty\)</span> (<em>divide by zero exception</em>)
 <ul>
-<li>... should really be called “exact infinity” exception</li>
+<li>... should really be called “exact infinity”</li>
 </ul></li>
 <li><span class="math inline">\(\sqrt{-1}\)</span> generates Not-a-Number (<em>invalid exception</em>)</li>
 </ul>
-<p>But every basic operation produces <em>something</em> well defined.</p>
+<p>But every basic op produces <em>something</em> well defined.</p>
 </section>
 
 <section>
 <h3>Basic rounding model</h3>
-<p>Model of roundoff in a basic op: <span class="math display">\[\fl(a \odot b) = (a \odot b)(1 + \delta), \quad
-|\delta| \leq \macheps.\]</span></p>
+<p>Model of roundoff in a basic op: <span class="math display">\[\mathrm{fl}(a \odot b) = (a \odot b)(1 + \delta), \quad
+|\delta| \leq \vareps.\]</span></p>
 <ul>
 <li>This model is <em>not</em> complete
 <ul>
-<li>Optimistic: misses overflow, underflow, divide by zero</li>
-<li>Also too pessimistic – some things are done exactly!</li>
+<li>Misses overflow, underflow, divide by zero</li>
+<li>Also, some things are done exactly!</li>
 <li>Example: <span class="math inline">\(2x\)</span> exact, as is <span class="math inline">\(x+y\)</span> if <span class="math inline">\(x/2 \leq y \leq 2x\)</span></li>
 </ul></li>
 <li>But useful as a basis for backward error analysis</li>
@@ -169,7 +169,7 @@ Modern error analysis of Gaussian elimination</p>
 <pre><code>p = c(n)
 for k = n-1 downto 0
   p = x*p + c(k)</code></pre>
-<p>Can show backward error result: <span class="math display">\[\fl(p) = \sum_{k=0}^n \hat{c}_k x^k\]</span> where <span class="math inline">\(|\hat{c}_k-c_k| \leq (n+1) \macheps |c_k|\)</span>.</p>
+<p>Can show backward error result: <span class="math display">\[\mathrm{fl}(p) = \sum_{k=0}^n \hat{c}_k x^k\]</span> where <span class="math inline">\(|\hat{c}_k-c_k| \leq (n+1) \vareps |c_k|\)</span>.</p>
 <p>Backward error + sensitivity gives forward error. Can even compute running error estimates!</p>
 </section>
 
