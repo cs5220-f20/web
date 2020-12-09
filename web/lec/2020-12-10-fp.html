@@ -343,7 +343,7 @@ int check_side(float ax, float ay, float bx, float by,
 </section>
 
 <section>
-<h3>Parallel problems</h3>
+<h3>Three problems</h3>
 <p>What goes wrong with floating point in parallel (or just high performance) environments?</p>
 </section>
 
@@ -416,6 +416,16 @@ int check_side(float ax, float ay, float bx, float by,
 </section>
 
 <section>
+<h3>New World Order</h3>
+<p>Claim: DNNs robust to low precision!</p>
+<ul>
+<li>Overflow an issue (hence bfloat16)</li>
+<li>Same pressure has revived block FP?</li>
+<li>More experiments than analysis</li>
+</ul>
+</section>
+
+<section>
 <h3>Recap</h3>
 <p>So why care about the vagaries of floating point?</p>
 <ul>
@@ -424,6 +434,16 @@ int check_side(float ax, float ay, float bx, float by,
 <li>Or maybe just reproducibility</li>
 <li>Or avoiding crashes from inconsistent decisions!</li>
 </ul>
-<p>Start with “What Every Computer Scientist Should Know About Floating Point Arithmetic” (David Goldberg, with an addendum by Doug Priest). It’s in the back of Patterson-Hennessey.</p>
+</section>
+
+<section>
+<h3>References</h3>
+<ul>
+<li>“What Every Computer Scientist Should Know About Floating Point Arithmetic” (David Goldberg, with an addendum by Doug Priest). It’s in the back of Patterson-Hennessey.</li>
+<li><a href="https://arxiv.org/pdf/2012.02492.pdf">“Revisiting ‘What Every Computer Scientist Should Know About Floating Point Arithmetic’”</a> (Vincent Lafage)</li>
+<li><em>Numerical Computing with IEEE Floating Point Arithmetic</em> (Overton)</li>
+<li><em>Handbook of Floating Point Arithmetic</em> (Muller et al)</li>
+<li><em>Accuracy and Stability of Numerical Algorithms</em> (Higham)</li>
+</ul>
 </section>
 
