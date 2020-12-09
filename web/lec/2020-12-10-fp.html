@@ -291,10 +291,19 @@ int check_side(float ax, float ay, float bx, float by,
 <li>Double precision on a GPU?</li>
 <li>Quad precision on a CPU?</li>
 </ul>
+</section>
+
+<section>
+<h3>Simulating extra precision</h3>
 <p>Can simulate extra precision. Example:</p>
-<pre><code>  if abs(a) &lt; abs(b) { swap(&amp;a, &amp;b); }
+<pre><code>  // s1, s2 = two_sum(a, b) -- Dekker&#39;s version
+  if abs(a) &lt; abs(b) { swap(&amp;a, &amp;b); }
   double s1 = a+b;         /* May suffer roundoff */
   double s2 = (a-s1) + b;  /* No roundoff! */</code></pre>
+</section>
+
+<section>
+<h3>Simulating extra precision</h3>
 <p>Idea applies more broadly (Bailey, Bohlender, Dekker, Demmel, Hida, Kahan, Li, Linnainmaa, Priest, Shewchuk, ...)</p>
 <ul>
 <li>Used in fast extra-precision packages</li>
@@ -312,6 +321,10 @@ int check_side(float ax, float ay, float bx, float by,
 <li>Initialized to <span class="math inline">\(10^{-312}\)</span>: 67 microseconds</li>
 </ul>
 <p><span class="math inline">\(50 \times\)</span> performance penalty for gradual underflow!</p>
+</section>
+
+<section>
+<h3>Exceptional arithmetic</h3>
 <p>Why worry? Some GPUs don’t support gradual underflow at all!<br />
 One reason:</p>
 <pre><code>if (x != y)
