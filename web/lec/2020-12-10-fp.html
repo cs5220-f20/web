@@ -66,7 +66,7 @@ Modern error analysis of Gaussian elimination</p>
 
 <section>
 <h3>Kahan</h3>
-<p>IEEE-754/854 (1985, revised 2008)</p>
+<p>IEEE-754/854 (1985, revised 2008, 2018)</p>
 <blockquote>
 <p>For his fundamental contributions to numerical analysis. One of the foremost experts on floating-point computations. Kahan has dedicated himself to “making the world safe for numerical computations.” — 1989 Turing Award citation</p>
 </blockquote>
@@ -106,12 +106,18 @@ Modern error analysis of Gaussian elimination</p>
 <li>Round to nearest even (default)</li>
 <li>Round up, down, toward 0 – error bounds and intervals</li>
 </ul></li>
+<li>754 <em>recommends</em> (does not require) correct rounding for a few transcendentals as well (sine, cosine, etc).</li>
+</ul>
+</section>
+
+<section>
+<h3>Inexact</h3>
+<ul>
 <li>If rounded result <span class="math inline">\(\neq\)</span> exact result, have <em>inexact exception</em>
 <ul>
 <li>Which most people seem not to know about...</li>
 <li>... and which most of us who do usually ignore</li>
 </ul></li>
-<li>754-2008 <em>recommends</em> (does not require) correct rounding for a few transcendentals as well (sine, cosine, etc).</li>
 </ul>
 </section>
 
