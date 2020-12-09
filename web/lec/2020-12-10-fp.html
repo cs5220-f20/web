@@ -104,7 +104,7 @@ Modern error analysis of Gaussian elimination</p>
 <li>Different rounding rules possible:
 <ul>
 <li>Round to nearest even (default)</li>
-<li>Round up, down, toward 0 – error bounds and intervals</li>
+<li>Round up, down, to 0 – error bds + intervals</li>
 </ul></li>
 <li>754 <em>recommends</em> (does not require) correct rounding for a few transcendentals as well (sine, cosine, etc).</li>
 </ul>
@@ -238,13 +238,17 @@ for k = n-1 downto 0
 
 <section>
 <h3>Example: Mixed-precision iterative refinement</h3>
-<p>̄ ̄ Factor <span class="math inline">\(A = LU\)</span> <span class="math inline">\(O(n^3)\)</span> single-precision work<br />
-Solve <span class="math inline">\(x = U^{-1} (L^{-1} b)\)</span> <span class="math inline">\(O(n^2)\)</span> single-precision work<br />
-<span class="math inline">\(r = b-Ax\)</span> <span class="math inline">\(O(n^2)\)</span> double-precision work<br />
-While <span class="math inline">\(\|r\|\)</span> too large<br />
-<span class="math inline">\(d = U^{-1} (L^{-1} r)\)</span> <span class="math inline">\(O(n^2)\)</span> single-precision work<br />
-<span class="math inline">\(x = x+d\)</span> <span class="math inline">\(O(n)\)</span> single-precision work<br />
-<span class="math inline">\(r = b-Ax\)</span> <span class="math inline">\(O(n^2)\)</span> double-precision work</p>
+<ul>
+<li>Factor <span class="math inline">\(A = LU\)</span> <span class="math inline">\(O(n^3)\)</span> single-precision work</li>
+<li>Solve <span class="math inline">\(x = U^{-1} (L^{-1} b)\)</span> <span class="math inline">\(O(n^2)\)</span> single-precision work</li>
+<li><span class="math inline">\(r = b-Ax\)</span> <span class="math inline">\(O(n^2)\)</span> double-precision work</li>
+<li>While <span class="math inline">\(\|r\|\)</span> too large
+<ul>
+<li><span class="math inline">\(d = U^{-1} (L^{-1} r)\)</span> <span class="math inline">\(O(n^2)\)</span> single-precision work</li>
+<li><span class="math inline">\(x = x+d\)</span> <span class="math inline">\(O(n)\)</span> single-precision work</li>
+<li><span class="math inline">\(r = b-Ax\)</span> <span class="math inline">\(O(n^2)\)</span> double-precision work</li>
+</ul></li>
+</ul>
 </section>
 
 <section>
