@@ -169,7 +169,11 @@ Modern error analysis of Gaussian elimination</p>
 <pre><code>p = c(n)
 for k = n-1 downto 0
   p = x*p + c(k)</code></pre>
-<p>Can show backward error result: <span class="math display">\[\mathrm{fl}(p) = \sum_{k=0}^n \hat{c}_k x^k\]</span> where <span class="math inline">\(|\hat{c}_k-c_k| \leq (n+1) \epsilin |c_k|\)</span>.</p>
+</section>
+
+<section>
+<h3>Example: Horner’s rule</h3>
+<p>Can show backward error result: <span class="math display">\[\mathrm{fl}(p) = \sum_{k=0}^n \hat{c}_k x^k\]</span> where <span class="math inline">\(|\hat{c}_k-c_k| \leq (n+1) \epsilon |c_k|\)</span>.</p>
 <p>Backward error + sensitivity gives forward error. Can even compute running error estimates!</p>
 </section>
 
@@ -188,15 +192,17 @@ for k = n-1 downto 0
 <section>
 <h3>Back to the future?</h3>
 <ul>
-<li>Almost everyone implements IEEE 754 (at least 1985)
-<ul>
-<li>Old Cray arithmetic is essentially extinct</li>
 <li>But GPUs may lack gradual underflow</li>
-<li>And it’s impossible to write portable exception handlers</li>
-<li>And even with C99, exception flags may be inaccessible</li>
-<li>And some features might be slow</li>
-<li>And the compiler might not do what you expected</li>
-</ul></li>
+<li>Hard to write portable exception handlers</li>
+<li>Exception flags may be inaccessible</li>
+<li>Some features might be slow</li>
+<li>Compiler might not do what you expected</li>
+</ul>
+</section>
+
+<section>
+<h3>Back to the future?</h3>
+<ul>
 <li>We teach backward error analysis in basic classes
 <ul>
 <li>... which are often no longer required!</li>
@@ -211,14 +217,14 @@ for k = n-1 downto 0
 
 <section>
 <h3>Arithmetic speed</h3>
-<p>Single precision is faster than double precision</p>
+<p>Single faster than double precision</p>
 <ul>
 <li>Actual arithmetic cost may be comparable (on CPU)</li>
 <li>But GPUs generally prefer single</li>
 <li>And AVX instructions do more per cycle with single</li>
 <li>And memory bandwidth is lower</li>
 </ul>
-<p>NB: There is a half-precision type (use for storage only!)</p>
+<p>NB: FP16 originally intended for storage only!</p>
 </section>
 
 <section>
