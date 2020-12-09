@@ -239,14 +239,14 @@ for k = n-1 downto 0
 <section>
 <h3>Example: Mixed-precision iterative refinement</h3>
 <ul>
-<li>Factor <span class="math inline">\(A = LU\)</span> <span class="math inline">\(O(n^3)\)</span> single-precision work</li>
-<li>Solve <span class="math inline">\(x = U^{-1} (L^{-1} b)\)</span> <span class="math inline">\(O(n^2)\)</span> single-precision work</li>
-<li><span class="math inline">\(r = b-Ax\)</span> <span class="math inline">\(O(n^2)\)</span> double-precision work</li>
+<li>Factor <span class="math inline">\(A = LU\)</span>: <span class="math inline">\(O(n^3)\)</span> single-precision work</li>
+<li>Solve <span class="math inline">\(x = U^{-1} (L^{-1} b)\)</span>: <span class="math inline">\(O(n^2)\)</span> single-precision work</li>
+<li><span class="math inline">\(r = b-Ax\)</span>: <span class="math inline">\(O(n^2)\)</span> double-precision work</li>
 <li>While <span class="math inline">\(\|r\|\)</span> too large
 <ul>
-<li><span class="math inline">\(d = U^{-1} (L^{-1} r)\)</span> <span class="math inline">\(O(n^2)\)</span> single-precision work</li>
-<li><span class="math inline">\(x = x+d\)</span> <span class="math inline">\(O(n)\)</span> single-precision work</li>
-<li><span class="math inline">\(r = b-Ax\)</span> <span class="math inline">\(O(n^2)\)</span> double-precision work</li>
+<li><span class="math inline">\(d = U^{-1} (L^{-1} r)\)</span>: <span class="math inline">\(O(n^2)\)</span> single-precision work</li>
+<li><span class="math inline">\(x = x+d\)</span>: <span class="math inline">\(O(n)\)</span> single-precision work</li>
+<li><span class="math inline">\(r = b-Ax\)</span>: <span class="math inline">\(O(n^2)\)</span> double-precision work</li>
 </ul></li>
 </ul>
 </section>
