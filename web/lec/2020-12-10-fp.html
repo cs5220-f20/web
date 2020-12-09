@@ -18,6 +18,7 @@ audio: 2020-12-10-fp
 <h3>Nothing New Under the Sun</h3>
 <p><a href="https://www.microsoft.com/en-us/research/publication/pushing-the-limits-of-narrow-precision-inferencing-at-cloud-scale-with-microsoft-floating-point/">“Pushing the Limits of Narrow Precision Inferencing at Cloud Scale with Microsoft Floating Point”</a><br />
 (at NeurIPS 2020 this week)</p>
+<p>Wilkinson, <em>Rounding Errors in Algebraic Processes</em>, 1963.</p>
 </section>
 
 <section>
@@ -73,13 +74,17 @@ Modern error analysis of Gaussian elimination</p>
 
 <section>
 <h3>IEEE floating point reminder</h3>
-<p>Normalized numbers: <span class="math display">\[(-1)^s \times (1.b_1 b_2 \ldots b_p)_2 \times 2^e\]</span> Have 32-bit single, 64-bit double numbers consisting of</p>
+<p>Normalized numbers: <span class="math display">\[(-1)^s \times (1.b_1 b_2 \ldots b_p)_2 \times 2^e\]</span> 32-bit single, 64-bit double numbers consisting of</p>
 <ul>
 <li>Sign <span class="math inline">\(s\)</span></li>
 <li>Precision <span class="math inline">\(p\)</span> (<span class="math inline">\(p = 23\)</span> or <span class="math inline">\(52\)</span>)</li>
 <li>Exponent <span class="math inline">\(e\)</span> (<span class="math inline">\(-126 \leq e \leq 126\)</span> or <span class="math inline">\(-1022 \leq e \leq 1023\)</span>)</li>
 </ul>
-<p>Questions:</p>
+<p>Newer 16-bit formats: fp16 (<span class="math inline">\(p = 10\)</span>); bfloat16 (<span class="math inline">\(p = 7\)</span>)</p>
+</section>
+
+<section>
+<h3>Beyond normalized</h3>
 <ul>
 <li>What if we can’t represent an exact result?</li>
 <li>What about <span class="math inline">\(2^{e_{\max}+1} \leq x &lt; \infty\)</span> or <span class="math inline">\(0 \leq x &lt; 2^{e_{\min}}\)</span>?</li>
