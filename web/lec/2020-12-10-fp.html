@@ -151,7 +151,7 @@ Modern error analysis of Gaussian elimination</p>
 <section>
 <h3>Basic rounding model</h3>
 <p>Model of roundoff in a basic op: <span class="math display">\[\mathrm{fl}(a \odot b) = (a \odot b)(1 + \delta), \quad
-|\delta| \leq \vareps.\]</span></p>
+|\delta| \leq \epsilon.\]</span></p>
 <ul>
 <li>This model is <em>not</em> complete
 <ul>
@@ -169,7 +169,7 @@ Modern error analysis of Gaussian elimination</p>
 <pre><code>p = c(n)
 for k = n-1 downto 0
   p = x*p + c(k)</code></pre>
-<p>Can show backward error result: <span class="math display">\[\mathrm{fl}(p) = \sum_{k=0}^n \hat{c}_k x^k\]</span> where <span class="math inline">\(|\hat{c}_k-c_k| \leq (n+1) \vareps |c_k|\)</span>.</p>
+<p>Can show backward error result: <span class="math display">\[\mathrm{fl}(p) = \sum_{k=0}^n \hat{c}_k x^k\]</span> where <span class="math inline">\(|\hat{c}_k-c_k| \leq (n+1) \epsilin |c_k|\)</span>.</p>
 <p>Backward error + sensitivity gives forward error. Can even compute running error estimates!</p>
 </section>
 
