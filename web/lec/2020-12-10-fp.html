@@ -15,22 +15,31 @@ audio: 2020-12-10-fp
 </section>
 
 <section>
-<h2>Nothing New Under the Sun</h2>
+<h3>Nothing New Under the Sun</h3>
 <p><a href="https://www.microsoft.com/en-us/research/publication/pushing-the-limits-of-narrow-precision-inferencing-at-cloud-scale-with-microsoft-floating-point/">“Pushing the Limits of Narrow Precision Inferencing at Cloud Scale with Microsoft Floating Point”</a><br />
 (at NeurIPS 2020 this week)</p>
-<h3 id="some-history-von-neumann-and-goldstine">Some history: Von Neumann and Goldstine</h3>
+</section>
+
+<section>
+<h3>Some history: Von Neumann and Goldstine</h3>
 <p><img data-src="figs/von-neumann.jpg" style="height:4cm" /> <img data-src="figs/goldstine.jpg" style="height:4cm" /></p>
 <p>“Numerical Inverting of Matrices of High Order” (1947)</p>
 <blockquote>
 <p>... matrices of the orders 15, 50, 150 can usually be inverted with a (relative) precision of 8, 10, 12 decimal digits less, respectively, than the number of digits carried throughout.</p>
 </blockquote>
-<h3 id="some-history-turing">Some history: Turing</h3>
+</section>
+
+<section>
+<h3>Some history: Turing</h3>
 <figure>
 <img data-src="figs/turing.jpg" alt="image" style="height:5cm" /><figcaption>image</figcaption>
 </figure>
 <p>“Rounding-Off Errors in Matrix Processes” (1948)</p>
 <p>Carrying <span class="math inline">\(d\)</span> digits is equivalent to changing input data in the <span class="math inline">\(d\)</span>th place (backward error analysis).</p>
-<h3 id="some-history-wilkinson">Some history: Wilkinson</h3>
+</section>
+
+<section>
+<h3>Some history: Wilkinson</h3>
 <figure>
 <img data-src="figs/wilkinson.jpg" alt="image" style="height:3cm" /><figcaption>image</figcaption>
 </figure>
@@ -39,7 +48,10 @@ Modern error analysis of Gaussian elimination</p>
 <blockquote>
 <p>For his research in numerical analysis to facilitiate the use of the high-speed digital computer, having received special recognition for his work in computations in linear algebra and “backward” error analysis. — 1970 Turing Award citation</p>
 </blockquote>
-<h3 id="some-history-kahan">Some history: Kahan</h3>
+</section>
+
+<section>
+<h3>Some history: Kahan</h3>
 <figure>
 <img data-src="figs/kahan.jpg" alt="image" style="height:3cm" /><figcaption>image</figcaption>
 </figure>
@@ -47,7 +59,10 @@ Modern error analysis of Gaussian elimination</p>
 <blockquote>
 <p>For his fundamental contributions to numerical analysis. One of the foremost experts on floating-point computations. Kahan has dedicated himself to “making the world safe for numerical computations.” — 1989 Turing Award citation</p>
 </blockquote>
-<h3 id="ieee-floating-point-reminder">IEEE floating point reminder</h3>
+</section>
+
+<section>
+<h3>IEEE floating point reminder</h3>
 <p>Normalized numbers: <span class="math display">\[(-1)^s \times (1.b_1 b_2 \ldots b_p)_2 \times 2^e\]</span> Have 32-bit single, 64-bit double numbers consisting of</p>
 <ul>
 <li>Sign <span class="math inline">\(s\)</span></li>
@@ -61,7 +76,10 @@ Modern error analysis of Gaussian elimination</p>
 <li>What if we compute <span class="math inline">\(1/0\)</span>?</li>
 <li>What if we compute <span class="math inline">\(\sqrt{-1}\)</span>?</li>
 </ul>
-<h3 id="rounding">Rounding</h3>
+</section>
+
+<section>
+<h3>Rounding</h3>
 <p>Basic ops (<span class="math inline">\(+, -, \times, /, \sqrt{}\)</span>), require <em>correct rounding</em></p>
 <ul>
 <li>As if computed to infinite precision, then rounded.
@@ -80,7 +98,10 @@ Modern error analysis of Gaussian elimination</p>
 </ul></li>
 <li>754-2008 <em>recommends</em> (does not require) correct rounding for a few transcendentals as well (sine, cosine, etc).</li>
 </ul>
-<h3 id="denormalization-and-underflow">Denormalization and underflow</h3>
+</section>
+
+<section>
+<h3>Denormalization and underflow</h3>
 <p>Denormalized numbers: <span class="math display">\[(-1)^s \times (0.b_1 b_2 \ldots b_p)_2 \times 2^{e_{\min}}\]</span></p>
 <ul>
 <li>Evenly fill in space between <span class="math inline">\(\pm 2^{e_{\min}}\)</span></li>
@@ -90,7 +111,10 @@ Modern error analysis of Gaussian elimination</p>
 <li>Except when an exact zero is generated</li>
 </ul></li>
 </ul>
-<h3 id="infinity-and-nan">Infinity and NaN</h3>
+</section>
+
+<section>
+<h3>Infinity and NaN</h3>
 <p>Other things can happen:</p>
 <ul>
 <li><span class="math inline">\(2^{e_{\max}} + 2^{e_{\max}}\)</span> generates <span class="math inline">\(\infty\)</span> (<em>overflow exception</em>)</li>
@@ -101,7 +125,10 @@ Modern error analysis of Gaussian elimination</p>
 <li><span class="math inline">\(\sqrt{-1}\)</span> generates Not-a-Number (<em>invalid exception</em>)</li>
 </ul>
 <p>But every basic operation produces <em>something</em> well defined.</p>
-<h3 id="basic-rounding-model">Basic rounding model</h3>
+</section>
+
+<section>
+<h3>Basic rounding model</h3>
 <p>Model of roundoff in a basic op: <span class="math display">\[\fl(a \odot b) = (a \odot b)(1 + \delta), \quad
 |\delta| \leq \macheps.\]</span></p>
 <ul>
@@ -113,14 +140,20 @@ Modern error analysis of Gaussian elimination</p>
 </ul></li>
 <li>But useful as a basis for backward error analysis</li>
 </ul>
-<h3 id="example-horners-rule">Example: Horner’s rule</h3>
+</section>
+
+<section>
+<h3>Example: Horner’s rule</h3>
 <p>Evaluate <span class="math inline">\(p(x) = \sum_{k=0}^n c_k x^k\)</span>:</p>
 <pre><code>p = c(n)
 for k = n-1 downto 0
   p = x*p + c(k)</code></pre>
 <p>Can show backward error result: <span class="math display">\[\fl(p) = \sum_{k=0}^n \hat{c}_k x^k\]</span> where <span class="math inline">\(|\hat{c}_k-c_k| \leq (n+1) \macheps |c_k|\)</span>.</p>
 <p>Backward error + sensitivity gives forward error. Can even compute running error estimates!</p>
-<h3 id="hooray-for-the-modern-era">Hooray for the modern era!</h3>
+</section>
+
+<section>
+<h3>Hooray for the modern era!</h3>
 <ul>
 <li>Almost everyone implements IEEE 754 (at least 1985)
 <ul>
@@ -129,7 +162,10 @@ for k = n-1 downto 0
 <li>We teach backward error analysis in basic classes</li>
 <li>Good libraries for linear algebra, elementary functions</li>
 </ul>
-<h3 id="back-to-the-future">Back to the future?</h3>
+</section>
+
+<section>
+<h3>Back to the future?</h3>
 <ul>
 <li>Almost everyone implements IEEE 754 (at least 1985)
 <ul>
@@ -150,7 +186,10 @@ for k = n-1 downto 0
 <li>But people will still roll their own.</li>
 </ul></li>
 </ul>
-<h3 id="arithmetic-speed">Arithmetic speed</h3>
+</section>
+
+<section>
+<h3>Arithmetic speed</h3>
 <p>Single precision is faster than double precision</p>
 <ul>
 <li>Actual arithmetic cost may be comparable (on CPU)</li>
@@ -159,13 +198,19 @@ for k = n-1 downto 0
 <li>And memory bandwidth is lower</li>
 </ul>
 <p>NB: There is a half-precision type (use for storage only!)</p>
-<h3 id="mixed-precision-arithmetic">Mixed-precision arithmetic</h3>
+</section>
+
+<section>
+<h3>Mixed-precision arithmetic</h3>
 <p>Idea: use double precision only where needed</p>
 <ul>
 <li>Example: iterative refinement and relatives</li>
 <li>Or use double-precision arithmetic between single-precision representations (may be a good idea regardless)</li>
 </ul>
-<h3 id="example-mixed-precision-iterative-refinement">Example: Mixed-precision iterative refinement</h3>
+</section>
+
+<section>
+<h3>Example: Mixed-precision iterative refinement</h3>
 <p>̄ ̄ Factor <span class="math inline">\(A = LU\)</span> <span class="math inline">\(O(n^3)\)</span> single-precision work<br />
 Solve <span class="math inline">\(x = U^{-1} (L^{-1} b)\)</span> <span class="math inline">\(O(n^2)\)</span> single-precision work<br />
 <span class="math inline">\(r = b-Ax\)</span> <span class="math inline">\(O(n^2)\)</span> double-precision work<br />
@@ -173,7 +218,10 @@ While <span class="math inline">\(\|r\|\)</span> too large<br />
 <span class="math inline">\(d = U^{-1} (L^{-1} r)\)</span> <span class="math inline">\(O(n^2)\)</span> single-precision work<br />
 <span class="math inline">\(x = x+d\)</span> <span class="math inline">\(O(n)\)</span> single-precision work<br />
 <span class="math inline">\(r = b-Ax\)</span> <span class="math inline">\(O(n^2)\)</span> double-precision work</p>
-<h3 id="example-helpful-extra-precision">Example: Helpful extra precision</h3>
+</section>
+
+<section>
+<h3>Example: Helpful extra precision</h3>
 <pre><code>/*
  * Assuming all coordinates are in [1,2), check on which
  * side of the line through A and B is the point C.
@@ -189,7 +237,10 @@ int check_side(float ax, float ay, float bx, float by,
     if (det &gt;  0) return  1;
 }</code></pre>
 <p>This is not robust if the inputs are double precision!</p>
-<h3 id="single-or-double">Single or double?</h3>
+</section>
+
+<section>
+<h3>Single or double?</h3>
 <p>What to use for:</p>
 <ul>
 <li>Large data sets? (single for performance, if possible)</li>
@@ -200,7 +251,10 @@ int check_side(float ax, float ay, float bx, float by,
 <li>Residual computations? (probably double)</li>
 <li>Checking geometric predicates? (double or more)</li>
 </ul>
-<h3 id="simulating-extra-precision">Simulating extra precision</h3>
+</section>
+
+<section>
+<h3>Simulating extra precision</h3>
 <p>What if we want higher precision than is fast?</p>
 <ul>
 <li>Double precision on a GPU?</li>
@@ -216,7 +270,10 @@ int check_side(float ax, float ay, float bx, float by,
 <li>And in robust geometric predicate code</li>
 <li>And in XBLAS</li>
 </ul>
-<h3 id="exceptional-arithmetic-speed">Exceptional arithmetic speed</h3>
+</section>
+
+<section>
+<h3>Exceptional arithmetic speed</h3>
 <p>Time to sum 1000 doubles on my laptop:</p>
 <ul>
 <li>Initialized to 1: 1.3 microseconds</li>
@@ -229,7 +286,10 @@ One reason:</p>
 <pre><code>if (x != y)
     z = x/(x-y);</code></pre>
 <p>Also limits range of simulated extra precision.</p>
-<h3 id="exceptional-algorithms-take-2">Exceptional algorithms, take 2</h3>
+</section>
+
+<section>
+<h3>Exceptional algorithms, take 2</h3>
 <p>A general idea (works outside numerics, too):</p>
 <ul>
 <li>Try something fast but risky</li>
@@ -237,9 +297,15 @@ One reason:</p>
 </ul>
 <p>If risky usually works and doesn’t cost too much extra, this improves performance.</p>
 <p>(See Demmel and Li, and also Hull, Farfrieve, and Tang.)</p>
-<h3 id="parallel-problems">Parallel problems</h3>
+</section>
+
+<section>
+<h3>Parallel problems</h3>
 <p>What goes wrong with floating point in parallel (or just high performance) environments?</p>
-<h3 id="problem-0-mis-attributed-blame">Problem 0: Mis-attributed Blame</h3>
+</section>
+
+<section>
+<h3>Problem 0: Mis-attributed Blame</h3>
 <blockquote>
 <p>To blame is human. To fix is to engineer.<br />
 — Unknown</p>
@@ -250,7 +316,10 @@ One reason:</p>
 <li>“This is probably due to floating point error.”</li>
 <li>“Floating point error makes this untrustworthy.”</li>
 </ul>
-<h3 id="problem-1-repeatability">Problem 1: Repeatability</h3>
+</section>
+
+<section>
+<h3>Problem 1: Repeatability</h3>
 <p>Floating point addition is <em>not</em> associative: <span class="math display">\[\fl(a + \fl(b + c)) \neq \fl(\fl(a + \b) + c)\]</span></p>
 <p>So answers depends on the inputs, but also</p>
 <ul>
@@ -260,7 +329,10 @@ One reason:</p>
 <li>Order in which critical sections are reached</li>
 </ul>
 <p>Worst case: with nontrivial probability we get an answer too bad to be useful, not bad enough for the program to barf — and garbage comes out.</p>
-<h3 id="problem-1-repeatability-1">Problem 1: Repeatability</h3>
+</section>
+
+<section>
+<h3>Problem 1: Repeatability</h3>
 <p>What can we do?</p>
 <ul>
 <li>Apply error analysis agnostic to ordering</li>
@@ -268,7 +340,10 @@ One reason:</p>
 <li>Soon: Call the <em>reproducible BLAS</em></li>
 </ul>
 <p>Note: new two_sum operation under discussion in IEEE 754 committee should make fast reproducibility (and double-double) easier.</p>
-<h3 id="problem-2-heterogeneity">Problem 2: Heterogeneity</h3>
+</section>
+
+<section>
+<h3>Problem 2: Heterogeneity</h3>
 <ul>
 <li>Local arithmetic faster than communication</li>
 <li>So be redundant about some computation</li>
@@ -280,14 +355,20 @@ One reason:</p>
 <li>Problem: different exception handling on different nodes</li>
 <li>Problem: different branches due to different rounding</li>
 </ul>
-<h3 id="problem-2-heterogeneity-1">Problem 2: Heterogeneity</h3>
+</section>
+
+<section>
+<h3>Problem 2: Heterogeneity</h3>
 <p>What can we do?</p>
 <ul>
 <li>Avoid FP-dependent branches</li>
 <li>Communicate FP results affecting branches</li>
 <li>Use reproducible kernels</li>
 </ul>
-<h3 id="recap">Recap</h3>
+</section>
+
+<section>
+<h3>Recap</h3>
 <p>So why care about the vagaries of floating point?</p>
 <ul>
 <li>Might actually care about error analysis</li>
