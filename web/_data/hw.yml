@@ -35,3 +35,13 @@
   text: "Final project proposal"
   files:
     - hw3.html
+-
+  due: 2020-12-15
+  text: "Final project talk"
+  files:
+    - final.html
+-
+  due: 2020-12-21
+  text: "Final report"
+  files:
+    - final.html
